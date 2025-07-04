@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Slam Flow CLI
+ * Slamb Flow CLI
  * Traditional git-flow operations
  */
 
@@ -15,7 +15,7 @@ import '../src/tools/git-flow.js';
 const program = new Command();
 
 program
-  .name('slam-flow')
+  .name('slamb-flow')
   .description('Traditional Git Flow Operations')
   .version('1.0.0');
 

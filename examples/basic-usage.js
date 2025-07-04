@@ -63,11 +63,11 @@ async function workflowExamples() {
   console.log('   slambed flow feature finish user-auth --auto-merge');
   
   console.log('\n3. Quick development:');
-  console.log('   slam-commit quick');
+  console.log('   slamb-commit quick');
   console.log('   → Auto-generates message and commits with smart defaults');
   
   console.log('\n4. Smart analysis:');
-  console.log('   slam-commit smart --execute');
+  console.log('   slamb-commit smart --execute');
   console.log('   → Analyzes changes and suggests optimal commit strategy');
   
   console.log('\n5. Release workflow:');
@@ -94,8 +94,8 @@ async function integrationExample() {
   console.log('\nCLI Integration:');
   console.log('Available commands:');
   console.log('- slambed (main CLI)');
-  console.log('- slam-commit (automation focus)');
-  console.log('- slam-flow (git-flow focus)');
+  console.log('- slamb-commit (automation focus)');
+  console.log('- slamb-flow (git-flow focus)');
 }
 
 async function customizationExample() {

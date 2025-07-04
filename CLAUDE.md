@@ -23,8 +23,8 @@ npm run build   # Lint + test pipeline
 ```bash
 # Test individual CLI tools
 ./bin/slambed.js --help
-./bin/slam-commit.js --help  
-./bin/slam-flow.js --help
+./bin/slamb-commit.js --help  
+./bin/slamb-flow.js --help
 
 # Test MCP tool registration
 node src/index.js --validate-tools
@@ -53,8 +53,8 @@ This is a **dual-interface system** serving as both an MCP server and CLI tool s
 
 **4. CLI Interfaces (`bin/`)**
 - **`slambed.js`** - Unified CLI with all capabilities
-- **`slam-commit.js`** - Automation-focused interface
-- **`slam-flow.js`** - GitFlow-focused interface
+- **`slamb-commit.js`** - Automation-focused interface
+- **`slamb-flow.js`** - GitFlow-focused interface
 
 ### Tool Registration Pattern
 

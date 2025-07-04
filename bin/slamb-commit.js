@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Slam Commit CLI
+ * Slamb Commit CLI
  * Automation-focused commit operations
  */
 
@@ -12,7 +12,7 @@ import inquirer from 'inquirer';
 const program = new Command();
 
 program
-  .name('slam-commit')
+  .name('slamb-commit')
   .description('Automated Commit Operations')
   .version('1.0.0');
 
