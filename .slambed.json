@@ -1,0 +1,67 @@
+{
+  "gitFlow": {
+    "defaultBranch": "main",
+    "branchPrefixes": {
+      "feature": "feature/",
+      "release": "release/",
+      "hotfix": "hotfix/",
+      "bugfix": "bugfix/",
+      "chore": "chore/",
+      "docs": "docs/"
+    },
+    "autoMerge": true,
+    "deleteBranch": true,
+    "targetBranch": "main"
+  },
+  "automation": {
+    "runFormat": true,
+    "runLint": true,
+    "runTests": false,
+    "pushAfterCommit": true,
+    "createPR": true,
+    "prTemplate": {
+      "title": "{{type}}: {{message}}",
+      "body": "## Summary\n{{message}}\n\n## Changes Made\n{{changes}}\n\n## Testing\n- [ ] Code formatting applied\n- [ ] Linting checks passed\n- [ ] Manual testing completed\n- [ ] Automated tests pass\n\n🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)"
+    }
+  },
+  "scripts": {
+    "format": ["npm run format", "yarn format", "pnpm format"],
+    "lint": ["npm run lint", "yarn lint", "pnpm lint"],
+    "test": ["npm test", "yarn test", "pnpm test"],
+    "build": ["npm run build", "yarn build", "pnpm build"]
+  },
+  "commitTemplates": {
+    "feat": "feat: {{message}}",
+    "fix": "fix: {{message}}",
+    "docs": "docs: {{message}}",
+    "style": "style: {{message}}",
+    "refactor": "refactor: {{message}}",
+    "test": "test: {{message}}",
+    "chore": "chore: {{message}}",
+    "ci": "ci: {{message}}",
+    "perf": "perf: {{message}}"
+  },
+  "branchNaming": {
+    "maxLength": 50,
+    "separator": "-",
+    "includeDate": true,
+    "dateFormat": "YYYY-MM-DD",
+    "sanitization": {
+      "removeSpecialChars": true,
+      "lowercase": true,
+      "replaceSpaces": true
+    }
+  },
+  "cli": {
+    "colors": true,
+    "interactive": true,
+    "confirmDestructive": true,
+    "verboseOutput": false
+  },
+  "mcp": {
+    "maxConcurrentOperations": 5,
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "logLevel": "info"
+  }
+}
