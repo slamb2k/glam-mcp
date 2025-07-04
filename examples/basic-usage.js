@@ -77,7 +77,9 @@ async function workflowExamples() {
   console.log("\n5. GitHub Actions workflows:");
   console.log("   slambed auto create-pr-workflow");
   console.log("   slamb-commit create-release-workflow");
-  console.log("   → Creates CI/CD workflows for automated testing and releases");
+  console.log(
+    "   → Creates CI/CD workflows for automated testing and releases",
+  );
 }
 
 async function integrationExample() {
