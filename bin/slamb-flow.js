@@ -2,67 +2,115 @@
 
 /**
  * Slamb Flow CLI
- * Traditional git-flow operations
+ * GitHub Flow focused interface (simplified workflow)
  */
 
 import { Command } from "commander";
 import chalk from "chalk";
-import inquirer from "inquirer";
 
 // Import banner utility
-import { showBanner, getStyledBanner } from "../src/utils/banner.js";
+import { showBanner } from "../src/utils/banner.js";
 
-// Import git-flow functions (we'll need to adjust these imports)
-import "../src/tools/git-flow.js";
+// Import GitHub Flow functions
+import {
+  startBranch,
+  finishBranch,
+  quickWorkflow,
+  createPullRequest,
+  mergePullRequest,
+  syncWithMain,
+  cleanupBranches,
+  getGitHubFlowStatus,
+} from "../src/tools/github-flow.js";
 
 const program = new Command();
 
-// Show banner before commands
-program.hook("preAction", () => {
-  showBanner({ compact: true });
-  console.log(""); // Add spacing
-});
-
 program
   .name("slamb-flow")
-  .description(
-    "Traditional Git Flow Operations - Git workflows that pack a punch!",
-  )
+  .description("GitHub Flow Operations (Simplified Workflow)")
   .version("1.0.0");
 
 program
-  .command("feature")
-  .argument("<action>", "start or finish")
-  .argument("[name]", "feature name")
-  .option("-m, --message <message>", "PR message for finish")
-  .option("--auto-merge", "Auto-merge PR (finish only)")
-  .option("-t, --target <branch>", "Target branch (finish only)", "main")
-  .description("Feature branch operations (start/finish)")
-  .action(async (action, name, options) => {
+  .command("start <name>")
+  .description("Start a new branch from main")
+  .option(
+    "-t, --type <type>",
+    "Branch type (feature, fix, docs, chore)",
+    "feature",
+  )
+  .action(async (name, options) => {
     try {
-      if (action === "start") {
-        if (!name) {
-          const answer = await inquirer.prompt([
-            {
-              type: "input",
-              name: "name",
-              message: "Feature name:",
-              validate: (input) => input.trim().length > 0 || "Name required",
-            },
-          ]);
-          name = answer.name;
-        }
+      console.log(chalk.blue(`Starting ${options.type} branch: ${name}`));
+      const result = await startBranch(name, options.type);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
 
-        console.log(chalk.blue(`Starting feature: ${name}`));
-        // Call startFeature function
-      } else if (action === "finish") {
-        console.log(
-          chalk.blue(`Finishing feature: ${name || "current branch"}`),
-        );
-        // Call finishFeature function
-      } else {
-        console.error(chalk.red('Invalid action. Use "start" or "finish"'));
-        process.exit(1);
+program
+  .command("finish")
+  .description("Finish current branch by creating a PR")
+  .option("-t, --title <title>", "PR title")
+  .option("-d, --description <description>", "PR description")
+  .option("--draft", "Create as draft PR")
+  .option("--auto-merge", "Auto-merge PR")
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue("Creating pull request for current branch"));
+      const result = await finishBranch(
+        options.title,
+        options.description,
+        options.draft,
+        options.autoMerge,
+        true,
+      );
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("quick <name>")
+  .description("Quick workflow: branch + commit + PR")
+  .option("-m, --message <message>", "Commit message", "Quick update")
+  .option(
+    "-t, --type <type>",
+    "Branch type (feature, fix, docs, chore)",
+    "feature",
+  )
+  .option("--auto-merge", "Auto-merge PR")
+  .action(async (name, options) => {
+    try {
+      console.log(chalk.blue(`Quick workflow for: ${name}`));
+      const result = await quickWorkflow(
+        name,
+        options.message,
+        options.message,
+        undefined,
+        options.type,
+        options.autoMerge,
+      );
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data && result.data.steps) {
+        console.log("\nSteps completed:");
+        result.data.steps.forEach((step) => console.log(`  ${step}`));
       }
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
@@ -71,37 +119,39 @@ program
   });
 
 program
-  .command("release")
-  .argument("<action>", "start or finish")
-  .argument("[version]", "release version")
-  .option("-m, --message <message>", "Release message")
-  .description("Release branch operations (start/finish)")
-  .action(async (action, version, options) => {
+  .command("pr")
+  .description("Create or merge pull request")
+  .option("-t, --title <title>", "PR title")
+  .option("-d, --description <description>", "PR description")
+  .option("--draft", "Create as draft PR")
+  .option("--merge [number]", "Merge PR by number")
+  .option("--method <method>", "Merge method (merge, squash, rebase)", "squash")
+  .action(async (options) => {
     try {
-      if (action === "start") {
-        if (!version) {
-          const answer = await inquirer.prompt([
-            {
-              type: "input",
-              name: "version",
-              message: "Release version (e.g., 1.2.0):",
-              validate: (input) =>
-                /^\d+\.\d+\.\d+$/.test(input) || "Version must be x.y.z format",
-            },
-          ]);
-          version = answer.version;
-        }
-
-        console.log(chalk.blue(`Starting release: ${version}`));
-        // Call startRelease function
-      } else if (action === "finish") {
-        console.log(
-          chalk.blue(`Finishing release: ${version || "current branch"}`),
+      if (options.merge) {
+        console.log(chalk.blue(`Merging PR: ${options.merge}`));
+        const result = await mergePullRequest(
+          options.merge,
+          options.method,
+          true,
         );
-        // Call finishRelease function
+        console.log(
+          result.success
+            ? chalk.green(result.message)
+            : chalk.red(result.message),
+        );
       } else {
-        console.error(chalk.red('Invalid action. Use "start" or "finish"'));
-        process.exit(1);
+        console.log(chalk.blue("Creating pull request"));
+        const result = await createPullRequest(
+          options.title,
+          options.description,
+          options.draft,
+        );
+        console.log(
+          result.success
+            ? chalk.green(result.message)
+            : chalk.red(result.message),
+        );
       }
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
@@ -110,37 +160,26 @@ program
   });
 
 program
-  .command("hotfix")
-  .argument("<action>", "start or finish")
-  .argument("[name]", "hotfix name")
-  .option("-m, --message <message>", "PR message for finish")
-  .option("--auto-merge", "Auto-merge PR (finish only)")
-  .description("Hotfix branch operations (start/finish)")
-  .action(async (action, name, options) => {
+  .command("sync")
+  .description("Sync current branch with main")
+  .option(
+    "-s, --strategy <strategy>",
+    "Sync strategy (merge, rebase)",
+    "rebase",
+  )
+  .action(async (options) => {
     try {
-      if (action === "start") {
-        if (!name) {
-          const answer = await inquirer.prompt([
-            {
-              type: "input",
-              name: "name",
-              message: "Hotfix name:",
-              validate: (input) => input.trim().length > 0 || "Name required",
-            },
-          ]);
-          name = answer.name;
-        }
+      console.log(chalk.blue("Syncing with main branch"));
+      const result = await syncWithMain(options.strategy);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
 
-        console.log(chalk.blue(`Starting hotfix: ${name}`));
-        // Call startHotfix function
-      } else if (action === "finish") {
-        console.log(
-          chalk.blue(`Finishing hotfix: ${name || "current branch"}`),
-        );
-        // Call finishHotfix function
-      } else {
-        console.error(chalk.red('Invalid action. Use "start" or "finish"'));
-        process.exit(1);
+      if (result.data && result.data.steps) {
+        console.log("\nSteps taken:");
+        result.data.steps.forEach((step) => console.log(`  • ${step}`));
       }
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
@@ -150,11 +189,11 @@ program
 
 program
   .command("status")
-  .description("Show git flow status")
+  .description("Show GitHub Flow status")
   .action(async () => {
     try {
-      console.log(chalk.blue("📊 Git Flow Status"));
-      // Call getGitFlowStatus function
+      const result = await getGitHubFlowStatus();
+      console.log(result.message || JSON.stringify(result.data, null, 2));
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);
@@ -162,13 +201,18 @@ program
   });
 
 program
-  .command("clean")
+  .command("cleanup")
   .description("Clean up merged branches")
-  .option("-f, --force", "Force cleanup without confirmation")
+  .option("-f, --force", "Force cleanup")
   .action(async (options) => {
     try {
-      console.log(chalk.blue("🧹 Cleaning merged branches"));
-      // Call cleanBranches function
+      console.log(chalk.blue("Cleaning up merged branches"));
+      const result = await cleanupBranches(options.force);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);

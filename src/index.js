@@ -15,7 +15,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 // Import tool registrations
-import { registerGitFlowTools } from "./tools/git-flow.js";
+import { registerGitHubFlowTools } from "./tools/github-flow.js";
 import { registerAutomationTools } from "./tools/automation.js";
 import { registerUtilityTools } from "./tools/utilities.js";
 
@@ -95,7 +95,7 @@ class SlamBedMCPServer {
     this.tools = [];
 
     // Register all tool categories
-    registerGitFlowTools(this);
+    registerGitHubFlowTools(this);
     registerAutomationTools(this);
     registerUtilityTools(this);
 

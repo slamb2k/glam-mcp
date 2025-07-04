@@ -23,15 +23,15 @@
 
 # Slambed MCP Server
 
-**Comprehensive Git Flow Automation with MCP and CLI Support**
+**Comprehensive GitHub Flow Automation with MCP and CLI Support**
 
 Transform your development workflow with powerful automation tools that handle everything from branch creation to PR merging. Slambed delivers git workflows that pack a punch! ✊
 
 ## ✨ Features
 
-- **🤖 29 Automation Tools** - Complete git workflow automation
+- **🤖 29+ Automation Tools** - Complete git workflow automation
 - **⚡ Auto-Commit Workflows** - Branch → format → lint → commit → push → PR → merge
-- **🌊 Traditional Git Flow** - Feature, release, and hotfix branch operations
+- **🚀 GitHub Flow** - Simple, branch-based workflow (no complex branching)
 - **🧠 Smart Analysis** - AI-powered commit message suggestions
 - **📦 Project Initialization** - Complete project setup automation
 - **🔧 Dual Interface** - Both MCP server and CLI tools
@@ -76,11 +76,12 @@ Add to your Claude Desktop config:
 - `slamb-commit quick` - Quick commit with smart defaults
 - `slamb-commit smart` - AI-powered analysis and suggestions
 
-### Git Flow Operations
+### GitHub Flow Operations
 
-- `slamb-flow feature start/finish` - Feature branch workflow
-- `slamb-flow release start/finish` - Release management
-- `slamb-flow hotfix start/finish` - Emergency fixes
+- `slamb-flow start <name>` - Start a new branch from main
+- `slamb-flow finish` - Create PR for current branch
+- `slamb-flow quick <name>` - Quick: branch + commit + PR
+- `slamb-flow sync` - Sync current branch with main
 
 ### Utilities
 
@@ -94,7 +95,7 @@ Add to your Claude Desktop config:
 
 ```bash
 # Start feature, make changes, then auto-commit
-slamb-flow feature start user-auth
+slamb-flow start user-auth
 # ... make your changes ...
 slambed auto commit -m "Implement user authentication"
 ```

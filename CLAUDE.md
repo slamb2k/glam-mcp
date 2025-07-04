@@ -14,7 +14,7 @@
 ║⠀⠀  ⠀⠀⠈⠉⠛⠛⠛⠒⠀⠈⠉⠁⠸⠿⠿⠿⠃⠾⠿⠟⠋⠀⠀⠀⠀⠀                                                                         ║
 ║                                                                                                                ║
 ║                                                                                                                ║
-║                                   🚀 Git Flow Automation & MCP Server 🚀                                      ║
+║                                  🚀 GitHub Flow Automation & MCP Server 🚀                                     ║
 ║                                                                                                                ║
 ║                                     Git workflows that pack a punch! ✊                                        ║
 ║                                                                                                                ║
@@ -58,7 +58,7 @@ node src/index.js --validate-tools
 
 ## Architecture Overview
 
-This is a **dual-interface system** serving as both an MCP server and CLI tool suite for Git workflow automation.
+This is a **dual-interface system** serving as both an MCP server and CLI tool suite for GitHub Flow automation.
 
 ### Core Components
 
@@ -70,7 +70,7 @@ This is a **dual-interface system** serving as both an MCP server and CLI tool s
 
 **2. Tool Categories (`src/tools/`)**
 
-- **`git-flow.js`** - Traditional GitFlow operations (10 tools)
+- **`github-flow.js`** - GitHub Flow operations (8 tools) - Simple branch-based workflow
 - **`automation.js`** - Workflow automation and project initialization (9 tools)
 - **`utilities.js`** - Repository analysis and utility operations (11 tools)
 
@@ -84,7 +84,7 @@ This is a **dual-interface system** serving as both an MCP server and CLI tool s
 
 - **`slambed.js`** - Unified CLI with all capabilities
 - **`slamb-commit.js`** - Automation-focused interface (includes npm publishing)
-- **`slamb-flow.js`** - GitFlow-focused interface
+- **`slamb-flow.js`** - GitHub Flow-focused interface
 
 ### Tool Registration Pattern
 
