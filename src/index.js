@@ -5,32 +5,32 @@
  * Comprehensive Git Flow Automation with MCP and CLI Support
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
-  McpError
-} from '@modelcontextprotocol/sdk/types.js';
+  McpError,
+} from "@modelcontextprotocol/sdk/types.js";
 
 // Import tool registrations
-import { registerGitFlowTools } from './tools/git-flow.js';
-import { registerAutomationTools } from './tools/automation.js';
-import { registerUtilityTools } from './tools/utilities.js';
+import { registerGitFlowTools } from "./tools/git-flow.js";
+import { registerAutomationTools } from "./tools/automation.js";
+import { registerUtilityTools } from "./tools/utilities.js";
 
 class SlamBedMCPServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'slambed-mcp',
-        version: '1.0.0',
+        name: "slambed-mcp",
+        version: "1.0.0",
       },
       {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     this.setupToolHandlers();
@@ -41,7 +41,7 @@ class SlamBedMCPServer {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
-        tools: this.tools.map(tool => ({
+        tools: this.tools.map((tool) => ({
           name: tool.name,
           description: tool.description,
           inputSchema: tool.inputSchema,
@@ -52,13 +52,10 @@ class SlamBedMCPServer {
     // Handle tool execution
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      
-      const tool = this.tools.find(t => t.name === name);
+
+      const tool = this.tools.find((t) => t.name === name);
       if (!tool) {
-        throw new McpError(
-          ErrorCode.MethodNotFound,
-          `Tool ${name} not found`
-        );
+        throw new McpError(ErrorCode.MethodNotFound, `Tool ${name} not found`);
       }
 
       try {
@@ -66,15 +63,18 @@ class SlamBedMCPServer {
         return {
           content: [
             {
-              type: 'text',
-              text: result.message || result.text || JSON.stringify(result, null, 2)
-            }
-          ]
+              type: "text",
+              text:
+                result.message ||
+                result.text ||
+                JSON.stringify(result, null, 2),
+            },
+          ],
         };
       } catch (error) {
         throw new McpError(
           ErrorCode.InternalError,
-          `Tool execution failed: ${error.message}`
+          `Tool execution failed: ${error.message}`,
         );
       }
     });
@@ -82,10 +82,10 @@ class SlamBedMCPServer {
 
   setupErrorHandling() {
     this.server.onerror = (error) => {
-      console.error('[MCP Error]', error);
+      console.error("[MCP Error]", error);
     };
 
-    process.on('SIGINT', async () => {
+    process.on("SIGINT", async () => {
       await this.server.close();
       process.exit(0);
     });
@@ -93,7 +93,7 @@ class SlamBedMCPServer {
 
   registerTools() {
     this.tools = [];
-    
+
     // Register all tool categories
     registerGitFlowTools(this);
     registerAutomationTools(this);
@@ -113,8 +113,8 @@ class SlamBedMCPServer {
     // Start the server
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    
-    console.log('[Slambed MCP] Server started successfully');
+
+    console.log("[Slambed MCP] Server started successfully");
   }
 }
 
@@ -125,7 +125,7 @@ export { SlamBedMCPServer };
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new SlamBedMCPServer();
   server.start().catch((error) => {
-    console.error('[Slambed MCP] Failed to start server:', error);
+    console.error("[Slambed MCP] Failed to start server:", error);
     process.exit(1);
   });
 }

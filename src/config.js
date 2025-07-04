@@ -3,9 +3,9 @@
  * Supports both file-based and environment variable configuration
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 /**
  * Default configuration
@@ -13,18 +13,18 @@ import os from 'os';
 const DEFAULT_CONFIG = {
   // Git flow settings
   gitFlow: {
-    defaultBranch: 'main',
+    defaultBranch: "main",
     branchPrefixes: {
-      feature: 'feature/',
-      release: 'release/',
-      hotfix: 'hotfix/',
-      bugfix: 'bugfix/',
-      chore: 'chore/',
-      docs: 'docs/'
+      feature: "feature/",
+      release: "release/",
+      hotfix: "hotfix/",
+      bugfix: "bugfix/",
+      chore: "chore/",
+      docs: "docs/",
     },
     autoMerge: true,
     deleteBranch: true,
-    targetBranch: 'main'
+    targetBranch: "main",
   },
 
   // Automation settings
@@ -35,7 +35,7 @@ const DEFAULT_CONFIG = {
     pushAfterCommit: true,
     createPR: true,
     prTemplate: {
-      title: '{{type}}: {{message}}',
+      title: "{{type}}: {{message}}",
       body: `## Summary
 {{message}}
 
@@ -48,42 +48,47 @@ const DEFAULT_CONFIG = {
 - [ ] Manual testing completed
 - [ ] Automated tests pass
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`
-    }
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`,
+    },
   },
 
   // Script detection settings
   scripts: {
-    format: ['npm run format', 'yarn format', 'pnpm format', 'prettier --write .'],
-    lint: ['npm run lint', 'yarn lint', 'pnpm lint', 'eslint .'],
-    test: ['npm test', 'yarn test', 'pnpm test', 'jest'],
-    build: ['npm run build', 'yarn build', 'pnpm build']
+    format: [
+      "npm run format",
+      "yarn format",
+      "pnpm format",
+      "prettier --write .",
+    ],
+    lint: ["npm run lint", "yarn lint", "pnpm lint", "eslint ."],
+    test: ["npm test", "yarn test", "pnpm test", "jest"],
+    build: ["npm run build", "yarn build", "pnpm build"],
   },
 
   // Commit message templates
   commitTemplates: {
-    feat: 'feat: {{message}}',
-    fix: 'fix: {{message}}',
-    docs: 'docs: {{message}}',
-    style: 'style: {{message}}',
-    refactor: 'refactor: {{message}}',
-    test: 'test: {{message}}',
-    chore: 'chore: {{message}}',
-    ci: 'ci: {{message}}',
-    perf: 'perf: {{message}}'
+    feat: "feat: {{message}}",
+    fix: "fix: {{message}}",
+    docs: "docs: {{message}}",
+    style: "style: {{message}}",
+    refactor: "refactor: {{message}}",
+    test: "test: {{message}}",
+    chore: "chore: {{message}}",
+    ci: "ci: {{message}}",
+    perf: "perf: {{message}}",
   },
 
   // Branch name generation
   branchNaming: {
     maxLength: 50,
-    separator: '-',
+    separator: "-",
     includeDate: true,
-    dateFormat: 'YYYY-MM-DD',
+    dateFormat: "YYYY-MM-DD",
     sanitization: {
       removeSpecialChars: true,
       lowercase: true,
-      replaceSpaces: true
-    }
+      replaceSpaces: true,
+    },
   },
 
   // CLI settings
@@ -91,7 +96,7 @@ const DEFAULT_CONFIG = {
     colors: true,
     interactive: true,
     confirmDestructive: true,
-    verboseOutput: false
+    verboseOutput: false,
   },
 
   // MCP server settings
@@ -99,8 +104,8 @@ const DEFAULT_CONFIG = {
     maxConcurrentOperations: 5,
     timeout: 30000,
     retryAttempts: 3,
-    logLevel: 'info'
-  }
+    logLevel: "info",
+  },
 };
 
 /**
@@ -119,13 +124,13 @@ export class ConfigManager {
   getConfigPaths() {
     const cwd = process.cwd();
     const home = os.homedir();
-    
+
     return [
-      path.join(cwd, '.slambed.json'),
-      path.join(cwd, '.slambed.config.json'),
-      path.join(cwd, 'slambed.config.json'),
-      path.join(home, '.slambed.json'),
-      path.join(home, '.config', 'slambed', 'config.json')
+      path.join(cwd, ".slambed.json"),
+      path.join(cwd, ".slambed.config.json"),
+      path.join(cwd, "slambed.config.json"),
+      path.join(home, ".slambed.json"),
+      path.join(home, ".config", "slambed", "config.json"),
     ];
   }
 
@@ -137,12 +142,14 @@ export class ConfigManager {
     for (const configPath of this.configPaths) {
       if (fs.existsSync(configPath)) {
         try {
-          const fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          const fileConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
           this.mergeConfig(fileConfig);
           console.log(`[Config] Loaded configuration from: ${configPath}`);
           break;
         } catch (error) {
-          console.warn(`[Config] Warning: Could not parse config file ${configPath}: ${error.message}`);
+          console.warn(
+            `[Config] Warning: Could not parse config file ${configPath}: ${error.message}`,
+          );
         }
       }
     }
@@ -159,17 +166,17 @@ export class ConfigManager {
 
     // Map environment variables to config paths
     const envMappings = {
-      'SLAMBED_DEFAULT_BRANCH': 'gitFlow.defaultBranch',
-      'SLAMBED_AUTO_MERGE': 'automation.autoMerge',
-      'SLAMBED_RUN_FORMAT': 'automation.runFormat',
-      'SLAMBED_RUN_LINT': 'automation.runLint',
-      'SLAMBED_RUN_TESTS': 'automation.runTests',
-      'SLAMBED_TARGET_BRANCH': 'gitFlow.targetBranch',
-      'SLAMBED_DELETE_BRANCH': 'gitFlow.deleteBranch',
-      'SLAMBED_MAX_BRANCH_LENGTH': 'branchNaming.maxLength',
-      'SLAMBED_VERBOSE': 'cli.verboseOutput',
-      'SLAMBED_NO_COLORS': 'cli.colors',
-      'SLAMBED_LOG_LEVEL': 'mcp.logLevel'
+      SLAMBED_DEFAULT_BRANCH: "gitFlow.defaultBranch",
+      SLAMBED_AUTO_MERGE: "automation.autoMerge",
+      SLAMBED_RUN_FORMAT: "automation.runFormat",
+      SLAMBED_RUN_LINT: "automation.runLint",
+      SLAMBED_RUN_TESTS: "automation.runTests",
+      SLAMBED_TARGET_BRANCH: "gitFlow.targetBranch",
+      SLAMBED_DELETE_BRANCH: "gitFlow.deleteBranch",
+      SLAMBED_MAX_BRANCH_LENGTH: "branchNaming.maxLength",
+      SLAMBED_VERBOSE: "cli.verboseOutput",
+      SLAMBED_NO_COLORS: "cli.colors",
+      SLAMBED_LOG_LEVEL: "mcp.logLevel",
     };
 
     for (const [envVar, configPath] of Object.entries(envMappings)) {
@@ -181,7 +188,7 @@ export class ConfigManager {
 
     if (Object.keys(envConfig).length > 0) {
       this.mergeConfig(envConfig);
-      console.log('[Config] Loaded configuration from environment variables');
+      console.log("[Config] Loaded configuration from environment variables");
     }
   }
 
@@ -190,13 +197,13 @@ export class ConfigManager {
    */
   parseEnvValue(value) {
     // Boolean values
-    if (value.toLowerCase() === 'true') return true;
-    if (value.toLowerCase() === 'false') return false;
-    
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
+
     // Number values
     if (/^\d+$/.test(value)) return parseInt(value);
     if (/^\d+\.\d+$/.test(value)) return parseFloat(value);
-    
+
     // String values
     return value;
   }
@@ -205,9 +212,9 @@ export class ConfigManager {
    * Set nested object value using dot notation
    */
   setNestedValue(obj, path, value) {
-    const keys = path.split('.');
+    const keys = path.split(".");
     let current = obj;
-    
+
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
       if (!(key in current)) {
@@ -215,7 +222,7 @@ export class ConfigManager {
       }
       current = current[key];
     }
-    
+
     current[keys[keys.length - 1]] = value;
   }
 
@@ -231,15 +238,19 @@ export class ConfigManager {
    */
   deepMerge(target, source) {
     const result = { ...target };
-    
+
     for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (
+        source[key] &&
+        typeof source[key] === "object" &&
+        !Array.isArray(source[key])
+      ) {
         result[key] = this.deepMerge(result[key] || {}, source[key]);
       } else {
         result[key] = source[key];
       }
     }
-    
+
     return result;
   }
 
@@ -247,17 +258,17 @@ export class ConfigManager {
    * Get configuration value using dot notation
    */
   get(path, defaultValue = undefined) {
-    const keys = path.split('.');
+    const keys = path.split(".");
     let current = this.config;
-    
+
     for (const key of keys) {
-      if (current && typeof current === 'object' && key in current) {
+      if (current && typeof current === "object" && key in current) {
         current = current[key];
       } else {
         return defaultValue;
       }
     }
-    
+
     return current;
   }
 
@@ -280,14 +291,14 @@ export class ConfigManager {
    */
   save(filePath = null) {
     const configPath = filePath || this.configPaths[0];
-    
+
     try {
       // Ensure directory exists
       const dir = path.dirname(configPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       fs.writeFileSync(configPath, JSON.stringify(this.config, null, 2));
       console.log(`[Config] Configuration saved to: ${configPath}`);
       return true;
@@ -309,30 +320,32 @@ export class ConfigManager {
    */
   validate() {
     const errors = [];
-    
+
     // Validate branch prefixes
-    const prefixes = this.get('gitFlow.branchPrefixes', {});
+    const prefixes = this.get("gitFlow.branchPrefixes", {});
     for (const [type, prefix] of Object.entries(prefixes)) {
-      if (typeof prefix !== 'string' || prefix.length === 0) {
-        errors.push(`Invalid branch prefix for ${type}: must be non-empty string`);
+      if (typeof prefix !== "string" || prefix.length === 0) {
+        errors.push(
+          `Invalid branch prefix for ${type}: must be non-empty string`,
+        );
       }
     }
-    
+
     // Validate branch naming settings
-    const maxLength = this.get('branchNaming.maxLength');
-    if (typeof maxLength !== 'number' || maxLength < 10 || maxLength > 100) {
-      errors.push('branchNaming.maxLength must be between 10 and 100');
+    const maxLength = this.get("branchNaming.maxLength");
+    if (typeof maxLength !== "number" || maxLength < 10 || maxLength > 100) {
+      errors.push("branchNaming.maxLength must be between 10 and 100");
     }
-    
+
     // Validate MCP settings
-    const timeout = this.get('mcp.timeout');
-    if (typeof timeout !== 'number' || timeout < 1000 || timeout > 120000) {
-      errors.push('mcp.timeout must be between 1000 and 120000 milliseconds');
+    const timeout = this.get("mcp.timeout");
+    if (typeof timeout !== "number" || timeout < 1000 || timeout > 120000) {
+      errors.push("mcp.timeout must be between 1000 and 120000 milliseconds");
     }
-    
+
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -341,28 +354,28 @@ export class ConfigManager {
    */
   getToolConfig(toolName) {
     const toolConfigs = {
-      'auto-commit': {
-        autoMerge: this.get('automation.autoMerge'),
-        runFormat: this.get('automation.runFormat'),
-        runLint: this.get('automation.runLint'),
-        targetBranch: this.get('gitFlow.targetBranch'),
-        deleteBranch: this.get('gitFlow.deleteBranch'),
-        branchPrefix: this.get('gitFlow.branchPrefixes.feature')
+      "auto-commit": {
+        autoMerge: this.get("automation.autoMerge"),
+        runFormat: this.get("automation.runFormat"),
+        runLint: this.get("automation.runLint"),
+        targetBranch: this.get("gitFlow.targetBranch"),
+        deleteBranch: this.get("gitFlow.deleteBranch"),
+        branchPrefix: this.get("gitFlow.branchPrefixes.feature"),
       },
-      'git-flow': {
-        defaultBranch: this.get('gitFlow.defaultBranch'),
-        branchPrefixes: this.get('gitFlow.branchPrefixes'),
-        autoMerge: this.get('gitFlow.autoMerge'),
-        deleteBranch: this.get('gitFlow.deleteBranch')
+      "git-flow": {
+        defaultBranch: this.get("gitFlow.defaultBranch"),
+        branchPrefixes: this.get("gitFlow.branchPrefixes"),
+        autoMerge: this.get("gitFlow.autoMerge"),
+        deleteBranch: this.get("gitFlow.deleteBranch"),
       },
-      'branch-naming': {
-        maxLength: this.get('branchNaming.maxLength'),
-        separator: this.get('branchNaming.separator'),
-        includeDate: this.get('branchNaming.includeDate'),
-        sanitization: this.get('branchNaming.sanitization')
-      }
+      "branch-naming": {
+        maxLength: this.get("branchNaming.maxLength"),
+        separator: this.get("branchNaming.separator"),
+        includeDate: this.get("branchNaming.includeDate"),
+        sanitization: this.get("branchNaming.sanitization"),
+      },
     };
-    
+
     return toolConfigs[toolName] || {};
   }
 }
