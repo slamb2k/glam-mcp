@@ -558,9 +558,7 @@ async function autoCommit({
 
       const commitMessage = `${message}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)
-
-Co-Authored-By: Claude <noreply@anthropic.com>`;
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
 
       execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
       steps.push("Changes committed successfully");
@@ -1446,9 +1444,7 @@ Project initialized with:
 - ${repo_visibility} repository
 ${enable_branch_protection ? "- Branch protection enabled" : ""}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)
-
-Co-Authored-By: Claude <noreply@anthropic.com>`;
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
 
     execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
     steps.push("✓ Committed initial files");
@@ -1893,9 +1889,7 @@ async function npmPublish({
 
 Version bump from ${currentVersion} to ${newVersion}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)
-
-Co-Authored-By: Claude <noreply@anthropic.com>`;
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
 
     execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
     steps.push("Committed version bump");
