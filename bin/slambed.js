@@ -24,17 +24,15 @@ import {
   npmPublish,
 } from "../src/tools/automation.js";
 import {
-  startFeature,
-  finishFeature,
-  startRelease,
-  finishRelease,
-  startHotfix,
-  finishHotfix,
+  startBranch,
+  finishBranch,
+  quickWorkflow,
   createPullRequest,
   mergePullRequest,
-  cleanBranches,
-  getGitFlowStatus,
-} from "../src/tools/git-flow.js";
+  syncWithMain,
+  cleanupBranches,
+  getGitHubFlowStatus,
+} from "../src/tools/github-flow.js";
 import {
   getRepoInfo,
   analyzeChanges,
@@ -256,47 +254,48 @@ automationCmd
     }
   });
 
-// Git flow commands
+// GitHub Flow commands (simplified)
 const flowCmd = program
   .command("flow")
-  .description("Traditional git flow operations");
+  .description("GitHub Flow operations (simple branch-based workflow)");
 
-// Feature operations
-const featureCmd = flowCmd
-  .command("feature")
-  .description("Feature branch operations");
-
-featureCmd
+flowCmd
   .command("start <name>")
-  .description("Start a new feature branch")
-  .action(async (name) => {
-    try {
-      const result = await startFeature(name);
-      console.log(
-        result.success
-          ? chalk.green(result.message)
-          : chalk.red(result.message),
-      );
-    } catch (error) {
-      console.error(chalk.red("Error:"), error.message);
-      process.exit(1);
-    }
-  });
-
-featureCmd
-  .command("finish [name]")
-  .description("Finish a feature branch")
-  .option("-m, --message <message>", "PR description")
-  .option("--auto-merge", "Auto-merge PR")
-  .option("-t, --target <branch>", "Target branch", "main")
+  .description("Start a new branch from main")
+  .option(
+    "-t, --type <type>",
+    "Branch type (feature, fix, docs, chore)",
+    "feature",
+  )
   .action(async (name, options) => {
     try {
-      const result = await finishFeature(
-        name,
-        options.message,
+      const result = await startBranch(name, options.type);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+flowCmd
+  .command("finish")
+  .description("Finish current branch by creating a PR")
+  .option("-t, --title <title>", "PR title")
+  .option("-d, --description <description>", "PR description")
+  .option("--draft", "Create as draft PR")
+  .option("--auto-merge", "Auto-merge PR")
+  .action(async (options) => {
+    try {
+      const result = await finishBranch(
+        options.title,
+        options.description,
+        options.draft,
         options.autoMerge,
         true,
-        options.target,
       );
       console.log(
         result.success
@@ -309,35 +308,76 @@ featureCmd
     }
   });
 
-// Release operations
-const releaseCmd = flowCmd
-  .command("release")
-  .description("Release branch operations");
-
-releaseCmd
-  .command("start <version>")
-  .description("Start a new release branch")
-  .action(async (version) => {
+flowCmd
+  .command("quick <name>")
+  .description("Quick workflow: branch + commit + PR")
+  .option("-m, --message <message>", "Commit message", "Quick update")
+  .option(
+    "-t, --type <type>",
+    "Branch type (feature, fix, docs, chore)",
+    "feature",
+  )
+  .option("--auto-merge", "Auto-merge PR")
+  .action(async (name, options) => {
     try {
-      const result = await startRelease(version);
+      const result = await quickWorkflow(
+        name,
+        options.message,
+        options.message,
+        undefined,
+        options.type,
+        options.autoMerge,
+      );
       console.log(
         result.success
           ? chalk.green(result.message)
           : chalk.red(result.message),
       );
+
+      if (result.data && result.data.steps) {
+        console.log("\nSteps completed:");
+        result.data.steps.forEach((step) => console.log(`  ${step}`));
+      }
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
-releaseCmd
-  .command("finish [version]")
-  .description("Finish a release branch")
-  .option("-m, --message <message>", "Release message")
-  .action(async (version, options) => {
+flowCmd
+  .command("sync")
+  .description("Sync current branch with main")
+  .option(
+    "-s, --strategy <strategy>",
+    "Sync strategy (merge, rebase)",
+    "rebase",
+  )
+  .action(async (options) => {
     try {
-      const result = await finishRelease(version, options.message);
+      const result = await syncWithMain(options.strategy);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data && result.data.steps) {
+        console.log("\nSteps taken:");
+        result.data.steps.forEach((step) => console.log(`  • ${step}`));
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+flowCmd
+  .command("cleanup")
+  .description("Clean up merged branches")
+  .option("-f, --force", "Force cleanup without confirmation")
+  .action(async (options) => {
+    try {
+      const result = await cleanupBranches(options.force);
       console.log(
         result.success
           ? chalk.green(result.message)
@@ -368,10 +408,10 @@ utilCmd
 
 utilCmd
   .command("status")
-  .description("Show git flow status")
+  .description("Show GitHub Flow status")
   .action(async () => {
     try {
-      const result = await getGitFlowStatus();
+      const result = await getGitHubFlowStatus();
       console.log(result.message || result.data);
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
