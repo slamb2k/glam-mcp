@@ -145,13 +145,13 @@ export async function testConfiguration() {
     });
 
     tests.push({
-      name: "DEFAULT_CONFIG - should have valid git flow settings",
+      name: "DEFAULT_CONFIG - should have valid GitHub Flow settings",
       passed:
         DEFAULT_CONFIG.gitFlow.defaultBranch === "main" &&
         typeof DEFAULT_CONFIG.gitFlow.branchPrefixes === "object" &&
         DEFAULT_CONFIG.gitFlow.branchPrefixes.feature === "feature/" &&
         typeof DEFAULT_CONFIG.gitFlow.autoMerge === "boolean",
-      details: "Git flow settings are valid",
+      details: "GitHub Flow settings are valid",
     });
 
     tests.push({

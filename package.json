@@ -1,7 +1,7 @@
 {
   "name": "slambed-mcp",
   "version": "1.1.0",
-  "description": "Slambed MCP Server - Comprehensive Git Flow Automation with MCP and CLI Support",
+  "description": "Slambed MCP Server - Comprehensive GitHub Flow Automation with MCP and CLI Support",
   "main": "src/index.js",
   "type": "module",
   "bin": {
@@ -31,7 +31,7 @@
     "git",
     "automation",
     "workflow",
-    "git-flow",
+    "github-flow",
     "cli",
     "development",
     "branching",

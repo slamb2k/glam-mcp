@@ -24,7 +24,7 @@ export const BANNER_ART = `
 ║⠀⠀  ⠀⠀⠈⠉⠛⠛⠛⠒⠀⠈⠉⠁⠸⠿⠿⠿⠃⠾⠿⠟⠋⠀⠀⠀⠀⠀                                                                         ║        
 ║                                                                                                       ║      
 ║                                                                                                       ║
-║                                   🚀 Git Flow Automation & MCP Server 🚀                              ║
+║                                  🚀 GitHub Flow Automation & MCP Server 🚀                             ║
 ║                                                                                                       ║
 ║                                     Git workflows that pack a punch! ✊                               ║ 
 ║                                                                                                       ║
@@ -35,7 +35,7 @@ export const BANNER_ART = `
  * Compact banner for smaller spaces
  */
 export const COMPACT_BANNER = `
-  ✊ SLAMBED! - Git Flow Automation & MCP Server
+  ✊ SLAMBED! - GitHub Flow Automation & MCP Server
      Git workflows that pack a punch!
 `;
 
@@ -72,7 +72,7 @@ export function getStyledBanner(options = {}) {
       " " +
       chalk[titleColor].bold("SLAMBED!") +
       " - " +
-      chalk[taglineColor]("Git Flow Automation & MCP Server") +
+      chalk[taglineColor]("GitHub Flow Automation & MCP Server") +
       "\n" +
       "     " +
       chalk[taglineColor]("Git workflows that pack a punch!")
@@ -85,7 +85,7 @@ export function getStyledBanner(options = {}) {
     if (line.includes("███████ ██       █████") || line.includes("slambed")) {
       return chalk[titleColor].bold(line);
     } else if (
-      line.includes("Git Flow Automation") ||
+      line.includes("GitHub Flow Automation") ||
       line.includes("pack a punch")
     ) {
       return chalk[taglineColor](line);
