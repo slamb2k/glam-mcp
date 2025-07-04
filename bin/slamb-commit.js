@@ -5,65 +5,63 @@
  * Automation-focused commit operations
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
+import { Command } from "commander";
+import chalk from "chalk";
+import inquirer from "inquirer";
 
 // Import banner utility
-import { showBanner, getStyledBanner } from '../src/utils/banner.js';
+import { showBanner, getStyledBanner } from "../src/utils/banner.js";
 
 const program = new Command();
 
 // Show banner before commands
-program
-  .hook('preAction', () => {
-    showBanner({ compact: true });
-    console.log(''); // Add spacing
-  });
+program.hook("preAction", () => {
+  showBanner({ compact: true });
+  console.log(""); // Add spacing
+});
 
 program
-  .name('slamb-commit')
-  .description('Automated Commit Operations - Git workflows that pack a punch!')
-  .version('1.0.0');
+  .name("slamb-commit")
+  .description("Automated Commit Operations - Git workflows that pack a punch!")
+  .version("1.0.0");
 
 program
-  .command('auto')
-  .description('Complete automation workflow')
-  .option('-m, --message <message>', 'Commit message')
-  .option('-b, --branch <branch>', 'Custom branch name')
-  .option('--no-merge', 'Skip auto-merge')
-  .option('--no-format', 'Skip formatting')
-  .option('--no-lint', 'Skip linting')
-  .option('-t, --target <branch>', 'Target branch', 'main')
+  .command("auto")
+  .description("Complete automation workflow")
+  .option("-m, --message <message>", "Commit message")
+  .option("-b, --branch <branch>", "Custom branch name")
+  .option("--no-merge", "Skip auto-merge")
+  .option("--no-format", "Skip formatting")
+  .option("--no-lint", "Skip linting")
+  .option("-t, --target <branch>", "Target branch", "main")
   .action(async (options) => {
     try {
       let message = options.message;
-      
+
       if (!message) {
         const answer = await inquirer.prompt([
           {
-            type: 'input',
-            name: 'message',
-            message: 'Commit message:',
-            validate: input => input.trim().length > 0 || 'Message required'
-          }
+            type: "input",
+            name: "message",
+            message: "Commit message:",
+            validate: (input) => input.trim().length > 0 || "Message required",
+          },
         ]);
         message = answer.message;
       }
 
-      console.log(chalk.blue('🚀 Starting automated commit workflow...'));
+      console.log(chalk.blue("🚀 Starting automated commit workflow..."));
       console.log(`Message: ${message}`);
-      console.log(`Branch: ${options.branch || 'auto-generated'}`);
-      console.log(`Auto-merge: ${options.merge ? 'Yes' : 'No'}`);
-      console.log(`Format: ${options.format ? 'Yes' : 'No'}`);
-      console.log(`Lint: ${options.lint ? 'Yes' : 'No'}`);
+      console.log(`Branch: ${options.branch || "auto-generated"}`);
+      console.log(`Auto-merge: ${options.merge ? "Yes" : "No"}`);
+      console.log(`Format: ${options.format ? "Yes" : "No"}`);
+      console.log(`Lint: ${options.lint ? "Yes" : "No"}`);
       console.log(`Target: ${options.target}`);
-      
+
       // Call autoCommit function
-      console.log(chalk.green('✅ Workflow completed!'));
-      
+      console.log(chalk.green("✅ Workflow completed!"));
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
@@ -92,24 +90,23 @@ program
   });
 
 program
-  .command('smart')
-  .description('Analyze changes and suggest commit')
-  .option('-x, --execute', 'Execute suggested commit')
+  .command("smart")
+  .description("Analyze changes and suggest commit")
+  .option("-x, --execute", "Execute suggested commit")
   .action(async (options) => {
     try {
-      console.log(chalk.blue('🧠 Smart analysis mode'));
-      
+      console.log(chalk.blue("🧠 Smart analysis mode"));
+
       if (options.execute) {
-        console.log('Will execute suggested commit...');
+        console.log("Will execute suggested commit...");
       } else {
-        console.log('Analysis only (use -x to execute)');
+        console.log("Analysis only (use -x to execute)");
       }
-      
+
       // Call smartCommit function
-      console.log(chalk.green('✅ Analysis completed!'));
-      
+      console.log(chalk.green("✅ Analysis completed!"));
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
@@ -210,18 +207,74 @@ program
   });
 
 program
-  .command('sync')
-  .description('Sync current branch with target')
-  .option('-t, --target <branch>', 'Target branch to sync with', 'main')
+  .command("sync")
+  .description("Sync current branch with target")
+  .option("-t, --target <branch>", "Target branch to sync with", "main")
   .action(async (options) => {
     try {
       console.log(chalk.blue(`🔄 Syncing with ${options.target}...`));
-      
+
       // Call syncBranch function
-      console.log(chalk.green('✅ Branch synced!'));
-      
+      console.log(chalk.green("✅ Branch synced!"));
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("publish")
+  .description("Automated NPM publishing workflow")
+  .option("-v, --version <type>", "Version bump type", "patch")
+  .option("--custom-version <version>", "Custom version number")
+  .option("--tag <tag>", "NPM tag for publishing", "latest")
+  .option("--no-tests", "Skip running tests")
+  .option("--no-build", "Skip running build")
+  .option("--no-lint", "Skip running linting")
+  .option("--no-release", "Skip creating GitHub release")
+  .option("--no-merge", "Skip auto-merging PR")
+  .option("--dry-run", "Perform dry run without publishing")
+  .option("--registry <url>", "NPM registry URL", "https://registry.npmjs.org/")
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue("📦 Starting NPM publishing workflow..."));
+
+      if (options.dryRun) {
+        console.log(
+          chalk.yellow("🔍 DRY RUN - No actual publishing will occur"),
+        );
+      }
+
+      console.log(`Version type: ${options.customVersion || options.version}`);
+      console.log(`NPM tag: ${options.tag}`);
+      console.log(`Registry: ${options.registry}`);
+      console.log(`Tests: ${options.tests ? "Yes" : "No"}`);
+      console.log(`Build: ${options.build ? "Yes" : "No"}`);
+      console.log(`Lint: ${options.lint ? "Yes" : "No"}`);
+      console.log(`GitHub Release: ${options.release ? "Yes" : "No"}`);
+      console.log(`Auto-merge: ${options.merge ? "Yes" : "No"}`);
+
+      // Confirmation for non-dry runs
+      if (!options.dryRun) {
+        const confirm = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "proceed",
+            message: "This will publish to NPM. Continue?",
+            default: false,
+          },
+        ]);
+
+        if (!confirm.proceed) {
+          console.log(chalk.yellow("Publishing cancelled"));
+          return;
+        }
+      }
+
+      // Call npmPublish function
+      console.log(chalk.green("✅ NPM publishing workflow completed!"));
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
@@ -231,6 +284,7 @@ program.parse();
 // Show help if no command provided
 if (!process.argv.slice(2).length) {
   showBanner();
-  console.log('\n');
+  console.log("\n");
   program.outputHelp();
 }
+

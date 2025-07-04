@@ -5,58 +5,93 @@
  * Unified interface for all git flow operations
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
+import { Command } from "commander";
+import chalk from "chalk";
+import inquirer from "inquirer";
+
+// Import banner utility
+import { showBanner, getStyledBanner } from "../src/utils/banner.js";
 
 // Import banner utility
 import { showBanner, getStyledBanner } from '../src/utils/banner.js';
 
 // Import tool functions directly for CLI usage
-import { autoCommit, quickCommit, smartCommit, syncBranch, squashCommits, undoCommit, batchCommit } from '../src/tools/automation.js';
-import { startFeature, finishFeature, startRelease, finishRelease, startHotfix, finishHotfix, createPullRequest, mergePullRequest, cleanBranches, getGitFlowStatus } from '../src/tools/git-flow.js';
-import { getRepoInfo, analyzeChanges, listBranches, getCommitHistory, getFileStatus, showDiff, searchCode, tagOperations, stashOperations, repoHealthCheck } from '../src/tools/utilities.js';
+import {
+  autoCommit,
+  quickCommit,
+  smartCommit,
+  syncBranch,
+  squashCommits,
+  undoCommit,
+  batchCommit,
+  npmPublish,
+} from "../src/tools/automation.js";
+import {
+  startFeature,
+  finishFeature,
+  startRelease,
+  finishRelease,
+  startHotfix,
+  finishHotfix,
+  createPullRequest,
+  mergePullRequest,
+  cleanBranches,
+  getGitFlowStatus,
+} from "../src/tools/git-flow.js";
+import {
+  getRepoInfo,
+  analyzeChanges,
+  listBranches,
+  getCommitHistory,
+  getFileStatus,
+  showDiff,
+  searchCode,
+  tagOperations,
+  stashOperations,
+  repoHealthCheck,
+} from "../src/tools/utilities.js";
 
 const program = new Command();
 
 // Show banner for specific commands
-program
-  .hook('preAction', (thisCommand) => {
-    if (thisCommand.args[0] !== 'help') {
-      showBanner({ compact: true });
-      console.log(''); // Add spacing
-    }
-  });
+program.hook("preAction", (thisCommand) => {
+  if (thisCommand.args[0] !== "help") {
+    showBanner({ compact: true });
+    console.log(""); // Add spacing
+  }
+});
 
 program
-  .name('slambed')
-  .description('Comprehensive Git Flow Automation with MCP and CLI Support')
-  .version('1.0.0');
+  .name("slambed")
+  .description("Comprehensive Git Flow Automation with MCP and CLI Support")
+  .version("1.0.0");
 
 // Automation commands
 const automationCmd = program
-  .command('auto')
-  .description('Automation commands for streamlined git workflow');
+  .command("auto")
+  .description("Automation commands for streamlined git workflow");
 
 automationCmd
-  .command('commit')
-  .description('Complete automation: branch → format → lint → commit → push → PR → merge → cleanup')
-  .option('-m, --message <message>', 'Commit message')
-  .option('-b, --branch <branch>', 'Custom branch name')
-  .option('--no-merge', 'Skip auto-merge')
-  .option('--no-format', 'Skip formatting')
-  .option('--no-lint', 'Skip linting')
-  .option('-t, --target <branch>', 'Target branch', 'main')
+  .command("commit")
+  .description(
+    "Complete automation: branch → format → lint → commit → push → PR → merge → cleanup",
+  )
+  .option("-m, --message <message>", "Commit message")
+  .option("-b, --branch <branch>", "Custom branch name")
+  .option("--no-merge", "Skip auto-merge")
+  .option("--no-format", "Skip formatting")
+  .option("--no-lint", "Skip linting")
+  .option("-t, --target <branch>", "Target branch", "main")
   .action(async (options) => {
     try {
       if (!options.message) {
         const answer = await inquirer.prompt([
           {
-            type: 'input',
-            name: 'message',
-            message: 'Commit message:',
-            validate: input => input.trim().length > 0 || 'Message required'
-          }
+            type: "input",
+            name: "message",
+            message: "Commit message:",
+            validate: (input) => input.trim().length > 0 || "Message required",
+          },
         ]);
         options.message = answer.message;
       }
@@ -67,316 +102,432 @@ automationCmd
         auto_merge: options.merge,
         run_format: options.format,
         run_lint: options.lint,
-        target_branch: options.target
+        target_branch: options.target,
       });
 
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
-      
+
       if (result.data) {
-        console.log('\nDetails:', JSON.stringify(result.data, null, 2));
+        console.log("\nDetails:", JSON.stringify(result.data, null, 2));
       }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 automationCmd
-  .command('quick')
-  .description('Quick commit with smart defaults')
-  .option('-m, --message <message>', 'Custom message')
+  .command("quick")
+  .description("Quick commit with smart defaults")
+  .option("-m, --message <message>", "Custom message")
   .action(async (options) => {
     try {
       const result = await quickCommit({ message: options.message });
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 automationCmd
-  .command('smart')
-  .description('Analyze changes and suggest commit')
-  .option('-x, --execute', 'Execute suggested commit')
+  .command("smart")
+  .description("Analyze changes and suggest commit")
+  .option("-x, --execute", "Execute suggested commit")
   .action(async (options) => {
     try {
       const result = await smartCommit({ execute: options.execute });
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
-      
+
       if (result.data) {
-        console.log('\n' + JSON.stringify(result.data, null, 2));
+        console.log("\n" + JSON.stringify(result.data, null, 2));
       }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+automationCmd
+  .command("sync")
+  .description("Sync current branch with target branch")
+  .option("-t, --target <branch>", "Target branch to sync with", "main")
+  .action(async (options) => {
+    try {
+      const result = await syncBranch({ target_branch: options.target });
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data && result.data.steps) {
+        console.log("\nSteps taken:");
+        result.data.steps.forEach((step) => console.log(`  • ${step}`));
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+automationCmd
+  .command("publish")
+  .description("Automated NPM publishing workflow")
+  .option(
+    "-v, --version <type>",
+    "Version bump type (patch, minor, major)",
+    "patch",
+  )
+  .option("--custom-version <version>", "Custom version number")
+  .option("--tag <tag>", "NPM tag for publishing", "latest")
+  .option("--no-tests", "Skip running tests")
+  .option("--no-build", "Skip running build")
+  .option("--no-lint", "Skip running linting")
+  .option("--no-release", "Skip creating GitHub release")
+  .option("--no-merge", "Skip auto-merging PR")
+  .option("--dry-run", "Perform dry run without publishing")
+  .option("--registry <url>", "NPM registry URL", "https://registry.npmjs.org/")
+  .action(async (options) => {
+    try {
+      if (options.dryRun) {
+        console.log(
+          chalk.yellow("🔍 DRY RUN - No actual publishing will occur"),
+        );
+      } else {
+        // Confirmation for actual publishing
+        const confirm = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "proceed",
+            message: "This will publish to NPM. Continue?",
+            default: false,
+          },
+        ]);
+
+        if (!confirm.proceed) {
+          console.log(chalk.yellow("Publishing cancelled"));
+          return;
+        }
+      }
+
+      const result = await npmPublish({
+        version_type: options.version,
+        custom_version: options.customVersion,
+        tag: options.tag,
+        run_tests: options.tests,
+        run_build: options.build,
+        run_lint: options.lint,
+        create_release: options.release,
+        auto_merge_pr: options.merge,
+        dry_run: options.dryRun,
+        registry: options.registry,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data) {
+        if (result.data.steps) {
+          console.log("\nSteps completed:");
+          result.data.steps.forEach((step) => console.log(`  • ${step}`));
+        }
+
+        if (result.data.nextSteps) {
+          console.log("\nNext steps:");
+          result.data.nextSteps.forEach((step) => console.log(`  • ${step}`));
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 // Git flow commands
 const flowCmd = program
-  .command('flow')
-  .description('Traditional git flow operations');
+  .command("flow")
+  .description("Traditional git flow operations");
 
 // Feature operations
 const featureCmd = flowCmd
-  .command('feature')
-  .description('Feature branch operations');
+  .command("feature")
+  .description("Feature branch operations");
 
 featureCmd
-  .command('start <name>')
-  .description('Start a new feature branch')
+  .command("start <name>")
+  .description("Start a new feature branch")
   .action(async (name) => {
     try {
       const result = await startFeature(name);
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 featureCmd
-  .command('finish [name]')
-  .description('Finish a feature branch')
-  .option('-m, --message <message>', 'PR description')
-  .option('--auto-merge', 'Auto-merge PR')
-  .option('-t, --target <branch>', 'Target branch', 'main')
+  .command("finish [name]")
+  .description("Finish a feature branch")
+  .option("-m, --message <message>", "PR description")
+  .option("--auto-merge", "Auto-merge PR")
+  .option("-t, --target <branch>", "Target branch", "main")
   .action(async (name, options) => {
     try {
       const result = await finishFeature(
-        name, 
-        options.message, 
-        options.autoMerge, 
-        true, 
-        options.target
+        name,
+        options.message,
+        options.autoMerge,
+        true,
+        options.target,
       );
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 // Release operations
 const releaseCmd = flowCmd
-  .command('release')
-  .description('Release branch operations');
+  .command("release")
+  .description("Release branch operations");
 
 releaseCmd
-  .command('start <version>')
-  .description('Start a new release branch')
+  .command("start <version>")
+  .description("Start a new release branch")
   .action(async (version) => {
     try {
       const result = await startRelease(version);
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 releaseCmd
-  .command('finish [version]')
-  .description('Finish a release branch')
-  .option('-m, --message <message>', 'Release message')
+  .command("finish [version]")
+  .description("Finish a release branch")
+  .option("-m, --message <message>", "Release message")
   .action(async (version, options) => {
     try {
       const result = await finishRelease(version, options.message);
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 // Utility commands
-const utilCmd = program
-  .command('util')
-  .description('Utility operations');
+const utilCmd = program.command("util").description("Utility operations");
 
 utilCmd
-  .command('info')
-  .description('Show repository information')
+  .command("info")
+  .description("Show repository information")
   .action(async () => {
     try {
       const result = await getRepoInfo({});
-      console.log(chalk.blue('Repository Information:'));
+      console.log(chalk.blue("Repository Information:"));
       console.log(JSON.stringify(result.data, null, 2));
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 utilCmd
-  .command('status')
-  .description('Show git flow status')
+  .command("status")
+  .description("Show git flow status")
   .action(async () => {
     try {
       const result = await getGitFlowStatus();
       console.log(result.message || result.data);
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 utilCmd
-  .command('analyze')
-  .description('Analyze current changes')
-  .option('-d, --detailed', 'Show detailed analysis')
+  .command("analyze")
+  .description("Analyze current changes")
+  .option("-d, --detailed", "Show detailed analysis")
   .action(async (options) => {
     try {
       const result = await analyzeChanges({ detailed: options.detailed });
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
-      
+
       if (result.data) {
-        console.log('\n' + JSON.stringify(result.data, null, 2));
+        console.log("\n" + JSON.stringify(result.data, null, 2));
       }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 utilCmd
-  .command('branches')
-  .description('List and categorize branches')
-  .option('-r, --remote', 'Include remote branches')
-  .option('-m, --merged', 'Show only merged branches')
+  .command("branches")
+  .description("List and categorize branches")
+  .option("-r, --remote", "Include remote branches")
+  .option("-m, --merged", "Show only merged branches")
   .action(async (options) => {
     try {
-      const result = await listBranches({ 
-        include_remote: options.remote, 
-        merged_only: options.merged 
+      const result = await listBranches({
+        include_remote: options.remote,
+        merged_only: options.merged,
       });
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
-      
+
       if (result.data) {
-        console.log('\n' + JSON.stringify(result.data, null, 2));
+        console.log("\n" + JSON.stringify(result.data, null, 2));
       }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 utilCmd
-  .command('health')
-  .description('Check repository health')
-  .option('-f, --fix', 'Auto-fix issues')
+  .command("health")
+  .description("Check repository health")
+  .option("-f, --fix", "Auto-fix issues")
   .action(async (options) => {
     try {
       const result = await repoHealthCheck({ fix_issues: options.fix });
-      console.log(result.success ? 
-        chalk.green(result.message) : 
-        chalk.red(result.message)
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
       );
-      
+
       if (result.data) {
-        console.log('\n' + JSON.stringify(result.data, null, 2));
+        console.log("\n" + JSON.stringify(result.data, null, 2));
       }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
 
 // Interactive mode
 program
-  .command('interactive')
-  .alias('i')
-  .description('Interactive mode with guided prompts')
+  .command("interactive")
+  .alias("i")
+  .description("Interactive mode with guided prompts")
   .action(async () => {
     try {
-      console.log(chalk.blue('🎯 Slambed Interactive Mode'));
-      console.log('===========================\n');
+      console.log(chalk.blue("🎯 Slambed Interactive Mode"));
+      console.log("===========================\n");
 
       const { operation } = await inquirer.prompt([
         {
-          type: 'list',
-          name: 'operation',
-          message: 'What would you like to do?',
+          type: "list",
+          name: "operation",
+          message: "What would you like to do?",
           choices: [
-            { name: '🚀 Auto Commit (Complete workflow)', value: 'auto-commit' },
-            { name: '⚡ Quick Commit (Smart defaults)', value: 'quick-commit' },
-            { name: '🧠 Smart Analysis (Analyze changes)', value: 'smart-analysis' },
-            { name: '🌿 Start Feature Branch', value: 'feature-start' },
-            { name: '🏁 Finish Feature Branch', value: 'feature-finish' },
-            { name: '📊 Repository Status', value: 'status' },
-            { name: '🔍 Analyze Changes', value: 'analyze' },
-            { name: '🏥 Health Check', value: 'health' },
-            { name: '📋 List Branches', value: 'branches' },
-            { name: '❌ Exit', value: 'exit' }
-          ]
-        }
+            {
+              name: "🚀 Auto Commit (Complete workflow)",
+              value: "auto-commit",
+            },
+            { name: "⚡ Quick Commit (Smart defaults)", value: "quick-commit" },
+            {
+              name: "🧠 Smart Analysis (Analyze changes)",
+              value: "smart-analysis",
+            },
+            { name: "🌿 Start Feature Branch", value: "feature-start" },
+            { name: "🏁 Finish Feature Branch", value: "feature-finish" },
+            { name: "📊 Repository Status", value: "status" },
+            { name: "🔍 Analyze Changes", value: "analyze" },
+            { name: "🏥 Health Check", value: "health" },
+            { name: "📋 List Branches", value: "branches" },
+            { name: "❌ Exit", value: "exit" },
+          ],
+        },
       ]);
 
-      if (operation === 'exit') {
-        console.log(chalk.yellow('Goodbye! 👋'));
+      if (operation === "exit") {
+        console.log(chalk.yellow("Goodbye! 👋"));
         return;
       }
 
       // Handle the selected operation
       switch (operation) {
-        case 'auto-commit':
+        case "auto-commit":
           const { message } = await inquirer.prompt([
             {
-              type: 'input',
-              name: 'message',
-              message: 'Commit message:',
-              validate: input => input.trim().length > 0 || 'Message required'
-            }
+              type: "input",
+              name: "message",
+              message: "Commit message:",
+              validate: (input) =>
+                input.trim().length > 0 || "Message required",
+            },
           ]);
-          
+
           const result = await autoCommit({ message });
-          console.log(result.success ? 
-            chalk.green('\n✅ ' + result.message) : 
-            chalk.red('\n❌ ' + result.message)
+          console.log(
+            result.success
+              ? chalk.green("\n✅ " + result.message)
+              : chalk.red("\n❌ " + result.message),
           );
           break;
 
-        case 'status':
+        case "status":
           const statusResult = await getGitFlowStatus();
-          console.log('\n' + statusResult.message);
+          console.log("\n" + statusResult.message);
           break;
 
         // Add more cases for other operations...
-        
-        default:
-          console.log(chalk.yellow('Operation not yet implemented in interactive mode'));
-      }
 
+        default:
+          console.log(
+            chalk.yellow("Operation not yet implemented in interactive mode"),
+          );
+      }
     } catch (error) {
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }
   });
@@ -384,7 +535,7 @@ program
 // Show help if no command provided
 if (!process.argv.slice(2).length) {
   showBanner();
-  console.log(''); // Add spacing after banner
+  console.log(""); // Add spacing after banner
   program.outputHelp();
   process.exit(0);
 }

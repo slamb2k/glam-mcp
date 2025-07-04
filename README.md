@@ -71,16 +71,19 @@ Add to your Claude Desktop config:
 ## 📋 Available Commands
 
 ### Auto-Commit Workflows
+
 - `slambed auto commit` - Complete automation workflow
 - `slamb-commit quick` - Quick commit with smart defaults
 - `slamb-commit smart` - AI-powered analysis and suggestions
 
 ### Git Flow Operations
+
 - `slamb-flow feature start/finish` - Feature branch workflow
 - `slamb-flow release start/finish` - Release management
 - `slamb-flow hotfix start/finish` - Emergency fixes
 
 ### Utilities
+
 - `slambed util info` - Repository information
 - `slambed util analyze` - Change analysis
 - `slambed util health` - Repository health check
@@ -88,6 +91,7 @@ Add to your Claude Desktop config:
 ## 🎯 Examples
 
 ### Complete Feature Development
+
 ```bash
 # Start feature, make changes, then auto-commit
 slamb-flow feature start user-auth
@@ -96,12 +100,14 @@ slambed auto commit -m "Implement user authentication"
 ```
 
 ### Project Initialization
+
 ```bash
 # Initialize complete project with GitHub repo
 slambed init-project --project-name "my-app" --description "My awesome app"
 ```
 
 ### Smart Development
+
 ```bash
 # Let AI analyze your changes and suggest commits
 slamb-commit smart --execute
