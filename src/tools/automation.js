@@ -349,6 +349,93 @@ export function registerAutomationTools(server) {
     },
     handler: async (params) => npmPublish(params),
   });
+
+  // GitHub Actions creation
+  server.addTool({
+    name: "create_pr_workflow",
+    description:
+      "Create GitHub Action workflow for PR checks (linting, testing, building)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workflow_name: {
+          type: "string",
+          description: "Workflow name",
+          default: "PR Checks",
+        },
+        node_version: {
+          type: "string",
+          description: "Node.js version to use",
+          default: "18",
+        },
+        include_lint: {
+          type: "boolean",
+          description: "Include linting step",
+          default: true,
+        },
+        include_test: {
+          type: "boolean",
+          description: "Include testing step",
+          default: true,
+        },
+        include_build: {
+          type: "boolean",
+          description: "Include build step",
+          default: true,
+        },
+        include_type_check: {
+          type: "boolean",
+          description: "Include type checking step",
+          default: false,
+        },
+      },
+    },
+    handler: async (params) => createPRWorkflow(params),
+  });
+
+  server.addTool({
+    name: "create_release_workflow",
+    description:
+      "Create GitHub Action workflow for automated releases on main branch",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workflow_name: {
+          type: "string",
+          description: "Workflow name",
+          default: "Release",
+        },
+        node_version: {
+          type: "string",
+          description: "Node.js version to use",
+          default: "18",
+        },
+        release_type: {
+          type: "string",
+          enum: ["npm", "github", "both"],
+          description: "Type of release to create",
+          default: "both",
+        },
+        auto_version_bump: {
+          type: "boolean",
+          description: "Automatically bump version",
+          default: true,
+        },
+        version_bump_type: {
+          type: "string",
+          enum: ["patch", "minor", "major"],
+          description: "Default version bump type",
+          default: "patch",
+        },
+        create_changelog: {
+          type: "boolean",
+          description: "Generate changelog",
+          default: true,
+        },
+      },
+    },
+    handler: async (params) => createReleaseWorkflow(params),
+  });
 }
 
 /**
@@ -1632,6 +1719,365 @@ See the [commit history](https://github.com/${packageJson.repository?.url?.split
   }
 }
 
+/**
+ * Create GitHub Action workflow for PR checks
+ */
+async function createPRWorkflow({
+  workflow_name = "PR Checks",
+  node_version = "18",
+  include_lint = true,
+  include_test = true,
+  include_build = true,
+  include_type_check = false,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const currentDir = process.cwd();
+    const workflowsDir = path.join(currentDir, ".github", "workflows");
+
+    // Create .github/workflows directory if it doesn't exist
+    if (!fs.existsSync(workflowsDir)) {
+      fs.mkdirSync(workflowsDir, { recursive: true });
+    }
+
+    // Check if package.json exists to determine project type
+    const packageJsonPath = path.join(currentDir, "package.json");
+    const isNodeProject = fs.existsSync(packageJsonPath);
+
+    let packageJson = {};
+    if (isNodeProject) {
+      packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    }
+
+    // Generate workflow content
+    const workflowContent = `name: ${workflow_name}
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [${node_version}]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: \${{ matrix.node-version }}
+        cache: '${packageJson.packageManager === "yarn" ? "yarn" : "npm"}'
+        
+    - name: Install dependencies
+      run: ${packageJson.packageManager === "yarn" ? "yarn install --frozen-lockfile" : "npm ci"}
+      
+${
+  include_lint && hasScript("lint")
+    ? `    - name: Run linting
+      run: ${packageJson.packageManager === "yarn" ? "yarn lint" : "npm run lint"}
+      
+`
+    : ""
+}${
+      include_type_check && hasScript("type-check")
+        ? `    - name: Type checking
+      run: ${packageJson.packageManager === "yarn" ? "yarn type-check" : "npm run type-check"}
+      
+`
+        : ""
+    }${
+      include_test && hasScript("test")
+        ? `    - name: Run tests
+      run: ${packageJson.packageManager === "yarn" ? "yarn test" : "npm test"}
+      env:
+        CI: true
+        
+`
+        : ""
+    }${
+      include_build && hasScript("build")
+        ? `    - name: Build project
+      run: ${packageJson.packageManager === "yarn" ? "yarn build" : "npm run build"}
+      
+`
+        : ""
+    }    - name: Upload coverage reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+        retention-days: 30
+      continue-on-error: true
+`;
+
+    // Write workflow file
+    const workflowFileName =
+      workflow_name.toLowerCase().replace(/\s+/g, "-") + ".yml";
+    const workflowPath = path.join(workflowsDir, workflowFileName);
+    fs.writeFileSync(workflowPath, workflowContent);
+
+    return createSuccessResponse("Created PR workflow successfully", {
+      workflowFile: `.github/workflows/${workflowFileName}`,
+      workflowName: workflow_name,
+      steps: [
+        include_lint && hasScript("lint")
+          ? "✓ Linting"
+          : "✗ Linting (no script found)",
+        include_type_check && hasScript("type-check")
+          ? "✓ Type checking"
+          : "✗ Type checking (no script found)",
+        include_test && hasScript("test")
+          ? "✓ Testing"
+          : "✗ Testing (no script found)",
+        include_build && hasScript("build")
+          ? "✓ Building"
+          : "✗ Building (no script found)",
+      ].filter(Boolean),
+      nodeVersion: node_version,
+      operation: "create-pr-workflow",
+    });
+  } catch (error) {
+    return createErrorResponse(
+      `Failed to create PR workflow: ${error.message}`,
+    );
+  }
+}
+
+/**
+ * Create GitHub Action workflow for automated releases
+ */
+async function createReleaseWorkflow({
+  workflow_name = "Release",
+  node_version = "18",
+  release_type = "both",
+  auto_version_bump = true,
+  version_bump_type = "patch",
+  create_changelog = true,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const currentDir = process.cwd();
+    const workflowsDir = path.join(currentDir, ".github", "workflows");
+
+    // Create .github/workflows directory if it doesn't exist
+    if (!fs.existsSync(workflowsDir)) {
+      fs.mkdirSync(workflowsDir, { recursive: true });
+    }
+
+    // Check if package.json exists
+    const packageJsonPath = path.join(currentDir, "package.json");
+    const isNodeProject = fs.existsSync(packageJsonPath);
+
+    let packageJson = {};
+    if (isNodeProject) {
+      packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    }
+
+    // Generate workflow content
+    const workflowContent = `name: ${workflow_name}
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: '${version_bump_type}'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      ${release_type === "npm" || release_type === "both" ? "id-token: write" : ""}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: \${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${node_version}
+        cache: '${packageJson.packageManager === "yarn" ? "yarn" : "npm"}'
+        ${release_type === "npm" || release_type === "both" ? "registry-url: 'https://registry.npmjs.org'" : ""}
+        
+    - name: Install dependencies
+      run: ${packageJson.packageManager === "yarn" ? "yarn install --frozen-lockfile" : "npm ci"}
+      
+    - name: Run tests
+      run: ${hasScript("test") ? (packageJson.packageManager === "yarn" ? "yarn test" : "npm test") : "echo 'No tests found, skipping...'"}
+      env:
+        CI: true
+        
+    - name: Build project
+      run: ${hasScript("build") ? (packageJson.packageManager === "yarn" ? "yarn build" : "npm run build") : "echo 'No build script found, skipping...'"}
+      
+${
+  auto_version_bump
+    ? `    - name: Bump version
+      id: version
+      run: |
+        VERSION_TYPE=\${{ github.event.inputs.version_type || '${version_bump_type}' }}
+        ${packageJson.packageManager === "yarn" ? "yarn version --\$VERSION_TYPE --no-git-tag-version" : "npm version \$VERSION_TYPE --no-git-tag-version"}
+        NEW_VERSION=\$(node -p "require('./package.json').version")
+        echo "new_version=\$NEW_VERSION" >> \$GITHUB_OUTPUT
+        echo "tag=v\$NEW_VERSION" >> \$GITHUB_OUTPUT
+        
+    - name: Commit version bump
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add package.json
+        git commit -m "chore(release): bump version to \${{ steps.version.outputs.new_version }}"
+        git push
+        
+`
+    : ""
+}${
+      create_changelog
+        ? `    - name: Generate changelog
+      id: changelog
+      run: |
+        # Simple changelog generation
+        LAST_TAG=\$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -n "\$LAST_TAG" ]; then
+          CHANGELOG=\$(git log \$LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+        else
+          CHANGELOG=\$(git log --pretty=format:"- %s (%h)" --no-merges -10)
+        fi
+        echo "changelog<<EOF" >> \$GITHUB_OUTPUT
+        echo "\$CHANGELOG" >> \$GITHUB_OUTPUT
+        echo "EOF" >> \$GITHUB_OUTPUT
+        
+`
+        : ""
+    }${
+      release_type === "github" || release_type === "both"
+        ? `    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: \${{ steps.version.outputs.tag }}
+        release_name: Release \${{ steps.version.outputs.new_version }}
+        body: |
+          ## What's Changed
+          \${{ steps.changelog.outputs.changelog }}
+          
+          **Full Changelog**: https://github.com/\${{ github.repository }}/compare/\${{ steps.version.outputs.tag }}...HEAD
+        draft: false
+        prerelease: false
+        
+`
+        : ""
+    }${
+      release_type === "npm" || release_type === "both"
+        ? `    - name: Publish to NPM
+      run: ${packageJson.packageManager === "yarn" ? "yarn publish --access public" : "npm publish --access public"}
+      env:
+        NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
+        
+`
+        : ""
+    }    - name: Create tag
+      if: steps.version.outputs.tag
+      run: |
+        git tag \${{ steps.version.outputs.tag }}
+        git push origin \${{ steps.version.outputs.tag }}
+`;
+
+    // Write workflow file
+    const workflowFileName =
+      workflow_name.toLowerCase().replace(/\s+/g, "-") + ".yml";
+    const workflowPath = path.join(workflowsDir, workflowFileName);
+    fs.writeFileSync(workflowPath, workflowContent);
+
+    // Create a simple setup guide
+    const setupGuide = `# GitHub Actions Release Setup
+
+## Required Secrets
+
+${
+  release_type === "npm" || release_type === "both"
+    ? `### NPM Token
+1. Go to npmjs.com and create an access token
+2. Add it as \`NPM_TOKEN\` in GitHub repository secrets
+
+`
+    : ""
+}### GitHub Token
+The \`GITHUB_TOKEN\` is automatically provided by GitHub Actions.
+
+## Manual Release Trigger
+You can manually trigger a release by:
+1. Go to Actions tab in your repository
+2. Select "${workflow_name}" workflow
+3. Click "Run workflow"
+4. Choose the version bump type (patch/minor/major)
+
+## Automatic Releases
+Releases will automatically trigger when code is pushed to the main branch.
+`;
+
+    const setupGuidePath = path.join(workflowsDir, "RELEASE_SETUP.md");
+    fs.writeFileSync(setupGuidePath, setupGuide);
+
+    return createSuccessResponse("Created release workflow successfully", {
+      workflowFile: `.github/workflows/${workflowFileName}`,
+      setupGuide: `.github/workflows/RELEASE_SETUP.md`,
+      workflowName: workflow_name,
+      releaseType: release_type,
+      features: [
+        auto_version_bump
+          ? "✓ Automatic version bumping"
+          : "✗ Manual version management",
+        create_changelog ? "✓ Changelog generation" : "✗ No changelog",
+        release_type === "github" || release_type === "both"
+          ? "✓ GitHub releases"
+          : "✗ No GitHub releases",
+        release_type === "npm" || release_type === "both"
+          ? "✓ NPM publishing"
+          : "✗ No NPM publishing",
+      ],
+      nodeVersion: node_version,
+      operation: "create-release-workflow",
+    });
+  } catch (error) {
+    return createErrorResponse(
+      `Failed to create release workflow: ${error.message}`,
+    );
+  }
+}
+
 // Export individual functions for CLI usage
 export {
   autoCommit,
@@ -1643,4 +2089,6 @@ export {
   batchCommit,
   initProject,
   npmPublish,
+  createPRWorkflow,
+  createReleaseWorkflow,
 };

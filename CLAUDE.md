@@ -71,7 +71,7 @@ This is a **dual-interface system** serving as both an MCP server and CLI tool s
 **2. Tool Categories (`src/tools/`)**
 
 - **`github-flow.js`** - GitHub Flow operations (8 tools) - Simple branch-based workflow
-- **`automation.js`** - Workflow automation and project initialization (9 tools)
+- **`automation.js`** - Workflow automation, GitHub Actions creation, and project initialization (10 tools)
 - **`utilities.js`** - Repository analysis and utility operations (11 tools)
 
 **3. Shared Utilities (`src/utils/`)**
@@ -200,6 +200,15 @@ async function yourToolFunction({ param }) {
 - Include detailed PR descriptions with change summaries
 - Support auto-merge with safety checks
 - Handle branch protection rules gracefully
+
+**GitHub Actions Workflows:**
+
+- Generate comprehensive CI/CD workflow files
+- Support both PR checks and release workflows
+- Include proper Node.js version matrix
+- Provide setup guides for required secrets
+- Detect package manager (npm/yarn) automatically
+- Support customizable workflow steps (lint, test, build, type-check)
 
 ## Testing
 

@@ -29,9 +29,10 @@ Transform your development workflow with powerful automation tools that handle e
 
 ## ✨ Features
 
-- **🤖 29+ Automation Tools** - Complete git workflow automation
+- **🤖 31+ Automation Tools** - Complete git workflow automation
 - **⚡ Auto-Commit Workflows** - Branch → format → lint → commit → push → PR → merge
 - **🚀 GitHub Flow** - Simple, branch-based workflow (no complex branching)
+- **⚙️ GitHub Actions** - Automated CI/CD workflow creation
 - **🧠 Smart Analysis** - AI-powered commit message suggestions
 - **📦 Project Initialization** - Complete project setup automation
 - **🔧 Dual Interface** - Both MCP server and CLI tools
@@ -76,6 +77,11 @@ Add to your Claude Desktop config:
 - `slamb-commit quick` - Quick commit with smart defaults
 - `slamb-commit smart` - AI-powered analysis and suggestions
 
+### GitHub Actions Workflows
+
+- `slambed auto create-pr-workflow` - Create PR check workflow (lint, test, build)
+- `slamb-commit create-release-workflow` - Create automated release workflow
+
 ### GitHub Flow Operations
 
 - `slamb-flow start <name>` - Start a new branch from main
@@ -105,6 +111,16 @@ slambed auto commit -m "Implement user authentication"
 ```bash
 # Initialize complete project with GitHub repo
 slambed init-project --project-name "my-app" --description "My awesome app"
+```
+
+### GitHub Actions Setup
+
+```bash
+# Create PR check workflow (lint, test, build)
+slambed auto create-pr-workflow --name "CI Pipeline"
+
+# Create automated release workflow
+slamb-commit create-release-workflow --type "both"
 ```
 
 ### Smart Development

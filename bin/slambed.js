@@ -22,6 +22,8 @@ import {
   undoCommit,
   batchCommit,
   npmPublish,
+  createPRWorkflow,
+  createReleaseWorkflow,
 } from "../src/tools/automation.js";
 import {
   startBranch,
@@ -246,6 +248,92 @@ automationCmd
         if (result.data.nextSteps) {
           console.log("\nNext steps:");
           result.data.nextSteps.forEach((step) => console.log(`  • ${step}`));
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+automationCmd
+  .command("create-pr-workflow")
+  .description("Create GitHub Actions workflow for PR checks")
+  .option("-n, --name <name>", "Workflow name", "PR Checks")
+  .option("--node-version <version>", "Node.js version", "18")
+  .option("--no-lint", "Skip linting step")
+  .option("--no-test", "Skip testing step")
+  .option("--no-build", "Skip build step")
+  .option("--no-type-check", "Skip type checking step")
+  .action(async (options) => {
+    try {
+      const result = await createPRWorkflow({
+        workflow_name: options.name,
+        node_version: options.nodeVersion,
+        include_lint: options.lint,
+        include_test: options.test,
+        include_build: options.build,
+        include_type_check: options.typeCheck,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data) {
+        console.log("\nWorkflow created:", result.data.workflowFile);
+        if (result.data.setupGuide) {
+          console.log("Setup guide:", result.data.setupGuide);
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+automationCmd
+  .command("create-release-workflow")
+  .description("Create GitHub Actions workflow for automated releases")
+  .option("-n, --name <name>", "Workflow name", "Release")
+  .option("--node-version <version>", "Node.js version", "18")
+  .option("-t, --type <type>", "Release type (npm, github, both)", "both")
+  .option("--no-auto-version", "Skip automatic version bumping")
+  .option(
+    "--version-type <type>",
+    "Version bump type (patch, minor, major)",
+    "patch",
+  )
+  .option("--no-changelog", "Skip changelog generation")
+  .action(async (options) => {
+    try {
+      const result = await createReleaseWorkflow({
+        workflow_name: options.name,
+        node_version: options.nodeVersion,
+        release_type: options.type,
+        auto_version_bump: options.autoVersion,
+        version_bump_type: options.versionType,
+        create_changelog: options.changelog,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data) {
+        console.log("\nWorkflow created:", result.data.workflowFile);
+        if (result.data.setupGuide) {
+          console.log("Setup guide:", result.data.setupGuide);
+        }
+        if (result.data.features) {
+          console.log("\nFeatures enabled:");
+          result.data.features.forEach((feature) =>
+            console.log(`  ${feature}`),
+          );
         }
       }
     } catch (error) {
@@ -520,6 +608,11 @@ program
             { name: "🔍 Analyze Changes", value: "analyze" },
             { name: "🏥 Health Check", value: "health" },
             { name: "📋 List Branches", value: "branches" },
+            { name: "⚙️ Create PR Workflow", value: "create-pr-workflow" },
+            {
+              name: "🚀 Create Release Workflow",
+              value: "create-release-workflow",
+            },
             { name: "❌ Exit", value: "exit" },
           ],
         },
@@ -552,8 +645,26 @@ program
           break;
 
         case "status":
-          const statusResult = await getGitFlowStatus();
+          const statusResult = await getGitHubFlowStatus();
           console.log("\n" + statusResult.message);
+          break;
+
+        case "create-pr-workflow":
+          const prWorkflowResult = await createPRWorkflow({});
+          console.log(
+            prWorkflowResult.success
+              ? chalk.green("\n✅ " + prWorkflowResult.message)
+              : chalk.red("\n❌ " + prWorkflowResult.message),
+          );
+          break;
+
+        case "create-release-workflow":
+          const releaseWorkflowResult = await createReleaseWorkflow({});
+          console.log(
+            releaseWorkflowResult.success
+              ? chalk.green("\n✅ " + releaseWorkflowResult.message)
+              : chalk.red("\n❌ " + releaseWorkflowResult.message),
+          );
           break;
 
         // Add more cases for other operations...

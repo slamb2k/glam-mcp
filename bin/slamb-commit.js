@@ -12,6 +12,20 @@ import inquirer from "inquirer";
 // Import banner utility
 import { showBanner, getStyledBanner } from "../src/utils/banner.js";
 
+// Import automation functions
+import {
+  autoCommit,
+  quickCommit,
+  smartCommit,
+  syncBranch,
+  squashCommits,
+  undoCommit,
+  batchCommit,
+  npmPublish,
+  createPRWorkflow,
+  createReleaseWorkflow,
+} from "../src/tools/automation.js";
+
 const program = new Command();
 
 // Show banner before commands
@@ -270,8 +284,121 @@ program
         }
       }
 
-      // Call npmPublish function
-      console.log(chalk.green("✅ NPM publishing workflow completed!"));
+      const result = await npmPublish({
+        version_type: options.version,
+        custom_version: options.customVersion,
+        tag: options.tag,
+        run_tests: options.tests,
+        run_build: options.build,
+        run_lint: options.lint,
+        create_release: options.release,
+        auto_merge_pr: options.merge,
+        dry_run: options.dryRun,
+        registry: options.registry,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data && result.data.steps) {
+        console.log("\\nSteps completed:");
+        result.data.steps.forEach((step) => console.log(`  • ${step}`));
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("create-pr-workflow")
+  .description("Create GitHub Actions workflow for PR checks")
+  .option("-n, --name <name>", "Workflow name", "PR Checks")
+  .option("--node-version <version>", "Node.js version", "18")
+  .option("--no-lint", "Skip linting step")
+  .option("--no-test", "Skip testing step")
+  .option("--no-build", "Skip build step")
+  .option("--no-type-check", "Skip type checking step")
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue("⚙️  Creating GitHub Actions PR workflow..."));
+
+      const result = await createPRWorkflow({
+        workflow_name: options.name,
+        node_version: options.nodeVersion,
+        include_lint: options.lint,
+        include_test: options.test,
+        include_build: options.build,
+        include_type_check: options.typeCheck,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data) {
+        console.log("\\nWorkflow created:", result.data.workflowFile);
+        if (result.data.setupGuide) {
+          console.log("Setup guide:", result.data.setupGuide);
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("create-release-workflow")
+  .description("Create GitHub Actions workflow for automated releases")
+  .option("-n, --name <name>", "Workflow name", "Release")
+  .option("--node-version <version>", "Node.js version", "18")
+  .option("-t, --type <type>", "Release type (npm, github, both)", "both")
+  .option("--no-auto-version", "Skip automatic version bumping")
+  .option(
+    "--version-type <type>",
+    "Version bump type (patch, minor, major)",
+    "patch",
+  )
+  .option("--no-changelog", "Skip changelog generation")
+  .action(async (options) => {
+    try {
+      console.log(
+        chalk.blue("⚙️  Creating GitHub Actions release workflow..."),
+      );
+
+      const result = await createReleaseWorkflow({
+        workflow_name: options.name,
+        node_version: options.nodeVersion,
+        release_type: options.type,
+        auto_version_bump: options.autoVersion,
+        version_bump_type: options.versionType,
+        create_changelog: options.changelog,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+
+      if (result.data) {
+        console.log("\\nWorkflow created:", result.data.workflowFile);
+        if (result.data.setupGuide) {
+          console.log("Setup guide:", result.data.setupGuide);
+        }
+        if (result.data.features) {
+          console.log("\\nFeatures enabled:");
+          result.data.features.forEach((feature) =>
+            console.log(`  ${feature}`),
+          );
+        }
+      }
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);
