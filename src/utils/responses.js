@@ -10,7 +10,7 @@ export function createSuccessResponse(message, data = {}) {
     success: true,
     message,
     data,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -22,7 +22,7 @@ export function createErrorResponse(message, error = null) {
     success: false,
     message,
     error: error?.message || error,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -34,7 +34,7 @@ export function createStatusResponse(status, message, data = {}) {
     status,
     message,
     data,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -42,15 +42,15 @@ export function createStatusResponse(status, message, data = {}) {
  * Format tool response for MCP
  */
 export function formatMCPResponse(result) {
-  if (typeof result === 'string') {
+  if (typeof result === "string") {
     return { text: result };
   }
-  
+
   if (result.success !== undefined) {
-    const icon = result.success ? '✅' : '❌';
-    const text = `${icon} ${result.message}${result.data ? '\n\n' + JSON.stringify(result.data, null, 2) : ''}`;
+    const icon = result.success ? "✅" : "❌";
+    const text = `${icon} ${result.message}${result.data ? "\n\n" + JSON.stringify(result.data, null, 2) : ""}`;
     return { text };
   }
-  
+
   return { text: JSON.stringify(result, null, 2) };
 }

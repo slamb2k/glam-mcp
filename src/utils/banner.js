@@ -3,7 +3,7 @@
  * Displays branding and tagline across CLI and documentation
  */
 
-import chalk from 'chalk';
+import chalk from "chalk";
 
 /**
  * ASCII art banner with fist and slambed branding
@@ -51,7 +51,7 @@ export function getColoredBanner(compact = false) {
   if (compact) {
     return chalk.cyan.bold(COMPACT_BANNER);
   }
-  
+
   return chalk.cyan.bold(BANNER_ART);
 }
 
@@ -60,33 +60,42 @@ export function getColoredBanner(compact = false) {
  */
 export function getStyledBanner(options = {}) {
   const {
-    fistColor = 'yellow',
-    titleColor = 'cyan',
-    taglineColor = 'green',
-    compact = false
+    fistColor = "yellow",
+    titleColor = "cyan",
+    taglineColor = "green",
+    compact = false,
   } = options;
 
   if (compact) {
-    return chalk[fistColor]('✊') + ' ' + 
-           chalk[titleColor].bold('SLAMBED!') + ' - ' +
-           chalk[taglineColor]('Git Flow Automation & MCP Server') + '\n' +
-           '     ' + chalk[taglineColor]('Git workflows that pack a punch!');
+    return (
+      chalk[fistColor]("✊") +
+      " " +
+      chalk[titleColor].bold("SLAMBED!") +
+      " - " +
+      chalk[taglineColor]("Git Flow Automation & MCP Server") +
+      "\n" +
+      "     " +
+      chalk[taglineColor]("Git workflows that pack a punch!")
+    );
   }
 
   // For full banner, apply colors to different sections
-  const lines = BANNER_ART.split('\n');
+  const lines = BANNER_ART.split("\n");
   const coloredLines = lines.map((line, index) => {
-    if (line.includes('███████ ██       █████') || line.includes('slambed')) {
+    if (line.includes("███████ ██       █████") || line.includes("slambed")) {
       return chalk[titleColor].bold(line);
-    } else if (line.includes('Git Flow Automation') || line.includes('pack a punch')) {
+    } else if (
+      line.includes("Git Flow Automation") ||
+      line.includes("pack a punch")
+    ) {
       return chalk[taglineColor](line);
-    } else if (line.includes('████') && index < 15) {
+    } else if (line.includes("████") && index < 15) {
       return chalk[fistColor](line);
     }
     return chalk.cyan(line);
   });
 
-  return coloredLines.join('\n');
+  return coloredLines.join("\n");
 }
 
 /**

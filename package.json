@@ -1,5 +1,5 @@
 {
-  "name": "slambed-mcp",
+  "name": "@tinysheep/slambed-mcp",
   "version": "1.0.0",
   "description": "Slambed MCP Server - Comprehensive Git Flow Automation with MCP and CLI Support",
   "main": "src/index.js",
@@ -21,7 +21,9 @@
     "mcpVersion": "0.1.0",
     "server": {
       "command": "node",
-      "args": ["src/index.js"]
+      "args": [
+        "src/index.js"
+      ]
     }
   },
   "keywords": [
