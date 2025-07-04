@@ -10,9 +10,7 @@
  * 5. Delete the branch
  */
 
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
+// Note: execSync, fs, and path imports removed as they're not currently used
 import {
   isGitRepository,
   getMainBranch,
@@ -367,7 +365,7 @@ async function finishBranch(
 
     const prUrl = execGitCommand(createCommand, { silent: true }).trim();
 
-    let result = {
+    const result = {
       branch: currentBranch,
       targetBranch: mainBranch,
       prUrl,
@@ -644,7 +642,7 @@ async function syncWithMain(strategy) {
 /**
  * Clean up merged branches
  */
-async function cleanupBranches(force) {
+async function cleanupBranches(_force) {
   if (!isGitRepository()) {
     return createErrorResponse("Not a git repository");
   }

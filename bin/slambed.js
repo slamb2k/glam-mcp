@@ -60,7 +60,7 @@ program.hook("preAction", (thisCommand) => {
 
 program
   .name("slambed")
-  .description("Comprehensive Git Flow Automation with MCP and CLI Support")
+  .description("Comprehensive GitHub Flow Automation with MCP and CLI Support")
   .version("1.0.0");
 
 // Automation commands
@@ -81,16 +81,39 @@ automationCmd
   .option("-t, --target <branch>", "Target branch", "main")
   .action(async (options) => {
     try {
+      // Check if we need a message (only prompt if we have changes to commit)
       if (!options.message) {
-        const answer = await inquirer.prompt([
-          {
-            type: "input",
-            name: "message",
-            message: "Commit message:",
-            validate: (input) => input.trim().length > 0 || "Message required",
-          },
-        ]);
-        options.message = answer.message;
+        // Import git helpers to check current state
+        const { getCurrentBranch, getMainBranch, getChangedFiles } =
+          await import("../src/utils/git-helpers.js");
+        const currentBranch = getCurrentBranch();
+        const mainBranch = getMainBranch();
+        const changedFiles = getChangedFiles();
+
+        // Only require message if we have changes or we're on main branch
+        if (changedFiles.length > 0 || currentBranch === mainBranch) {
+          const answer = await inquirer.prompt([
+            {
+              type: "input",
+              name: "message",
+              message: "Commit message:",
+              validate: (input) =>
+                input.trim().length > 0 || "Message required",
+            },
+          ]);
+          options.message = answer.message;
+        } else {
+          // On feature branch with no changes - message is optional
+          const answer = await inquirer.prompt([
+            {
+              type: "input",
+              name: "message",
+              message: "PR message (optional, will use branch name if empty):",
+            },
+          ]);
+          options.message =
+            answer.message || `Push changes from ${currentBranch}`;
+        }
       }
 
       const result = await autoCommit({

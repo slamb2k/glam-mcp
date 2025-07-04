@@ -36,7 +36,8 @@ export function registerAutomationTools(server) {
       properties: {
         message: {
           type: "string",
-          description: "Commit message",
+          description:
+            "Commit message (required for new commits, optional when pushing existing branch)",
         },
         branch_name: {
           type: "string",
@@ -73,7 +74,7 @@ export function registerAutomationTools(server) {
           default: "feature/",
         },
       },
-      required: ["message"],
+      required: [],
     },
     handler: async (params) => autoCommit(params),
   });
@@ -457,76 +458,124 @@ async function autoCommit({
 
   try {
     const steps = [];
+    const currentBranch = getCurrentBranch();
+    const mainBranch = getMainBranch();
 
     // Check for changes
     const changedFiles = getChangedFiles();
-    if (changedFiles.length === 0) {
-      return createErrorResponse("No changes detected. Nothing to commit.");
-    }
-    steps.push(`Found ${changedFiles.length} changed files`);
+    const hasChanges = changedFiles.length > 0;
 
-    // Generate branch name if not provided
-    const branchName =
-      branch_name || generateBranchName(message, branch_prefix);
-    steps.push(`Generated branch name: ${branchName}`);
-
-    // Create and switch to new branch
-    const mainBranch = getMainBranch();
-    execGitCommand(`git checkout ${mainBranch}`, { silent: true });
-
-    try {
-      execGitCommand("git pull origin HEAD", { silent: true });
-      steps.push("Updated main branch");
-    } catch (e) {
-      steps.push("Could not pull latest changes (no remote or network issue)");
+    // If no changes and we're on main branch, nothing to do
+    if (!hasChanges && currentBranch === mainBranch) {
+      return createErrorResponse(
+        "No changes detected and on main branch. Nothing to commit.",
+      );
     }
 
-    execGitCommand(`git checkout -b ${branchName}`, { silent: true });
-    steps.push(`Created and switched to branch: ${branchName}`);
+    let branchName;
+    let needsCommit = hasChanges;
+    let needsPush = false;
 
-    // Run formatting if available and requested
-    if (run_format && hasScript("format")) {
-      try {
-        execSync("npm run format", { stdio: "inherit" });
-        steps.push("Code formatting completed");
-      } catch (e) {
-        steps.push("Formatting failed, continuing...");
+    if (!hasChanges && currentBranch !== mainBranch) {
+      // No changes but on feature branch - continue with push + PR workflow
+      branchName = currentBranch;
+      needsCommit = false;
+      needsPush = true;
+      steps.push(
+        `No changes to commit, but continuing with push + PR workflow for branch: ${branchName}`,
+      );
+    } else if (hasChanges) {
+      // Has changes - normal commit workflow
+      if (!message) {
+        return createErrorResponse(
+          "Commit message is required when there are changes to commit.",
+        );
       }
-    } else if (run_format) {
-      steps.push("No format script found, skipping formatting");
-    }
 
-    // Run linting if available and requested
-    if (run_lint && hasScript("lint")) {
+      steps.push(`Found ${changedFiles.length} changed files`);
+
+      // Generate branch name if not provided
+      branchName = branch_name || generateBranchName(message, branch_prefix);
+      steps.push(`Generated branch name: ${branchName}`);
+
+      // Create and switch to new branch
+      execGitCommand(`git checkout ${mainBranch}`, { silent: true });
+
       try {
-        execSync("npm run lint", { stdio: "pipe" });
-        steps.push("Linting passed");
+        execGitCommand("git pull origin HEAD", { silent: true });
+        steps.push("Updated main branch");
       } catch (e) {
-        steps.push("Linting issues found, continuing...");
+        steps.push(
+          "Could not pull latest changes (no remote or network issue)",
+        );
       }
-    } else if (run_lint) {
-      steps.push("No lint script found, skipping linting");
+
+      execGitCommand(`git checkout -b ${branchName}`, { silent: true });
+      steps.push(`Created and switched to branch: ${branchName}`);
+      needsPush = true;
     }
 
-    // Stage and commit changes
-    execGitCommand("git add .", { silent: true });
+    // Only run formatting and linting if we have changes to commit
+    if (needsCommit) {
+      // Run formatting if available and requested
+      if (run_format && hasScript("format")) {
+        try {
+          execSync("npm run format", { stdio: "inherit" });
+          steps.push("Code formatting completed");
+        } catch (e) {
+          steps.push("Formatting failed, continuing...");
+        }
+      } else if (run_format) {
+        steps.push("No format script found, skipping formatting");
+      }
 
-    const commitMessage = `${message}
+      // Run linting if available and requested
+      if (run_lint && hasScript("lint")) {
+        try {
+          execSync("npm run lint", { stdio: "pipe" });
+          steps.push("Linting passed");
+        } catch (e) {
+          steps.push("Linting issues found, continuing...");
+        }
+      } else if (run_lint) {
+        steps.push("No lint script found, skipping linting");
+      }
+
+      // Stage and commit changes
+      execGitCommand("git add .", { silent: true });
+
+      const commitMessage = `${message}
 
 🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)
 
 Co-Authored-By: Claude <noreply@anthropic.com>`;
 
-    execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
-    steps.push("Changes committed successfully");
+      execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
+      steps.push("Changes committed successfully");
+    } else {
+      steps.push("Skipping commit - no changes to commit");
+    }
 
-    // Push branch to remote
-    execGitCommand(`git push -u origin ${branchName}`, { silent: true });
-    steps.push("Branch pushed to remote");
+    // Push branch to remote if needed
+    if (needsPush) {
+      try {
+        execGitCommand(`git push -u origin ${branchName}`, { silent: true });
+        steps.push("Branch pushed to remote");
+      } catch (e) {
+        // Branch might already be pushed, try without -u flag
+        try {
+          execGitCommand(`git push origin ${branchName}`, { silent: true });
+          steps.push("Branch updated on remote");
+        } catch (e2) {
+          steps.push("Push failed, continuing with PR creation...");
+        }
+      }
+    }
 
-    // Create PR
-    const prTitle = message;
-    const prBody = `## Summary
+    // Create PR - use default message if none provided and no commit was made
+    const prTitle = message || `Update ${branchName}`;
+    const prBody = needsCommit
+      ? `## Summary
 ${message}
 
 ## Changes Made
@@ -538,13 +587,39 @@ ${message}
 - [ ] Linting checks passed
 - [ ] Manual testing completed
 
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`
+      : `## Summary
+${message || "Push existing branch changes for review"}
+
+## Changes Made
+- Pushing existing commits for review
+- Ready for review and merge
+
+## Testing
+- [ ] Manual testing completed
+- [ ] Changes reviewed
+
 🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
 
-    const prUrl = execGitCommand(
-      `gh pr create --title "${prTitle}" --body "${prBody}" --base ${target_branch}`,
-      { silent: true },
-    ).trim();
-    steps.push(`Pull request created: ${prUrl}`);
+    // Create PR - check if one already exists first
+    let prUrl;
+    try {
+      prUrl = execGitCommand(
+        `gh pr create --title "${prTitle}" --body "${prBody}" --base ${target_branch}`,
+        { silent: true },
+      ).trim();
+      steps.push(`Pull request created: ${prUrl}`);
+    } catch (e) {
+      // PR might already exist, try to get the existing PR URL
+      try {
+        prUrl = execGitCommand(`gh pr view --json url --jq .url`, {
+          silent: true,
+        }).trim();
+        steps.push(`Using existing pull request: ${prUrl}`);
+      } catch (e2) {
+        return createErrorResponse(`Failed to create or find PR: ${e.message}`);
+      }
+    }
 
     let merged = false;
     let deleted = false;
@@ -600,9 +675,23 @@ async function quickCommit({ message, auto_merge = true, run_format = true }) {
     return createErrorResponse("Not a git repository");
   }
 
+  const currentBranch = getCurrentBranch();
+  const mainBranch = getMainBranch();
   const changedFiles = getChangedFiles();
-  if (changedFiles.length === 0) {
-    return createErrorResponse("No changes to commit");
+
+  // If no changes and we're on main branch, nothing to do
+  if (changedFiles.length === 0 && currentBranch === mainBranch) {
+    return createErrorResponse("No changes to commit and on main branch.");
+  }
+
+  // If no changes but on feature branch, just use autoCommit for push + PR
+  if (changedFiles.length === 0 && currentBranch !== mainBranch) {
+    return autoCommit({
+      message: message || `Quick push for ${currentBranch}`,
+      auto_merge,
+      run_format: false, // Skip formatting since no new changes
+      run_lint: false, // Skip linting since no new changes
+    });
   }
 
   // Generate message if not provided
@@ -652,9 +741,38 @@ async function smartCommit({ execute = false }) {
     return createErrorResponse("Not a git repository");
   }
 
+  const currentBranch = getCurrentBranch();
+  const mainBranch = getMainBranch();
   const changedFiles = getChangedFiles();
-  if (changedFiles.length === 0) {
-    return createErrorResponse("No changes to analyze");
+
+  // If no changes and we're on main branch, nothing to analyze
+  if (changedFiles.length === 0 && currentBranch === mainBranch) {
+    return createErrorResponse("No changes to analyze and on main branch.");
+  }
+
+  // If no changes but on feature branch, suggest push + PR
+  if (changedFiles.length === 0 && currentBranch !== mainBranch) {
+    const suggestion = {
+      analysis: {
+        totalFiles: 0,
+        suggestedAction: "push-pr",
+        suggestedMessage: `Push existing commits from ${currentBranch} for review`,
+        confidence: 100,
+      },
+      recommendation:
+        "No new changes detected, but you're on a feature branch. Consider pushing and creating a PR for existing commits.",
+    };
+
+    if (execute) {
+      return autoCommit({
+        message: suggestion.analysis.suggestedMessage,
+        auto_merge: false, // Don't auto-merge for smart commits
+        run_format: false,
+        run_lint: false,
+      });
+    }
+
+    return createSuccessResponse("Smart commit analysis completed", suggestion);
   }
 
   try {
