@@ -59,12 +59,31 @@ export function getMainBranch() {
  */
 export function getCurrentBranch() {
   try {
-    return execSync("git branch --show-current", { encoding: "utf8" }).trim();
+    const result = execSync("git branch --show-current", { encoding: "utf8" }).trim();
+    if (result) return result;
   } catch (error) {
-    return execSync("git rev-parse --abbrev-ref HEAD", {
+    // Fall through to backup method
+  }
+  
+  try {
+    const result = execSync("git rev-parse --abbrev-ref HEAD", {
       encoding: "utf8",
     }).trim();
+    if (result) return result;
+  } catch (error) {
+    // Fall through to backup method
   }
+  
+  // Last resort: try git status to get branch info
+  try {
+    const status = execSync("git status", { encoding: "utf8" });
+    const match = status.match(/On branch (.+)/);
+    if (match && match[1]) return match[1];
+  } catch (error) {
+    // If all else fails, return empty string
+  }
+  
+  return "";
 }
 
 /**
@@ -85,8 +104,12 @@ export function hasUncommittedChanges() {
  * Check if a branch exists
  */
 export function branchExists(branchName) {
+  if (!branchName || typeof branchName !== 'string' || branchName.trim() === '') {
+    return false;
+  }
+  
   try {
-    execSync(`git show-ref --verify --quiet refs/heads/${branchName}`, {
+    execSync(`git show-ref --verify --quiet refs/heads/${branchName.trim()}`, {
       stdio: "pipe",
     });
     return true;
