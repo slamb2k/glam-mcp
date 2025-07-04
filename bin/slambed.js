@@ -60,7 +60,7 @@ program.hook("preAction", (thisCommand) => {
 
 program
   .name("slambed")
-  .description("Comprehensive Git Flow Automation with MCP and CLI Support")
+  .description("Comprehensive GitHub Flow Automation with MCP and CLI Support")
   .version("1.0.0");
 
 // Automation commands

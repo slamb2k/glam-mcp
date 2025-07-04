@@ -18,15 +18,15 @@ async function basicMCPExample() {
 
   // This would normally be connected to Claude or another MCP client
   console.log("Server created with tools:");
-  console.log("- Git Flow Operations (10 tools)");
-  console.log("- Automation Features (7 tools)");
-  console.log("- Utility Operations (10 tools)");
-  console.log("Total: 27+ tools available");
+  console.log("- GitHub Flow Operations (8 tools)");
+  console.log("- Automation Features (10 tools)");
+  console.log("- Utility Operations (11 tools)");
+  console.log("Total: 29+ tools available");
 
   // Example of calling a tool programmatically
   // (In real usage, this would be done through MCP protocol)
   console.log("\nExample tool call simulation:");
-  console.log("Tool: git_flow_status");
+  console.log("Tool: github_flow_status");
   console.log("Result: Repository status and branch information");
 }
 
@@ -62,9 +62,9 @@ async function workflowExamples() {
     "   → Creates branch, formats, commits, pushes, creates PR, merges, cleans up",
   );
 
-  console.log("\n2. Traditional git-flow:");
-  console.log("   slambed flow feature start user-auth");
-  console.log("   slambed flow feature finish user-auth --auto-merge");
+  console.log("\n2. GitHub Flow:");
+  console.log("   slamb-flow start user-auth");
+  console.log("   slamb-flow finish --auto-merge");
 
   console.log("\n3. Quick development:");
   console.log("   slam-commit quick");
@@ -74,10 +74,10 @@ async function workflowExamples() {
   console.log("   slam-commit smart --execute");
   console.log("   → Analyzes changes and suggests optimal commit strategy");
 
-  console.log("\n5. Release workflow:");
-  console.log("   slambed flow release start 1.2.0");
-  console.log("   slambed flow release finish 1.2.0");
-  console.log("   → Updates version, creates tag, merges to main");
+  console.log("\n5. GitHub Actions workflows:");
+  console.log("   slambed auto create-pr-workflow");
+  console.log("   slamb-commit create-release-workflow");
+  console.log("   → Creates CI/CD workflows for automated testing and releases");
 }
 
 async function integrationExample() {
@@ -99,7 +99,7 @@ async function integrationExample() {
   console.log("Available commands:");
   console.log("- slambed (main CLI)");
   console.log("- slamb-commit (automation focus)");
-  console.log("- slamb-flow (git-flow focus)");
+  console.log("- slamb-flow (GitHub Flow focus)");
 }
 
 async function customizationExample() {

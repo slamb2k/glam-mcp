@@ -2,7 +2,7 @@
 
 /**
  * Slambed MCP Server
- * Comprehensive Git Flow Automation with MCP and CLI Support
+ * Comprehensive GitHub Flow Automation with MCP and CLI Support
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
