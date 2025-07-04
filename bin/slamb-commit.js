@@ -67,26 +67,24 @@ program
   });
 
 program
-  .command("quick")
-  .description("Quick commit with smart defaults")
-  .option(
-    "-m, --message <message>",
-    "Custom message (auto-generated if not provided)",
-  )
+  .command('quick')
+  .description('Quick commit with smart defaults')
+  .option('-m, --message <message>', 'Custom message (auto-generated if not provided)')
   .action(async (options) => {
     try {
-      console.log(chalk.blue("⚡ Quick commit mode"));
-
+      console.log(chalk.blue('⚡ Quick commit mode'));
+      
       if (options.message) {
         console.log(`Using custom message: ${options.message}`);
       } else {
-        console.log("Analyzing changes for smart message...");
+        console.log('Analyzing changes for smart message...');
       }
-
+      
       // Call quickCommit function
-      console.log(chalk.green("✅ Quick commit completed!"));
+      console.log(chalk.green('✅ Quick commit completed!'));
+      
     } catch (error) {
-      console.error(chalk.red("Error:"), error.message);
+      console.error(chalk.red('Error:'), error.message);
       process.exit(1);
     }
   });
@@ -114,93 +112,96 @@ program
   });
 
 program
-  .command("batch")
-  .description("Commit multiple logical groups separately")
+  .command('batch')
+  .description('Commit multiple logical groups separately')
   .action(async () => {
     try {
-      console.log(chalk.blue("📦 Batch commit mode"));
-
+      console.log(chalk.blue('📦 Batch commit mode'));
+      
       // Interactive prompts for grouping files
       const answer = await inquirer.prompt([
         {
-          type: "confirm",
-          name: "proceed",
-          message: "This will interactively group your changes. Continue?",
-          default: true,
-        },
+          type: 'confirm',
+          name: 'proceed',
+          message: 'This will interactively group your changes. Continue?',
+          default: true
+        }
       ]);
-
+      
       if (!answer.proceed) {
-        console.log(chalk.yellow("Cancelled"));
+        console.log(chalk.yellow('Cancelled'));
         return;
       }
-
+      
       // Call batchCommit function
-      console.log(chalk.green("✅ Batch commits completed!"));
+      console.log(chalk.green('✅ Batch commits completed!'));
+      
     } catch (error) {
-      console.error(chalk.red("Error:"), error.message);
+      console.error(chalk.red('Error:'), error.message);
       process.exit(1);
     }
   });
 
 program
-  .command("undo")
-  .description("Undo last commit safely")
-  .option("--hard", "Hard reset (loses changes)")
+  .command('undo')
+  .description('Undo last commit safely')
+  .option('--hard', 'Hard reset (loses changes)')
   .action(async (options) => {
     try {
-      console.log(chalk.yellow("↩️  Undoing last commit..."));
-
+      console.log(chalk.yellow('↩️  Undoing last commit...'));
+      
       if (options.hard) {
         const confirm = await inquirer.prompt([
           {
-            type: "confirm",
-            name: "proceed",
-            message: "This will permanently lose your changes. Continue?",
-            default: false,
-          },
+            type: 'confirm',
+            name: 'proceed',
+            message: 'This will permanently lose your changes. Continue?',
+            default: false
+          }
         ]);
-
+        
         if (!confirm.proceed) {
-          console.log(chalk.yellow("Cancelled"));
+          console.log(chalk.yellow('Cancelled'));
           return;
         }
       }
-
+      
       // Call undoCommit function
-      console.log(chalk.green("✅ Commit undone!"));
+      console.log(chalk.green('✅ Commit undone!'));
+      
     } catch (error) {
-      console.error(chalk.red("Error:"), error.message);
+      console.error(chalk.red('Error:'), error.message);
       process.exit(1);
     }
   });
 
 program
-  .command("squash")
-  .description("Squash multiple commits")
-  .option("-n, --count <number>", "Number of commits to squash", "2")
-  .option("-m, --message <message>", "New commit message")
+  .command('squash')
+  .description('Squash multiple commits')
+  .option('-n, --count <number>', 'Number of commits to squash', '2')
+  .option('-m, --message <message>', 'New commit message')
   .action(async (options) => {
     try {
       const count = parseInt(options.count);
       console.log(chalk.blue(`🔄 Squashing last ${count} commits...`));
-
+      
       if (!options.message) {
         const answer = await inquirer.prompt([
           {
-            type: "input",
-            name: "message",
-            message: "New commit message:",
-            validate: (input) => input.trim().length > 0 || "Message required",
-          },
+            type: 'input',
+            name: 'message',
+            message: 'New commit message:',
+            validate: input => input.trim().length > 0 || 'Message required'
+          }
         ]);
         options.message = answer.message;
       }
-
+      
       // Call squashCommits function
-      console.log(chalk.green("✅ Commits squashed!"));
+      console.log(chalk.green('✅ Commits squashed!'));
+      
     } catch (error) {
-      console.error(chalk.red("Error:"), error.message);
+      console.error(chalk.red('Error:'), error.message);
       process.exit(1);
     }
   });
@@ -286,3 +287,4 @@ if (!process.argv.slice(2).length) {
   console.log("\n");
   program.outputHelp();
 }
+

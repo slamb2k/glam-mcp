@@ -104,6 +104,7 @@ program
         process.exit(1);
       }
     } catch (error) {
+
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);
     }

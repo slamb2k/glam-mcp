@@ -12,6 +12,9 @@ import inquirer from "inquirer";
 // Import banner utility
 import { showBanner, getStyledBanner } from "../src/utils/banner.js";
 
+// Import banner utility
+import { showBanner, getStyledBanner } from '../src/utils/banner.js';
+
 // Import tool functions directly for CLI usage
 import {
   autoCommit,
