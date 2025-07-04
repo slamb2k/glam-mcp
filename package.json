@@ -1,0 +1,65 @@
+{
+  "name": "slambed-mcp",
+  "version": "1.0.0",
+  "description": "Slambed MCP Server - Comprehensive Git Flow Automation with MCP and CLI Support",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "slambed": "./bin/slambed.js",
+    "slam-flow": "./bin/slam-flow.js",
+    "slam-commit": "./bin/slam-commit.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node test/test-runner.js",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write .",
+    "build": "npm run lint && npm run test"
+  },
+  "mcp": {
+    "mcpVersion": "0.1.0",
+    "server": {
+      "command": "node",
+      "args": ["src/index.js"]
+    }
+  },
+  "keywords": [
+    "mcp",
+    "git",
+    "automation",
+    "workflow",
+    "git-flow",
+    "cli",
+    "development",
+    "branching",
+    "pull-requests",
+    "continuous-integration"
+  ],
+  "author": "Claude Code",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "commander": "^11.1.0",
+    "chalk": "^5.3.0",
+    "inquirer": "^9.2.12",
+    "simple-git": "^3.20.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.1.1",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/slambed-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/slambed-mcp/issues"
+  },
+  "homepage": "https://github.com/your-username/slambed-mcp#readme"
+}
