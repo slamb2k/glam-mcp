@@ -487,9 +487,21 @@ async function autoCommit({
     } else if (hasChanges) {
       // Has changes - normal commit workflow
       if (!message) {
-        return createErrorResponse(
-          "Commit message is required when there are changes to commit.",
-        );
+        // Generate AI message when none provided
+        try {
+          const analysis = await analyzeChangesInDepth(
+            changedFiles,
+            currentBranch,
+          );
+          message = analysis.suggestedMessage;
+          steps.push(
+            `Generated AI commit message: "${message}" (confidence: ${analysis.confidence}%)`,
+          );
+        } catch (e) {
+          return createErrorResponse(
+            "Could not generate commit message automatically. Please provide a message.",
+          );
+        }
       }
 
       steps.push(`Found ${changedFiles.length} changed files`);
@@ -697,30 +709,36 @@ async function quickCommit({ message, auto_merge = true, run_format = true }) {
   // Generate message if not provided
   let commitMessage = message;
   if (!commitMessage) {
-    // Smart message generation based on changed files
-    const fileTypes = changedFiles.map((f) => {
-      if (f.file.includes("test")) return "test";
-      if (f.file.includes("doc") || f.file.includes("README")) return "docs";
-      if (f.file.includes("package.json")) return "deps";
-      if (f.file.includes(".github")) return "ci";
-      return "code";
-    });
+    // Use enhanced AI message generation
+    try {
+      const analysis = await analyzeChangesInDepth(changedFiles, currentBranch);
+      commitMessage = analysis.suggestedMessage;
+    } catch (e) {
+      // Fallback to basic message generation
+      const fileTypes = changedFiles.map((f) => {
+        if (f.file.includes("test")) return "test";
+        if (f.file.includes("doc") || f.file.includes("README")) return "docs";
+        if (f.file.includes("package.json")) return "deps";
+        if (f.file.includes(".github")) return "ci";
+        return "code";
+      });
 
-    const primaryType = fileTypes.reduce((a, b, _, arr) =>
-      arr.filter((v) => v === a).length >= arr.filter((v) => v === b).length
-        ? a
-        : b,
-    );
+      const primaryType = fileTypes.reduce((a, b, _, arr) =>
+        arr.filter((v) => v === a).length >= arr.filter((v) => v === b).length
+          ? a
+          : b,
+      );
 
-    const typeMessages = {
-      test: "Update tests",
-      docs: "Update documentation",
-      deps: "Update dependencies",
-      ci: "Update CI configuration",
-      code: `Update ${changedFiles.length} file${changedFiles.length > 1 ? "s" : ""}`,
-    };
+      const typeMessages = {
+        test: "Update tests",
+        docs: "Update documentation",
+        deps: "Update dependencies",
+        ci: "Update CI configuration",
+        code: `Update ${changedFiles.length} file${changedFiles.length > 1 ? "s" : ""}`,
+      };
 
-    commitMessage = typeMessages[primaryType];
+      commitMessage = typeMessages[primaryType];
+    }
   }
 
   // Use auto-commit with smart defaults
@@ -776,149 +794,337 @@ async function smartCommit({ execute = false }) {
   }
 
   try {
-    // Analyze changes
-    const analysis = {
-      totalFiles: changedFiles.length,
-      filesByType: {},
-      suggestedType: "feat",
-      suggestedMessage: "",
-      suggestedBranch: "",
-      confidence: 0,
-    };
-
-    // Categorize files
-    changedFiles.forEach(({ file, status }) => {
-      let category = "other";
-
-      if (
-        file.includes("test") ||
-        file.includes(".test.") ||
-        file.includes(".spec.")
-      ) {
-        category = "test";
-      } else if (
-        file.includes("doc") ||
-        file.includes("README") ||
-        file.includes(".md")
-      ) {
-        category = "docs";
-      } else if (
-        file.includes("package.json") ||
-        file.includes("yarn.lock") ||
-        file.includes("package-lock.json")
-      ) {
-        category = "deps";
-      } else if (
-        file.includes(".github") ||
-        file.includes(".yml") ||
-        file.includes(".yaml")
-      ) {
-        category = "ci";
-      } else if (
-        file.includes("src/") ||
-        file.includes("lib/") ||
-        file.endsWith(".js") ||
-        file.endsWith(".ts")
-      ) {
-        category = "code";
-      } else if (
-        file.includes("style") ||
-        file.includes(".css") ||
-        file.includes(".scss")
-      ) {
-        category = "style";
-      }
-
-      if (!analysis.filesByType[category]) {
-        analysis.filesByType[category] = [];
-      }
-      analysis.filesByType[category].push({ file, status });
-    });
-
-    // Determine primary change type
-    const categories = Object.keys(analysis.filesByType);
-    const primaryCategory = categories.reduce((a, b) =>
-      analysis.filesByType[a].length >= analysis.filesByType[b].length ? a : b,
-    );
-
-    // Generate suggestions based on primary category
-    const suggestions = {
-      test: {
-        type: "test",
-        message: "Add/update tests",
-        branch: "test/",
-        confidence: 0.9,
-      },
-      docs: {
-        type: "docs",
-        message: "Update documentation",
-        branch: "docs/",
-        confidence: 0.9,
-      },
-      deps: {
-        type: "chore",
-        message: "Update dependencies",
-        branch: "chore/",
-        confidence: 0.95,
-      },
-      ci: {
-        type: "ci",
-        message: "Update CI configuration",
-        branch: "ci/",
-        confidence: 0.9,
-      },
-      style: {
-        type: "style",
-        message: "Update styles and formatting",
-        branch: "style/",
-        confidence: 0.8,
-      },
-      code: {
-        type: "feat",
-        message: "Add new feature",
-        branch: "feature/",
-        confidence: 0.7,
-      },
-      other: {
-        type: "chore",
-        message: "Update project files",
-        branch: "chore/",
-        confidence: 0.6,
-      },
-    };
-
-    const suggestion = suggestions[primaryCategory] || suggestions.other;
-    analysis.suggestedType = suggestion.type;
-    analysis.suggestedMessage = suggestion.message;
-    analysis.suggestedBranch = suggestion.branch;
-    analysis.confidence = suggestion.confidence;
-
-    // Add more specific suggestions
-    if (categories.length > 1) {
-      analysis.suggestedMessage = `${suggestion.message} and other changes`;
-      analysis.confidence -= 0.1;
-    }
-
-    const result = {
-      analysis,
-      recommendations: [
-        `${analysis.suggestedType}: ${analysis.suggestedMessage}`,
-        `Use branch prefix: ${analysis.suggestedBranch}`,
-        `Confidence: ${Math.round(analysis.confidence * 100)}%`,
-      ],
-    };
+    // Enhanced analysis with diff parsing
+    const analysis = await analyzeChangesInDepth(changedFiles, currentBranch);
 
     if (execute) {
-      // Execute the auto-commit with suggested parameters
       return autoCommit({
-        message: `${analysis.suggestedType}: ${analysis.suggestedMessage}`,
-        branch_prefix: analysis.suggestedBranch,
+        message: analysis.suggestedMessage,
+        auto_merge: false, // Don't auto-merge for smart commits
+        run_format: true,
+        run_lint: true,
       });
     }
 
-    return createSuccessResponse("Change analysis completed", result);
+    return createSuccessResponse("Smart commit analysis completed", {
+      analysis,
+      recommendation: generateRecommendation(analysis),
+    });
   } catch (error) {
-    return createErrorResponse(`Analysis failed: ${error.message}`);
+    return createErrorResponse(
+      `Smart commit analysis failed: ${error.message}`,
+    );
+  }
+}
+
+/**
+ * Enhanced analysis engine with diff parsing and semantic understanding
+ */
+async function analyzeChangesInDepth(changedFiles, currentBranch) {
+  const analysis = {
+    totalFiles: changedFiles.length,
+    filesByType: {},
+    changeTypes: {},
+    suggestedType: "feat",
+    suggestedMessage: "",
+    suggestedBranch: "",
+    confidence: 0,
+    breakingChanges: false,
+    scope: "",
+    description: "",
+  };
+
+  // Get actual diff content for better analysis
+  let diffContent = "";
+  try {
+    diffContent = execGitCommand("git diff --cached HEAD", { silent: true });
+    if (!diffContent) {
+      diffContent = execGitCommand("git diff HEAD~1", { silent: true });
+    }
+  } catch (e) {
+    // Fallback to file-based analysis
+  }
+
+  // Categorize files and analyze changes
+  changedFiles.forEach(({ file, status }) => {
+    const category = categorizeFile(file);
+    analysis.filesByType[category] = (analysis.filesByType[category] || 0) + 1;
+
+    // Track change types
+    analysis.changeTypes[status] = (analysis.changeTypes[status] || 0) + 1;
+  });
+
+  // Analyze diff content for semantic understanding
+  if (diffContent) {
+    const diffAnalysis = analyzeDiffContent(diffContent);
+    analysis.breakingChanges = diffAnalysis.breakingChanges;
+    analysis.scope = diffAnalysis.scope;
+    analysis.description = diffAnalysis.description;
+  }
+
+  // Determine primary change type and generate message
+  const primaryCategory = getPrimaryCategory(analysis.filesByType);
+  const messageData = generateSmartMessage(
+    analysis,
+    primaryCategory,
+    currentBranch,
+  );
+
+  analysis.suggestedType = messageData.type;
+  analysis.suggestedMessage = messageData.message;
+  analysis.suggestedBranch = messageData.branch;
+  analysis.confidence = messageData.confidence;
+
+  return analysis;
+}
+
+/**
+ * Categorize a file based on its path and extension
+ */
+function categorizeFile(file) {
+  if (
+    file.includes("test") ||
+    file.includes(".test.") ||
+    file.includes(".spec.") ||
+    file.includes("__tests__")
+  ) {
+    return "test";
+  } else if (
+    file.includes("doc") ||
+    file.includes("README") ||
+    file.endsWith(".md")
+  ) {
+    return "docs";
+  } else if (
+    file.includes("package.json") ||
+    file.includes("yarn.lock") ||
+    file.includes("package-lock.json") ||
+    file.includes("requirements.txt") ||
+    file.includes("Gemfile")
+  ) {
+    return "deps";
+  } else if (
+    file.includes(".github") ||
+    file.endsWith(".yml") ||
+    file.endsWith(".yaml") ||
+    file.includes("docker") ||
+    file.includes("ci") ||
+    file.includes("cd")
+  ) {
+    return "ci";
+  } else if (
+    file.endsWith(".css") ||
+    file.endsWith(".scss") ||
+    file.endsWith(".sass") ||
+    file.endsWith(".less") ||
+    file.includes("style")
+  ) {
+    return "style";
+  } else if (
+    file.includes("config") ||
+    file.endsWith(".config.js") ||
+    file.endsWith(".json") ||
+    file.endsWith(".env")
+  ) {
+    return "config";
+  } else if (
+    file.endsWith(".js") ||
+    file.endsWith(".ts") ||
+    file.endsWith(".tsx") ||
+    file.endsWith(".jsx") ||
+    file.endsWith(".py") ||
+    file.endsWith(".rb") ||
+    file.endsWith(".go") ||
+    file.endsWith(".rs")
+  ) {
+    return "code";
+  }
+
+  return "other";
+}
+
+/**
+ * Analyze diff content for semantic patterns
+ */
+function analyzeDiffContent(diffContent) {
+  const analysis = {
+    breakingChanges: false,
+    scope: "",
+    description: "",
+  };
+
+  // Detect breaking changes
+  if (
+    diffContent.includes("BREAKING CHANGE") ||
+    diffContent.includes("breaking:") ||
+    diffContent.includes("major:") ||
+    diffContent.match(/^-.*export\s+(default\s+)?function/) ||
+    diffContent.match(/^-.*export\s+(default\s+)?class/)
+  ) {
+    analysis.breakingChanges = true;
+  }
+
+  // Extract scope from file paths
+  const scopeMatch = diffContent.match(/diff --git a\/([^\/]+)/);
+  if (scopeMatch) {
+    analysis.scope = scopeMatch[1];
+  }
+
+  // Analyze change patterns
+  const addedLines = diffContent
+    .split("\n")
+    .filter((line) => line.startsWith("+")).length;
+  const removedLines = diffContent
+    .split("\n")
+    .filter((line) => line.startsWith("-")).length;
+
+  if (addedLines > removedLines * 2) {
+    analysis.description = "substantial additions";
+  } else if (removedLines > addedLines * 2) {
+    analysis.description = "significant removals";
+  } else {
+    analysis.description = "modifications";
+  }
+
+  return analysis;
+}
+
+/**
+ * Get the primary category of changes
+ */
+function getPrimaryCategory(filesByType) {
+  const categories = Object.keys(filesByType);
+  if (categories.length === 0) return "other";
+
+  return categories.reduce((a, b) =>
+    filesByType[a] >= filesByType[b] ? a : b,
+  );
+}
+
+/**
+ * Generate smart commit message based on analysis
+ */
+function generateSmartMessage(analysis, primaryCategory, currentBranch) {
+  const suggestions = {
+    test: {
+      type: "test",
+      message: "Add/update tests",
+      branch: "test/",
+      confidence: 90,
+    },
+    docs: {
+      type: "docs",
+      message: "Update documentation",
+      branch: "docs/",
+      confidence: 95,
+    },
+    deps: {
+      type: "chore",
+      message: "Update dependencies",
+      branch: "chore/",
+      confidence: 95,
+    },
+    ci: {
+      type: "ci",
+      message: "Update CI configuration",
+      branch: "ci/",
+      confidence: 90,
+    },
+    style: {
+      type: "style",
+      message: "Update styles and formatting",
+      branch: "style/",
+      confidence: 85,
+    },
+    config: {
+      type: "chore",
+      message: "Update configuration",
+      branch: "chore/",
+      confidence: 85,
+    },
+    code: {
+      type: "feat",
+      message: "Add new functionality",
+      branch: "feature/",
+      confidence: 70,
+    },
+    other: {
+      type: "chore",
+      message: "Update project files",
+      branch: "chore/",
+      confidence: 60,
+    },
+  };
+
+  const suggestion = suggestions[primaryCategory] || suggestions.other;
+
+  // Enhance message based on analysis details
+  if (analysis.breakingChanges) {
+    suggestion.type = suggestion.type + "!";
+    suggestion.message = "BREAKING: " + suggestion.message;
+    suggestion.confidence = Math.max(suggestion.confidence, 85);
+  }
+
+  // Format as conventional commit
+  const baseMessage = suggestion.message
+    .toLowerCase()
+    .replace(/^(feat|fix|docs|style|refactor|test|chore|ci):?\s*/, "");
+
+  if (analysis.scope && analysis.scope !== ".") {
+    suggestion.message = `${suggestion.type}(${analysis.scope}): ${baseMessage}`;
+  } else {
+    suggestion.message = `${suggestion.type}: ${baseMessage}`;
+  }
+
+  // Enhance based on file count and types
+  if (analysis.totalFiles === 1) {
+    const singleFileCategories = {
+      test: "add test",
+      docs: "update README",
+      deps: "update package.json",
+      ci: "update workflow",
+      config: "update config",
+    };
+
+    if (singleFileCategories[primaryCategory]) {
+      suggestion.message = `${suggestion.type}: ${singleFileCategories[primaryCategory]}`;
+      suggestion.confidence += 10;
+    }
+  } else if (analysis.totalFiles > 10) {
+    suggestion.message = suggestion.message.replace(
+      "Update",
+      "Major update to",
+    );
+    suggestion.confidence -= 5;
+  }
+
+  // Branch name enhancement based on current branch
+  if (currentBranch && currentBranch !== "main" && currentBranch !== "master") {
+    const branchName = currentBranch.split("/").slice(1).join("/");
+
+    if (branchName) {
+      suggestion.message = `${suggestion.type}: ${branchName.replace(/-/g, " ")}`;
+      suggestion.confidence += 15;
+    }
+  }
+
+  return suggestion;
+}
+
+/**
+ * Generate recommendation text based on analysis
+ */
+function generateRecommendation(analysis) {
+  const confidence = analysis.confidence;
+
+  if (confidence >= 90) {
+    return "High confidence suggestion. This message accurately reflects your changes.";
+  } else if (confidence >= 75) {
+    return "Good suggestion based on file patterns. You might want to refine the description.";
+  } else if (confidence >= 60) {
+    return "Basic suggestion. Consider providing a more specific commit message for better clarity.";
+  } else {
+    return "Low confidence suggestion. A manual commit message would be more accurate.";
   }
 }
 

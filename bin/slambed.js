@@ -81,7 +81,7 @@ automationCmd
   .option("-t, --target <branch>", "Target branch", "main")
   .action(async (options) => {
     try {
-      // Check if we need a message (only prompt if we have changes to commit)
+      // Check if we need a message (auto-generate with AI by default)
       if (!options.message) {
         // Import git helpers to check current state
         const { getCurrentBranch, getMainBranch, getChangedFiles } =
@@ -90,30 +90,32 @@ automationCmd
         const mainBranch = getMainBranch();
         const changedFiles = getChangedFiles();
 
-        // Only require message if we have changes or we're on main branch
-        if (changedFiles.length > 0 || currentBranch === mainBranch) {
+        // Only prompt for message if user wants to override AI generation
+        const shouldPrompt = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "useAI",
+            message: `AI will generate a smart commit message${changedFiles.length > 0 ? ` for ${changedFiles.length} changed files` : ` for ${currentBranch} branch`}. Use AI-generated message?`,
+            default: true,
+          },
+        ]);
+
+        if (!shouldPrompt.useAI) {
+          // User wants to provide their own message
           const answer = await inquirer.prompt([
             {
               type: "input",
               name: "message",
-              message: "Commit message:",
+              message:
+                changedFiles.length > 0 ? "Commit message:" : "PR message:",
               validate: (input) =>
-                input.trim().length > 0 || "Message required",
+                input.trim().length > 0 ||
+                "Message required when not using AI generation",
             },
           ]);
           options.message = answer.message;
-        } else {
-          // On feature branch with no changes - message is optional
-          const answer = await inquirer.prompt([
-            {
-              type: "input",
-              name: "message",
-              message: "PR message (optional, will use branch name if empty):",
-            },
-          ]);
-          options.message =
-            answer.message || `Push changes from ${currentBranch}`;
         }
+        // If options.message is still undefined, autoCommit will generate AI message
       }
 
       const result = await autoCommit({
@@ -649,15 +651,28 @@ program
       // Handle the selected operation
       switch (operation) {
         case "auto-commit":
-          const { message } = await inquirer.prompt([
+          const useAI = await inquirer.prompt([
             {
-              type: "input",
-              name: "message",
-              message: "Commit message:",
-              validate: (input) =>
-                input.trim().length > 0 || "Message required",
+              type: "confirm",
+              name: "useAI",
+              message: "Use AI-generated smart commit message?",
+              default: true,
             },
           ]);
+
+          let message;
+          if (!useAI.useAI) {
+            const messagePrompt = await inquirer.prompt([
+              {
+                type: "input",
+                name: "message",
+                message: "Commit message:",
+                validate: (input) =>
+                  input.trim().length > 0 || "Message required",
+              },
+            ]);
+            message = messagePrompt.message;
+          }
 
           const result = await autoCommit({ message });
           console.log(
