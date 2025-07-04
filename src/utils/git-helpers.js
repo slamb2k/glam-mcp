@@ -126,7 +126,7 @@ export function hasScript(scriptName) {
       return false;
     }
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-    return packageJson.scripts && packageJson.scripts[scriptName];
+    return !!(packageJson.scripts && packageJson.scripts[scriptName]);
   } catch (error) {
     return false;
   }

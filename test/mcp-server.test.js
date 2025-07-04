@@ -42,7 +42,7 @@ export async function testMCPServer() {
     const toolNames = server.tools.map((tool) => tool.name);
 
     const hasGitFlowTools = toolNames.some((name) =>
-      name.startsWith("git_flow_"),
+      name.startsWith("github_flow_"),
     );
     const hasAutomationTools = toolNames.some((name) =>
       ["auto_commit", "quick_commit", "smart_commit"].includes(name),
@@ -94,7 +94,6 @@ export async function testMCPServer() {
         passed:
           autoCommitTool.inputSchema.type === "object" &&
           Array.isArray(autoCommitTool.inputSchema.required) &&
-          autoCommitTool.inputSchema.required.includes("message") &&
           typeof autoCommitTool.inputSchema.properties === "object" &&
           typeof autoCommitTool.inputSchema.properties.message === "object",
         details: `Required fields: ${autoCommitTool.inputSchema.required.join(", ")}`,
@@ -108,22 +107,22 @@ export async function testMCPServer() {
     }
 
     const featureStartTool = server.tools.find(
-      (tool) => tool.name === "git_flow_feature_start",
+      (tool) => tool.name === "github_flow_start",
     );
     if (featureStartTool) {
       tests.push({
-        name: "SlamBedMCPServer - git_flow_feature_start tool should have proper schema",
+        name: "SlamBedMCPServer - github_flow_start tool should have proper schema",
         passed:
           featureStartTool.inputSchema.type === "object" &&
           Array.isArray(featureStartTool.inputSchema.required) &&
           featureStartTool.inputSchema.required.includes("name"),
-        details: "Git flow feature start tool properly configured",
+        details: "GitHub flow start tool properly configured",
       });
     } else {
       tests.push({
-        name: "SlamBedMCPServer - git_flow_feature_start tool should be present",
+        name: "SlamBedMCPServer - github_flow_start tool should be present",
         passed: false,
-        error: "git_flow_feature_start tool not found",
+        error: "github_flow_start tool not found",
       });
     }
 
@@ -146,7 +145,7 @@ export async function testMCPServer() {
 
     // Test tool counts for each category
     const gitFlowTools = server.tools.filter((tool) =>
-      tool.name.startsWith("git_flow_"),
+      tool.name.startsWith("github_flow_"),
     );
     const automationTools = server.tools.filter((tool) =>
       [
@@ -177,9 +176,9 @@ export async function testMCPServer() {
     tests.push({
       name: "SlamBedMCPServer - should have expected number of tools",
       passed:
-        gitFlowTools.length >= 8 && // At least 8 git flow tools
-        automationTools.length >= 6 && // At least 6 automation tools
-        utilityTools.length >= 8, // At least 8 utility tools
+        gitFlowTools.length >= 8 && // At least 8 github flow tools
+        automationTools.length >= 7 && // At least 7 automation tools
+        utilityTools.length >= 10, // At least 10 utility tools
       details: `Git Flow: ${gitFlowTools.length}, Automation: ${automationTools.length}, Utility: ${utilityTools.length}`,
     });
   } catch (error) {

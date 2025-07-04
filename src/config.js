@@ -355,7 +355,7 @@ export class ConfigManager {
   getToolConfig(toolName) {
     const toolConfigs = {
       "auto-commit": {
-        autoMerge: this.get("automation.autoMerge"),
+        autoMerge: this.get("gitFlow.autoMerge"),
         runFormat: this.get("automation.runFormat"),
         runLint: this.get("automation.runLint"),
         targetBranch: this.get("gitFlow.targetBranch"),
