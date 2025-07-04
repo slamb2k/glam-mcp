@@ -9,12 +9,24 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 
+// Import banner utility
+import { showBanner, getStyledBanner } from '../src/utils/banner.js';
+
 // Import tool functions directly for CLI usage
 import { autoCommit, quickCommit, smartCommit, syncBranch, squashCommits, undoCommit, batchCommit } from '../src/tools/automation.js';
 import { startFeature, finishFeature, startRelease, finishRelease, startHotfix, finishHotfix, createPullRequest, mergePullRequest, cleanBranches, getGitFlowStatus } from '../src/tools/git-flow.js';
 import { getRepoInfo, analyzeChanges, listBranches, getCommitHistory, getFileStatus, showDiff, searchCode, tagOperations, stashOperations, repoHealthCheck } from '../src/tools/utilities.js';
 
 const program = new Command();
+
+// Show banner for specific commands
+program
+  .hook('preAction', (thisCommand) => {
+    if (thisCommand.args[0] !== 'help') {
+      showBanner({ compact: true });
+      console.log(''); // Add spacing
+    }
+  });
 
 program
   .name('slambed')
@@ -369,10 +381,13 @@ program
     }
   });
 
-// Parse command line arguments
-program.parse();
-
 // Show help if no command provided
 if (!process.argv.slice(2).length) {
+  showBanner();
+  console.log(''); // Add spacing after banner
   program.outputHelp();
+  process.exit(0);
 }
+
+// Parse command line arguments
+program.parse();

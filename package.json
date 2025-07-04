@@ -6,8 +6,8 @@
   "type": "module",
   "bin": {
     "slambed": "./bin/slambed.js",
-    "slam-flow": "./bin/slam-flow.js",
-    "slam-commit": "./bin/slam-commit.js"
+    "slamb-flow": "./bin/slamb-flow.js",
+    "slamb-commit": "./bin/slamb-commit.js"
   },
   "scripts": {
     "start": "node src/index.js",

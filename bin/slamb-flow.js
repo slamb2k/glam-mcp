@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Slam Flow CLI
+ * Slamb Flow CLI
  * Traditional git-flow operations
  */
 
@@ -9,14 +9,24 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 
+// Import banner utility
+import { showBanner, getStyledBanner } from '../src/utils/banner.js';
+
 // Import git-flow functions (we'll need to adjust these imports)
 import '../src/tools/git-flow.js';
 
 const program = new Command();
 
+// Show banner before commands
 program
-  .name('slam-flow')
-  .description('Traditional Git Flow Operations')
+  .hook('preAction', () => {
+    showBanner({ compact: true });
+    console.log(''); // Add spacing
+  });
+
+program
+  .name('slamb-flow')
+  .description('Traditional Git Flow Operations - Git workflows that pack a punch!')
   .version('1.0.0');
 
 program
@@ -167,5 +177,7 @@ program.parse();
 
 // Show help if no command provided
 if (!process.argv.slice(2).length) {
+  showBanner();
+  console.log('\n');
   program.outputHelp();
 }

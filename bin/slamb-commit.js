@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Slam Commit CLI
+ * Slamb Commit CLI
  * Automation-focused commit operations
  */
 
@@ -9,11 +9,21 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 
+// Import banner utility
+import { showBanner, getStyledBanner } from '../src/utils/banner.js';
+
 const program = new Command();
 
+// Show banner before commands
 program
-  .name('slam-commit')
-  .description('Automated Commit Operations')
+  .hook('preAction', () => {
+    showBanner({ compact: true });
+    console.log(''); // Add spacing
+  });
+
+program
+  .name('slamb-commit')
+  .description('Automated Commit Operations - Git workflows that pack a punch!')
   .version('1.0.0');
 
 program
@@ -220,5 +230,7 @@ program.parse();
 
 // Show help if no command provided
 if (!process.argv.slice(2).length) {
+  showBanner();
+  console.log('\n');
   program.outputHelp();
 }
