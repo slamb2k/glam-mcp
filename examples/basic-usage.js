@@ -6,9 +6,11 @@
 
 import { SlamBedMCPServer } from '../src/index.js';
 import { config } from '../src/config.js';
+import { showBanner } from '../src/utils/banner.js';
 
 async function basicMCPExample() {
-  console.log('🚀 Basic MCP Server Example');
+  showBanner();
+  console.log('\n🚀 Basic MCP Server Example');
   console.log('===========================');
   
   // Create and start MCP server
@@ -94,8 +96,8 @@ async function integrationExample() {
   console.log('\nCLI Integration:');
   console.log('Available commands:');
   console.log('- slambed (main CLI)');
-  console.log('- slam-commit (automation focus)');
-  console.log('- slam-flow (git-flow focus)');
+  console.log('- slamb-commit (automation focus)');
+  console.log('- slamb-flow (git-flow focus)');
 }
 
 async function customizationExample() {
