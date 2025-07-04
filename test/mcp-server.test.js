@@ -52,9 +52,9 @@ export async function testMCPServer() {
     );
 
     tests.push({
-      name: "SlamBedMCPServer - should have git flow tools",
+      name: "SlamBedMCPServer - should have GitHub Flow tools",
       passed: hasGitFlowTools,
-      details: `Git flow tools present: ${hasGitFlowTools}`,
+      details: `GitHub Flow tools present: ${hasGitFlowTools}`,
     });
 
     tests.push({
@@ -179,7 +179,7 @@ export async function testMCPServer() {
         gitFlowTools.length >= 8 && // At least 8 github flow tools
         automationTools.length >= 7 && // At least 7 automation tools
         utilityTools.length >= 10, // At least 10 utility tools
-      details: `Git Flow: ${gitFlowTools.length}, Automation: ${automationTools.length}, Utility: ${utilityTools.length}`,
+      details: `GitHub Flow: ${gitFlowTools.length}, Automation: ${automationTools.length}, Utility: ${utilityTools.length}`,
     });
   } catch (error) {
     tests.push({

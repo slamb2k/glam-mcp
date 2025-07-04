@@ -662,7 +662,7 @@ ${message || "Push existing branch changes for review"}
     }
 
     return createSuccessResponse(
-      "Git flow automation completed successfully!",
+      "GitHub Flow automation completed successfully!",
       {
         branch: branchName,
         targetBranch: target_branch,
@@ -675,7 +675,9 @@ ${message || "Push existing branch changes for review"}
       },
     );
   } catch (error) {
-    return createErrorResponse(`Git flow automation failed: ${error.message}`);
+    return createErrorResponse(
+      `GitHub Flow automation failed: ${error.message}`,
+    );
   }
 }
 

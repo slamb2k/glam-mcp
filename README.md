@@ -14,7 +14,7 @@
 ║⠀⠀  ⠀⠀⠈⠉⠛⠛⠛⠒⠀⠈⠉⠁⠸⠿⠿⠿⠃⠾⠿⠟⠋⠀⠀⠀⠀⠀                                                                         ║
 ║                                                                                                                ║
 ║                                                                                                                ║
-║                                   🚀 Git Flow Automation & MCP Server 🚀                                      ║
+║                                  🚀 GitHub Flow Automation & MCP Server 🚀                                     ║
 ║                                                                                                                ║
 ║                                     Git workflows that pack a punch! ✊                                        ║
 ║                                                                                                                ║
@@ -50,7 +50,7 @@ slambed auto commit -m "Add user authentication"
 # Automation-focused CLI
 slamb-commit auto -m "Fix login bug"
 
-# Git flow-focused CLI
+# GitHub Flow-focused CLI
 slamb-flow feature start user-profile
 ```
 

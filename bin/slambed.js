@@ -2,7 +2,7 @@
 
 /**
  * Main Slambed CLI
- * Unified interface for all git flow operations
+ * Unified interface for all GitHub Flow operations
  */
 
 import { Command } from "commander";
