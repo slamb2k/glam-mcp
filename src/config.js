@@ -25,6 +25,9 @@ const DEFAULT_CONFIG = {
     autoMerge: true,
     deleteBranch: true,
     targetBranch: "main",
+    branchStrategy: "auto", // auto | auto-fresh | reuse-with-check | always-reuse
+    autoCleanupMerged: false, // Automatically cleanup merged branches before creating new ones
+    warnOnMergedBranch: true, // Show warnings when working on merged branches
   },
 
   // Automation settings
@@ -382,6 +385,9 @@ export class ConfigManager {
 
 // Export singleton instance
 export const config = new ConfigManager();
+
+// Export convenience function
+export const getConfig = () => config.getAll();
 
 // Export default configuration for reference
 export { DEFAULT_CONFIG };
