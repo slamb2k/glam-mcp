@@ -824,6 +824,56 @@ utilCmd
     }
   });
 
+// Add protection command to main program (not under util)
+program
+  .command("protection <operation>")
+  .description("Manage GitHub branch protection rules")
+  .option("-b, --branch <branch>", "Branch to protect", "main")
+  .option("--no-pr-reviews", "Don't require PR reviews")
+  .option("--no-status-checks", "Don't require status checks")
+  .option("--no-strict", "Don't require branches to be up-to-date")
+  .option("-c, --contexts <contexts...>", "Required status check contexts", [
+    "lint",
+    "test",
+    "build",
+  ])
+  .option("-a, --approvals <count>", "Required approving reviews", "0")
+  .option("--enforce-admins", "Apply rules to administrators")
+  .option("--allow-force-pushes", "Allow force pushes")
+  .option("--allow-deletions", "Allow branch deletion")
+  .action(async (operation, options) => {
+    try {
+      const { branchProtection } = await import("../src/tools/utilities.js");
+
+      const result = await branchProtection({
+        operation,
+        branch: options.branch,
+        require_pr_reviews: options.prReviews,
+        require_status_checks: options.statusChecks,
+        strict_status_checks: options.strict,
+        status_check_contexts: options.contexts,
+        required_approving_review_count: parseInt(options.approvals),
+        enforce_admins: options.enforceAdmins,
+        allow_force_pushes: options.allowForcePushes,
+        allow_deletions: options.allowDeletions,
+      });
+
+      if (result.success) {
+        console.log(chalk.green(`✓ ${result.message}`));
+        if (result.data && result.data.steps) {
+          result.data.steps.forEach((step) =>
+            console.log(chalk.gray(`  ${step}`)),
+          );
+        }
+      } else {
+        console.error(chalk.red(`✗ ${result.message}`));
+      }
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
 // Interactive mode
 program
   .command("interactive")

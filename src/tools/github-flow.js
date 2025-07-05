@@ -317,6 +317,15 @@ async function startBranch(name, type, allow_outdated_base) {
               `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
           );
         }
+      } else if (
+        updateResult.divergence.ahead > 0 &&
+        updateResult.divergence.behind > 0
+      ) {
+        // Diverged - always fail regardless of config
+        return createErrorResponse(
+          `Cannot start new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
+            `Please resolve the divergence manually before creating new branches.`,
+        );
       } else if (updateResult.divergence.behind > 0) {
         // Behind but update failed (uncommitted changes on main?)
         if (config.gitFlow.allowOutdatedBase) {
@@ -329,15 +338,6 @@ async function startBranch(name, type, allow_outdated_base) {
               `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
           );
         }
-      } else if (
-        updateResult.divergence.ahead > 0 &&
-        updateResult.divergence.behind > 0
-      ) {
-        // Diverged - always fail regardless of config
-        return createErrorResponse(
-          `Cannot start new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
-            `Please resolve the divergence manually before creating new branches.`,
-        );
       }
     }
 
