@@ -68,6 +68,7 @@ automationCmd
   .option("--no-format", "Skip formatting")
   .option("--no-lint", "Skip linting")
   .option("-t, --target <branch>", "Target branch", "main")
+  .option("--branch-strategy <strategy>", "Strategy for stale branches: auto, rebase, new", "auto")
   .action(async (options) => {
     try {
       // Check if we need a message (auto-generate with AI by default)
@@ -113,6 +114,7 @@ automationCmd
         run_format: options.format,
         run_lint: options.lint,
         target_branch: options.target,
+        branch_strategy: options.branchStrategy,
       });
 
       console.log(
