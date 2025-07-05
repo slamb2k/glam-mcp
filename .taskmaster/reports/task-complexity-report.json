@@ -1,0 +1,173 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-05T14:59:50.386Z",
+		"tasksAnalyzed": 20,
+		"totalTasks": 20,
+		"analysisCount": 20,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Set up project structure and dependencies",
+			"complexityScore": 3,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down the project setup process into detailed steps, including specific commands and configurations for each dependency.",
+			"reasoning": "This task is relatively straightforward but involves multiple steps. The complexity is low as it's a common setup process for Node.js projects."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Context Engine foundation",
+			"complexityScore": 7,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Detail the implementation of each Context Engine function, including data structures and algorithms for efficient context tracking and querying.",
+			"reasoning": "This task involves complex real-time tracking and caching mechanisms, requiring careful design and implementation of multiple interconnected components."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Build Intent Resolution Layer",
+			"complexityScore": 8,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Elaborate on the NLP techniques and algorithms needed for accurate intent resolution, including the integration with advanced AI models.",
+			"reasoning": "Natural language processing and intent resolution are complex tasks, especially when dealing with ambiguity and integrating advanced AI models."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Create basic 'slam' natural language tool",
+			"complexityScore": 6,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Detail the implementation of the 'slam' function, including its interaction with other components and error handling mechanisms.",
+			"reasoning": "While building on existing components, this task requires careful integration and robust error handling to create a user-friendly interface."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Set up state management with SQLite",
+			"complexityScore": 5,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Provide a detailed database schema design and implementation plan for each data type, including optimization strategies.",
+			"reasoning": "Setting up a database system is moderately complex, involving schema design, query optimization, and ensuring data integrity across multiple sessions."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement 'slam_develop' workflow tool",
+			"complexityScore": 7,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "Break down each development task into detailed steps, including error handling and integration with external systems like CI/CD.",
+			"reasoning": "This task involves complex workflow management and integration with multiple external systems, requiring careful coordination and error handling."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Create 'slam_ship' deployment tool",
+			"complexityScore": 8,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Detail the implementation of each deployment strategy, including rollback mechanisms and security considerations for handling sensitive data.",
+			"reasoning": "Deployment tools involve complex operations with critical security implications. Integration with multiple CI/CD platforms and container orchestration adds to the complexity."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Build Workflow Orchestrator",
+			"complexityScore": 9,
+			"recommendedSubtasks": 12,
+			"expansionPrompt": "Elaborate on the design of the workflow definition language and the implementation of parallel execution and error recovery mechanisms.",
+			"reasoning": "Creating a flexible and robust workflow orchestration system is highly complex, involving concurrent execution, state management, and error recovery across multiple steps."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Integrate with existing git-helpers",
+			"complexityScore": 5,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Detail the process of analyzing existing git-helpers and creating a compatibility layer, including specific refactoring steps.",
+			"reasoning": "While not introducing new functionality, this task requires careful analysis and refactoring of existing code to ensure smooth integration and backward compatibility."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Implement AI-powered commit messages",
+			"complexityScore": 7,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Detail the implementation of the diff analysis system and the prompt engineering process for generating effective commit messages.",
+			"reasoning": "This task involves complex integration with AI services, requiring careful prompt engineering and fallback mechanisms to ensure reliability."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Implement predictive suggestions",
+			"complexityScore": 9,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Elaborate on the machine learning model design, feature engineering process, and the implementation of the training pipeline.",
+			"reasoning": "Implementing a machine learning system for predictive suggestions is highly complex, involving data processing, model training, and real-time inference."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Create 'slam_context' rich context tool",
+			"complexityScore": 7,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Detail the implementation of context gathering from various sources and the algorithms for context summarization and diffing.",
+			"reasoning": "This task requires integration with multiple data sources and the implementation of complex algorithms for data analysis and visualization."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Build learning system foundation",
+			"complexityScore": 8,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "Elaborate on the design of the data collection pipeline, feature extraction system, and the implementation of machine learning algorithms.",
+			"reasoning": "Creating a foundation for a learning system involves complex data processing, storage, and machine learning implementations, with additional complexity from privacy considerations."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Implement 'slam_collaborate' team features",
+			"complexityScore": 8,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Detail the implementation of real-time collaboration features, including conflict prevention and pair programming functionality.",
+			"reasoning": "Implementing real-time collaboration features is complex, involving concurrent operations, conflict resolution, and integration with multiple external services."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Implement 'slam_recover' time machine",
+			"complexityScore": 8,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "Elaborate on the design of the action history tracking system and the implementation of state reversion and conflict resolution mechanisms.",
+			"reasoning": "Creating a robust time machine feature involves complex state management, diff algorithms, and conflict resolution, requiring careful design and implementation."
+		},
+		{
+			"taskId": 16,
+			"taskTitle": "Add 'slam_learn' personalization",
+			"complexityScore": 7,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Detail the implementation of user profiles, personalized suggestion algorithms, and the feedback system for improving suggestions.",
+			"reasoning": "Implementing personalization features involves complex data analysis and machine learning techniques, with additional considerations for privacy and cross-device synchronization."
+		},
+		{
+			"taskId": 17,
+			"taskTitle": "Create visual interfaces (TUI/Web)",
+			"complexityScore": 8,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Break down the implementation of both TUI and web interfaces, including the design of RESTful APIs and real-time update mechanisms.",
+			"reasoning": "Creating multiple user interfaces with real-time updates and visualizations is complex, involving frontend and backend development with various technologies."
+		},
+		{
+			"taskId": 18,
+			"taskTitle": "Build IDE integrations",
+			"complexityScore": 8,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "Detail the implementation of each IDE integration, including the design of the common core library and context-aware code suggestions.",
+			"reasoning": "Developing extensions for multiple IDEs is complex, requiring knowledge of different extension APIs and careful design of a shared core library."
+		},
+		{
+			"taskId": 19,
+			"taskTitle": "Implement backward compatibility layer",
+			"complexityScore": 6,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Elaborate on the mapping process between old and new commands, and detail the implementation of the command routing system.",
+			"reasoning": "While not introducing new functionality, ensuring backward compatibility requires careful analysis and implementation to handle various command structures and provide a smooth transition."
+		},
+		{
+			"taskId": 20,
+			"taskTitle": "Implement security measures and audit logging",
+			"complexityScore": 9,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Detail the implementation of each security measure, including the design of the audit logging system and the RBAC mechanism.",
+			"reasoning": "Implementing comprehensive security measures is highly complex, involving various aspects of system security, cryptography, and compliance with best practices."
+		}
+	]
+}

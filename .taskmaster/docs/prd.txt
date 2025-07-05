@@ -1,0 +1,183 @@
+# Slambed MCP Transformation - Product Requirements Document
+
+## Project Overview
+Transform Slambed from a CLI-focused tool with 32 low-level commands into an MCP-first solution with semantic, intent-based tools that understand natural language and automate complex git workflows.
+
+## Problem Statement
+Current Slambed has:
+- 31 tools across 3 CLI interfaces causing command overload
+- Context switching between git, GitHub, npm operations
+- Steep learning curve for new developers
+- Repetitive manual tasks
+- No intelligent automation or natural language understanding
+
+## Solution Overview
+Create an MCP-focused architecture with 5-7 high-level semantic tools that:
+- Accept natural language commands ("implement user auth", "ship it")
+- Understand context and predict developer intent
+- Automate multi-step workflows
+- Learn from user patterns
+- Provide rich feedback for AI clients
+
+## Core Requirements
+
+### 1. MCP Semantic Tools
+- Universal 'slam' tool for natural language commands
+- 'slam_develop' for feature development workflows
+- 'slam_ship' for deployment pipelines
+- 'slam_collaborate' for team synchronization
+- 'slam_context' for rich context provision
+- 'slam_recover' for undo/recovery operations
+- 'slam_learn' for personalization
+
+### 2. Context Engine
+- Track git state, branches, commits, conflicts
+- Monitor project structure and dependencies
+- Maintain team activity awareness
+- Analyze user patterns and preferences
+- Provide temporal context (deadlines, schedules)
+
+### 3. Intent Resolution Layer
+- Parse natural language into structured intents
+- Map user requests to appropriate tool invocations
+- Handle ambiguous commands intelligently
+- Suggest clarifications when needed
+
+### 4. Workflow Orchestrator
+- Execute complex multi-step operations
+- Support parallel execution where possible
+- Handle rollbacks on failure
+- Track progress for long-running operations
+- Support declarative workflow definitions
+
+### 5. AI Integration
+- Local models for fast predictions
+- Cloud models for complex analysis
+- Generate commit messages and PR descriptions
+- Provide code review suggestions
+- Learn from codebase patterns
+
+### 6. State Management
+- SQLite database for persistent context
+- Session tracking across MCP invocations
+- Audit trail for all operations
+- State recovery mechanisms
+
+### 7. Backward Compatibility
+- Keep existing tools as internal utilities
+- Expose new semantic layer via MCP
+- Maintain CLI interface for direct access
+- Support gradual migration
+
+## Technical Architecture
+
+### Directory Structure
+```
+src/
+├── mcp/                    # New MCP-focused components
+│   ├── tools/             # Semantic MCP tools
+│   ├── context-engine.js  # Context tracking system
+│   ├── intent-resolver.js # Natural language parsing
+│   ├── workflow-orchestrator.js # Multi-step operations
+│   ├── ai-integration.js  # AI model management
+│   └── state-manager.js   # Persistence layer
+├── tools/                  # Existing tools (become utilities)
+├── utils/                  # Shared utilities
+└── index.js               # MCP server entry point
+```
+
+### Tool Response Format
+```javascript
+{
+  "success": true,
+  "workflow": "feature-development",
+  "steps_completed": ["branch", "commit", "test"],
+  "current_state": { /* rich context */ },
+  "suggestions": [
+    "Ready to create PR? Say 'slam share with team'",
+    "3 failing tests need attention"
+  ]
+}
+```
+
+## Implementation Phases
+
+### Phase 1: Foundation (Weeks 1-4)
+- Create MCP directory structure
+- Implement Context Engine foundation
+- Build Intent Resolution Layer
+- Create basic 'slam' natural language tool
+- Set up state management with SQLite
+
+### Phase 2: Core Tools (Weeks 5-8)
+- Implement 'slam_develop' workflow tool
+- Create 'slam_ship' deployment tool
+- Build Workflow Orchestrator
+- Integrate with existing git-helpers
+
+### Phase 3: Intelligence (Weeks 9-12)
+- Add AI-powered commit messages
+- Implement predictive suggestions
+- Create 'slam_context' rich context tool
+- Build learning system foundation
+
+### Phase 4: Collaboration (Weeks 13-16)
+- Implement 'slam_collaborate' team features
+- Add real-time sync capabilities
+- Build conflict prevention system
+- Create team awareness features
+
+### Phase 5: Advanced Features (Weeks 17-20)
+- Implement 'slam_recover' time machine
+- Add 'slam_learn' personalization
+- Create visual interfaces (TUI/Web)
+- Build IDE integrations
+
+## Success Metrics
+- Reduce command memorization from 32 to 1
+- 80% of workflows completable via natural language
+- 10x reduction in git-related errors
+- 90% of routine operations automated
+- 50% reduction in merge conflicts
+- Zero-touch deployments for simple changes
+
+## Testing Strategy
+- Unit tests for each MCP component
+- Integration tests for workflows
+- End-to-end tests for natural language processing
+- Performance tests for context engine
+- User acceptance testing with real workflows
+
+## Security Considerations
+- Secure storage of context data
+- API key management for AI services
+- Audit logging for all operations
+- Permission checks for destructive operations
+- Encrypted communication for team features
+
+## Migration Plan
+- Phase 1: Deploy alongside existing tools
+- Phase 2: Beta test with volunteer users
+- Phase 3: Gradual rollout with documentation
+- Phase 4: Deprecate old tools after adoption
+- Phase 5: Full migration complete
+
+## Dependencies
+- @modelcontextprotocol/sdk for MCP server
+- SQLite for state persistence
+- AI model APIs (OpenAI, Anthropic, etc.)
+- Existing git-helpers utilities
+- Node.js 18+ runtime
+
+## Risks and Mitigations
+- Risk: AI model costs - Mitigation: Use local models where possible
+- Risk: Breaking changes - Mitigation: Maintain backward compatibility
+- Risk: Performance issues - Mitigation: Implement caching and optimization
+- Risk: User adoption - Mitigation: Gradual rollout with training
+
+## Future Enhancements
+- Voice control integration
+- Mobile app support
+- Autonomous agent mode
+- Multi-repo management
+- Advanced analytics dashboard

@@ -5,6 +5,9 @@
  * Comprehensive GitHub Flow Automation with MCP and CLI Support
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -18,6 +21,7 @@ import {
 import { registerGitHubFlowTools } from "./tools/github-flow.js";
 import { registerAutomationTools } from "./tools/automation.js";
 import { registerUtilityTools } from "./tools/utilities.js";
+import { registerSlamTools } from "./tools/slam-tools.js";
 
 class SlamBedMCPServer {
   constructor() {
@@ -98,6 +102,7 @@ class SlamBedMCPServer {
     registerGitHubFlowTools(this);
     registerAutomationTools(this);
     registerUtilityTools(this);
+    registerSlamTools(this);
 
     console.log(`[Slambed MCP] Registered ${this.tools.length} tools`);
   }
