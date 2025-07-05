@@ -444,3 +444,118 @@ export function forceRebaseOnMain(targetBranch = null) {
     return result;
   }
 }
+
+/**
+ * Ensure main branch is up to date with origin
+ */
+export function ensureMainUpdated(targetBranch = null) {
+  const target = targetBranch || getMainBranch();
+  const currentBranch = getCurrentBranch();
+  const result = {
+    success: false,
+    isUpdated: false,
+    networkError: false,
+    message: "",
+    divergence: { behind: 0, ahead: 0 },
+    steps: [],
+    updateAttempted: false,
+    updateSucceeded: false,
+  };
+
+  try {
+    // First, fetch latest changes from origin
+    try {
+      execSync(`git fetch origin ${target}`, { stdio: "pipe" });
+      result.steps.push(`Fetched latest ${target} from origin`);
+    } catch (fetchError) {
+      // Network issue or offline
+      result.networkError = true;
+      result.message = `Cannot fetch from origin: ${fetchError.message}`;
+      result.steps.push("Failed to fetch from origin (network issue?)");
+      return result;
+    }
+
+    // Check divergence between local and origin
+    const localCommit = execSync(`git rev-parse ${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
+    const remoteCommit = execSync(`git rev-parse origin/${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
+    if (localCommit === remoteCommit) {
+      result.success = true;
+      result.isUpdated = true;
+      result.message = `Local ${target} is up to date with origin/${target}`;
+      result.steps.push("Local and remote branches are in sync");
+      return result;
+    }
+
+    // Get divergence details
+    const behind = execSync(
+      `git rev-list --count ${target}..origin/${target}`,
+      { encoding: "utf8", stdio: "pipe" },
+    ).trim();
+
+    const ahead = execSync(`git rev-list --count origin/${target}..${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
+    result.divergence = {
+      behind: parseInt(behind) || 0,
+      ahead: parseInt(ahead) || 0,
+    };
+
+    if (result.divergence.ahead > 0 && result.divergence.behind > 0) {
+      result.message = `Local ${target} has diverged from origin/${target} (${result.divergence.ahead} ahead, ${result.divergence.behind} behind)`;
+      result.steps.push(
+        "Branches have diverged - manual intervention required",
+      );
+    } else if (result.divergence.ahead > 0) {
+      result.success = true;
+      result.isUpdated = false;
+      result.message = `Local ${target} is ${result.divergence.ahead} commits ahead of origin/${target}`;
+      result.steps.push("Local branch has unpushed commits");
+    } else {
+      result.message = `Local ${target} is ${result.divergence.behind} commits behind origin/${target}`;
+      result.steps.push(
+        `Local branch is ${result.divergence.behind} commits behind`,
+      );
+
+      // Always attempt to update if we're on the target branch and it's behind
+      if (currentBranch === target) {
+        result.updateAttempted = true;
+        result.steps.push(`Attempting to update ${target} branch...`);
+
+        try {
+          execSync(`git merge --ff-only origin/${target}`, { stdio: "pipe" });
+          result.success = true;
+          result.isUpdated = true;
+          result.updateSucceeded = true;
+          result.message = `Successfully updated ${target} to match origin/${target}`;
+          result.steps.push(`✅ Successfully updated ${target} branch`);
+        } catch (mergeError) {
+          result.updateSucceeded = false;
+          result.steps.push(
+            `❌ Could not update ${target} (uncommitted changes or conflicts)`,
+          );
+          result.message = `Local ${target} is ${result.divergence.behind} commits behind but cannot be updated automatically`;
+        }
+      } else {
+        result.steps.push(
+          `Not on ${target} branch - cannot update automatically`,
+        );
+        result.message = `Local ${target} is ${result.divergence.behind} commits behind (switch to ${target} to update)`;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    result.message = `Failed to check ${target} status: ${error.message}`;
+    return result;
+  }
+}

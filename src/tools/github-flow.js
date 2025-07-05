@@ -18,11 +18,13 @@ import {
   hasUncommittedChanges,
   branchExists,
   execGitCommand,
+  ensureMainUpdated,
 } from "../utils/git-helpers.js";
 import {
   createSuccessResponse,
   createErrorResponse,
 } from "../utils/responses.js";
+import { getConfig } from "../config.js";
 
 /**
  * Register GitHub Flow tools
@@ -255,7 +257,7 @@ export function registerGitHubFlowTools(server) {
 /**
  * Start a new branch from main
  */
-async function startBranch(name, type) {
+async function startBranch(name, type, allow_outdated_base) {
   if (!name) {
     return createErrorResponse("Branch name is required");
   }
@@ -276,10 +278,67 @@ async function startBranch(name, type) {
     // Ensure we're on main branch and up to date
     execGitCommand(`git checkout ${mainBranch}`, { silent: true });
 
-    try {
-      execGitCommand("git pull origin HEAD", { silent: true });
-    } catch (e) {
-      // Ignore pull errors (might not have remote)
+    // Always check and attempt to update main branch
+    const config = getConfig();
+    if (allow_outdated_base !== undefined) {
+      config.gitFlow.allowOutdatedBase = allow_outdated_base;
+    }
+    const updateResult = ensureMainUpdated(mainBranch);
+
+    if (updateResult.divergence.behind > 0) {
+      console.log(
+        `\n⚠️  Main branch is ${updateResult.divergence.behind} commits behind origin/${mainBranch}`,
+      );
+    }
+
+    // Show update steps to user
+    updateResult.steps.forEach((step) => {
+      if (
+        step.includes("✅") ||
+        step.includes("❌") ||
+        step.includes("Attempting")
+      ) {
+        console.log(`  ${step}`);
+      }
+    });
+
+    // Handle different scenarios
+    if (!updateResult.success && !updateResult.isUpdated) {
+      // Main is outdated and couldn't be updated
+      if (updateResult.networkError) {
+        // Network issue - check config for whether to continue
+        if (config.gitFlow.allowOutdatedBase) {
+          console.log(
+            `⚠️  Could not update base branch (${mainBranch}) due to network issue. Continuing anyway due to config...`,
+          );
+        } else {
+          return createErrorResponse(
+            `Cannot start new branch: base branch (${mainBranch}) needs updating but network is unavailable.\n` +
+              `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
+          );
+        }
+      } else if (updateResult.divergence.behind > 0) {
+        // Behind but update failed (uncommitted changes on main?)
+        if (config.gitFlow.allowOutdatedBase) {
+          console.log(
+            `⚠️  Base branch (${mainBranch}) is outdated but cannot be updated. Continuing anyway due to config...`,
+          );
+        } else {
+          return createErrorResponse(
+            `Cannot start new branch: base branch (${mainBranch}) is ${updateResult.divergence.behind} commits behind origin/${mainBranch} and could not be updated.\n` +
+              `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
+          );
+        }
+      } else if (
+        updateResult.divergence.ahead > 0 &&
+        updateResult.divergence.behind > 0
+      ) {
+        // Diverged - always fail regardless of config
+        return createErrorResponse(
+          `Cannot start new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
+            `Please resolve the divergence manually before creating new branches.`,
+        );
+      }
     }
 
     // Create and checkout new branch

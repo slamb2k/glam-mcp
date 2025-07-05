@@ -48,6 +48,7 @@ program
   .option("--no-format", "Skip formatting")
   .option("--no-lint", "Skip linting")
   .option("-t, --target <branch>", "Target branch", "main")
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (options) => {
     try {
       let message = options.message;
@@ -73,7 +74,21 @@ program
       console.log(`Target: ${options.target}`);
 
       // Call autoCommit function
-      console.log(chalk.green("✅ Workflow completed!"));
+      const result = await autoCommit({
+        message,
+        branch_name: options.branch,
+        auto_merge: options.merge,
+        run_format: options.format,
+        run_lint: options.lint,
+        target_branch: options.target,
+        allow_outdated_base: options.allowOutdatedBase,
+      });
+
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);
@@ -246,6 +261,7 @@ program
   .option("--no-lint", "Skip running linting")
   .option("--no-release", "Skip creating GitHub release")
   .option("--no-merge", "Skip auto-merging PR")
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .option("--dry-run", "Perform dry run without publishing")
   .option("--registry <url>", "NPM registry URL", "https://registry.npmjs.org/")
   .action(async (options) => {
@@ -295,6 +311,7 @@ program
         auto_merge_pr: options.merge,
         dry_run: options.dryRun,
         registry: options.registry,
+        allow_outdated_base: options.allowOutdatedBase,
       });
 
       console.log(

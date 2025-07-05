@@ -159,6 +159,7 @@ automationCmd
     "Strategy for stale branches: auto, rebase, new",
     "auto",
   )
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (options) => {
     try {
       // Check if we need a message (auto-generate with AI by default)
@@ -206,6 +207,7 @@ automationCmd
         run_lint: options.lint,
         target_branch: options.target,
         branch_strategy: options.branchStrategy,
+        allow_outdated_base: options.allowOutdatedBase,
       });
 
       console.log(
@@ -303,6 +305,7 @@ automationCmd
   .option("--no-merge", "Skip auto-merging PR")
   .option("--dry-run", "Perform dry run without publishing")
   .option("--registry <url>", "NPM registry URL", "https://registry.npmjs.org/")
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (options) => {
     try {
       if (options.dryRun) {
@@ -337,6 +340,7 @@ automationCmd
         auto_merge_pr: options.merge,
         dry_run: options.dryRun,
         registry: options.registry,
+        allow_outdated_base: options.allowOutdatedBase,
       });
 
       console.log(
@@ -461,9 +465,14 @@ flowCmd
     "Branch type (feature, fix, docs, chore)",
     "feature",
   )
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (name, options) => {
     try {
-      const result = await startBranch(name, options.type);
+      const result = await startBranch(
+        name,
+        options.type,
+        options.allowOutdatedBase,
+      );
       console.log(
         result.success
           ? chalk.green(result.message)
@@ -589,11 +598,13 @@ program
   .description("Commit changes with smart workflow")
   .option("-m, --message <message>", "Commit message")
   .option("--no-merge", "Skip auto-merge")
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (options) => {
     try {
       const result = await autoCommit({
         message: options.message,
         auto_merge: options.merge,
+        allow_outdated_base: options.allowOutdatedBase,
       });
       console.log(
         result.success
@@ -659,11 +670,13 @@ program
   .description("Publish package to npm")
   .option("-v, --version <type>", "Version bump type", "patch")
   .option("--dry-run", "Perform dry run")
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (options) => {
     try {
       const result = await npmPublish({
         version_type: options.version,
         dry_run: options.dryRun,
+        allow_outdated_base: options.allowOutdatedBase,
       });
       console.log(
         result.success
@@ -692,9 +705,14 @@ program
 program
   .command("feature <name>")
   .description("Start a new feature branch")
-  .action(async (name) => {
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
+  .action(async (name, options) => {
     try {
-      const result = await startBranch(name, "feature");
+      const result = await startBranch(
+        name,
+        "feature",
+        options.allowOutdatedBase,
+      );
       console.log(
         result.success
           ? chalk.green(result.message)
