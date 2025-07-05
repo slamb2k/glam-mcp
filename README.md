@@ -89,6 +89,15 @@ Add to your Claude Desktop config:
 - `slamb-flow quick <name>` - Quick: branch + commit + PR
 - `slamb-flow sync` - Sync current branch with main
 
+### Issue-Based Workflow
+
+- `slambed issue` - List all open issues
+- `slambed issue <id>` - Create branch from specific issue
+- `slambed issue <search>` - Search and select issue
+- `slambed issue -c` - Include closed issues
+- `slambed issue -a <user>` - Filter by assignee
+- `slambed issue -L <label>` - Filter by label
+
 ### Utilities
 
 - `slambed util info` - Repository information
@@ -128,6 +137,23 @@ slamb-commit create-release-workflow --type "both"
 ```bash
 # Let AI analyze your changes and suggest commits
 slamb-commit smart --execute
+```
+
+### Issue-Based Development
+
+```bash
+# List all open issues
+slambed issue
+
+# Create branch from issue #123
+slambed issue 123
+
+# Search for issues about login
+slambed issue login
+
+# Work on issue interactively
+slambed interactive
+# Select "🎯 Work on Issue"
 ```
 
 ## 🔧 Configuration

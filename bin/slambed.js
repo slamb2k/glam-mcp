@@ -10,7 +10,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 
 // Import banner utility
-import { showBanner, getStyledBanner } from "../src/utils/banner.js";
+import { showBanner } from "../src/utils/banner.js";
 
 // Import tool functions directly for CLI usage
 import {
@@ -18,9 +18,6 @@ import {
   quickCommit,
   smartCommit,
   syncBranch,
-  squashCommits,
-  undoCommit,
-  batchCommit,
   npmPublish,
   createPRWorkflow,
   createReleaseWorkflow,
@@ -29,8 +26,6 @@ import {
   startBranch,
   finishBranch,
   quickWorkflow,
-  createPullRequest,
-  mergePullRequest,
   syncWithMain,
   cleanupBranches,
   getGitHubFlowStatus,
@@ -39,12 +34,6 @@ import {
   getRepoInfo,
   analyzeChanges,
   listBranches,
-  getCommitHistory,
-  getFileStatus,
-  showDiff,
-  searchCode,
-  tagOperations,
-  stashOperations,
   repoHealthCheck,
 } from "../src/tools/utilities.js";
 
@@ -84,10 +73,9 @@ automationCmd
       // Check if we need a message (auto-generate with AI by default)
       if (!options.message) {
         // Import git helpers to check current state
-        const { getCurrentBranch, getMainBranch, getChangedFiles } =
+        const { getCurrentBranch, getChangedFiles } =
           await import("../src/utils/git-helpers.js");
         const currentBranch = getCurrentBranch();
-        const mainBranch = getMainBranch();
         const changedFiles = getChangedFiles();
 
         // Only prompt for message if user wants to override AI generation
@@ -502,6 +490,227 @@ flowCmd
     }
   });
 
+// Issue-based workflow command
+program
+  .command("issue [searchTerm]")
+  .description("Work with GitHub issues - create branches from issues")
+  .option("-l, --list", "List all open issues")
+  .option("-c, --closed", "Include closed issues")
+  .option("-a, --assignee <username>", "Filter by assignee")
+  .option("-L, --label <label>", "Filter by label")
+  .option("-m, --milestone <milestone>", "Filter by milestone")
+  .action(async (searchTerm, options) => {
+    try {
+      // Import necessary functions
+      const { execGitCommand, isGitRepository, getMainBranch, getCurrentBranch, branchExists } = 
+        await import("../src/utils/git-helpers.js");
+      
+      if (!isGitRepository()) {
+        console.error(chalk.red("Error: Not a git repository"));
+        process.exit(1);
+      }
+
+      // Check if gh CLI is available
+      try {
+        execGitCommand("gh --version", { silent: true });
+      } catch (error) {
+        console.error(chalk.red("Error: GitHub CLI (gh) is not installed or not authenticated"));
+        console.error(chalk.yellow("Please install gh and run 'gh auth login'"));
+        process.exit(1);
+      }
+
+      let issues = [];
+      
+      // Build the gh issue list command
+      let listCommand = "gh issue list --json number,title,state,assignees,labels,milestone,body,url";
+      
+      if (!options.closed) {
+        listCommand += " --state open";
+      } else {
+        listCommand += " --state all";
+      }
+      
+      if (options.assignee) {
+        listCommand += ` --assignee ${options.assignee}`;
+      }
+      
+      if (options.label) {
+        listCommand += ` --label "${options.label}"`;
+      }
+      
+      if (options.milestone) {
+        listCommand += ` --milestone "${options.milestone}"`;
+      }
+      
+      try {
+        const output = execGitCommand(listCommand, { silent: true });
+        issues = JSON.parse(output);
+      } catch (error) {
+        console.error(chalk.red("Error fetching issues:"), error.message);
+        process.exit(1);
+      }
+
+      // If searchTerm is provided, filter or find specific issue
+      if (searchTerm) {
+        // Check if searchTerm is a number (issue ID)
+        const issueNumber = parseInt(searchTerm);
+        if (!isNaN(issueNumber)) {
+          // Fetch specific issue
+          try {
+            const issueOutput = execGitCommand(`gh issue view ${issueNumber} --json number,title,state,assignees,labels,milestone,body,url`, { silent: true });
+            const specificIssue = JSON.parse(issueOutput);
+            issues = [specificIssue];
+          } catch (error) {
+            console.error(chalk.red(`Issue #${issueNumber} not found`));
+            process.exit(1);
+          }
+        } else {
+          // Search by title/body
+          issues = issues.filter(issue => 
+            issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (issue.body && issue.body.toLowerCase().includes(searchTerm.toLowerCase()))
+          );
+        }
+      }
+
+      // Handle no issues found
+      if (issues.length === 0) {
+        console.log(chalk.yellow(searchTerm ? `No issues found matching "${searchTerm}"` : "No open issues found"));
+        process.exit(0);
+      }
+
+      // If just listing, show all issues
+      if (options.list || !searchTerm) {
+        console.log(chalk.blue(`\n📋 ${options.closed ? 'All' : 'Open'} Issues (${issues.length}):\n`));
+        issues.forEach(issue => {
+          const state = issue.state === 'OPEN' ? chalk.green('●') : chalk.red('●');
+          const labels = issue.labels.map(l => chalk.cyan(`[${l.name}]`)).join(' ');
+          const assignees = issue.assignees.map(a => `@${a.login}`).join(', ');
+          
+          console.log(`${state} #${issue.number}: ${chalk.bold(issue.title)}`);
+          if (labels) console.log(`  ${labels}`);
+          if (assignees) console.log(`  Assigned to: ${assignees}`);
+          if (issue.milestone) console.log(`  Milestone: ${issue.milestone.title}`);
+          console.log(`  ${chalk.dim(issue.url)}`);
+          console.log();
+        });
+        
+        if (!searchTerm) {
+          console.log(chalk.dim("Tip: Use 'slambed issue <number>' to create a branch from a specific issue"));
+        }
+        process.exit(0);
+      }
+
+      // Select issue if multiple matches
+      let selectedIssue;
+      if (issues.length === 1) {
+        selectedIssue = issues[0];
+      } else {
+        // Multiple matches - show selection menu
+        const choices = issues.map(issue => ({
+          name: `#${issue.number}: ${issue.title} ${issue.state === 'CLOSED' ? chalk.red('[CLOSED]') : ''}`,
+          value: issue,
+          short: `#${issue.number}`
+        }));
+
+        const answer = await inquirer.prompt([{
+          type: 'list',
+          name: 'issue',
+          message: 'Select an issue to work on:',
+          choices: choices,
+          pageSize: 10
+        }]);
+        
+        selectedIssue = answer.issue;
+      }
+
+      // Check if issue is closed
+      if (selectedIssue.state === 'CLOSED') {
+        const confirm = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'proceed',
+          message: chalk.yellow(`Issue #${selectedIssue.number} is closed. Do you still want to create a branch?`),
+          default: false
+        }]);
+        
+        if (!confirm.proceed) {
+          console.log(chalk.yellow("Operation cancelled"));
+          process.exit(0);
+        }
+      }
+
+      // Generate branch name from issue
+      const sanitizedTitle = selectedIssue.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 50);
+      
+      const branchName = `issue/${selectedIssue.number}-${sanitizedTitle}`;
+
+      // Check if branch already exists
+      if (branchExists(branchName)) {
+        const switchBranch = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'switch',
+          message: `Branch '${branchName}' already exists. Switch to it?`,
+          default: true
+        }]);
+        
+        if (switchBranch.switch) {
+          execGitCommand(`git checkout ${branchName}`, { silent: true });
+          console.log(chalk.green(`✅ Switched to existing branch: ${branchName}`));
+        } else {
+          console.log(chalk.yellow("Operation cancelled"));
+        }
+        process.exit(0);
+      }
+
+      // Create the branch
+      console.log(chalk.blue(`\n🎯 Creating branch for issue #${selectedIssue.number}: ${selectedIssue.title}\n`));
+
+      // Ensure we're on main branch and up to date
+      const mainBranch = getMainBranch();
+      const currentBranch = getCurrentBranch();
+      
+      if (currentBranch !== mainBranch) {
+        console.log(chalk.dim(`Switching to ${mainBranch} branch...`));
+        execGitCommand(`git checkout ${mainBranch}`, { silent: true });
+      }
+
+      try {
+        console.log(chalk.dim("Pulling latest changes..."));
+        execGitCommand("git pull origin HEAD", { silent: true });
+      } catch (e) {
+        // Ignore pull errors (might not have remote)
+      }
+
+      // Create and checkout new branch
+      execGitCommand(`git checkout -b ${branchName}`, { silent: true });
+      
+      // Store issue metadata in git config for later use
+      execGitCommand(`git config branch.${branchName}.issue-number ${selectedIssue.number}`, { silent: true });
+      execGitCommand(`git config branch.${branchName}.issue-title "${selectedIssue.title}"`, { silent: true });
+      execGitCommand(`git config branch.${branchName}.issue-url "${selectedIssue.url}"`, { silent: true });
+
+      console.log(chalk.green(`\n✅ Created and switched to branch: ${branchName}`));
+      console.log(chalk.dim(`\nIssue URL: ${selectedIssue.url}`));
+      console.log(chalk.dim(`\nThis branch is now linked to issue #${selectedIssue.number}`));
+      console.log(chalk.dim(`When you create commits or PRs, they will automatically reference this issue.\n`));
+      
+      // Show next steps
+      console.log(chalk.blue("Next steps:"));
+      console.log("  1. Make your changes");
+      console.log("  2. Commit with: git commit -m 'Your message'");
+      console.log(`  3. Create PR with: slambed flow finish`);
+      console.log(chalk.dim("\nThe PR will automatically link to issue #" + selectedIssue.number));
+
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
 // Utility commands
 const utilCmd = program.command("util").description("Utility operations");
 
@@ -627,6 +836,7 @@ program
               name: "🧠 Smart Analysis (Analyze changes)",
               value: "smart-analysis",
             },
+            { name: "🎯 Work on Issue", value: "issue-branch" },
             { name: "🌿 Start Feature Branch", value: "feature-start" },
             { name: "🏁 Finish Feature Branch", value: "feature-finish" },
             { name: "📊 Repository Status", value: "status" },
@@ -703,6 +913,40 @@ program
               ? chalk.green("\n✅ " + releaseWorkflowResult.message)
               : chalk.red("\n❌ " + releaseWorkflowResult.message),
           );
+          break;
+
+        case "issue-branch":
+          // Show open issues first
+          const { execGitCommand: execGit } = await import("../src/utils/git-helpers.js");
+          
+          try {
+            const issuesOutput = execGit("gh issue list --json number,title,state --limit 20", { silent: true });
+            const issues = JSON.parse(issuesOutput);
+            
+            if (issues.length === 0) {
+              console.log(chalk.yellow("\nNo open issues found"));
+              break;
+            }
+            
+            const issueChoices = issues.map(issue => ({
+              name: `#${issue.number}: ${issue.title}`,
+              value: issue.number
+            }));
+            
+            const { selectedIssue } = await inquirer.prompt([{
+              type: 'list',
+              name: 'selectedIssue',
+              message: 'Select an issue to work on:',
+              choices: issueChoices
+            }]);
+            
+            // Now execute the issue command with the selected issue number
+            process.argv = ['node', 'slambed', 'issue', selectedIssue.toString()];
+            const issueCommand = program.commands.find(cmd => cmd.name() === 'issue');
+            await issueCommand.parseAsync(process.argv);
+          } catch (error) {
+            console.error(chalk.red("Error:"), error.message);
+          }
           break;
 
         // Add more cases for other operations...

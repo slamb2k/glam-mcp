@@ -556,7 +556,17 @@ async function autoCommit({
       // Stage and commit changes
       execGitCommand("git add .", { silent: true });
 
-      const commitMessage = `${message}
+      // Check if this branch has associated issue metadata
+      let issueNumber = null;
+      try {
+        issueNumber = execGitCommand(`git config branch.${currentBranch}.issue-number`, { silent: true }).trim();
+      } catch (e) {
+        // No issue metadata - that's okay
+      }
+
+      // Include issue reference if available
+      const issueRef = issueNumber ? ` (#${issueNumber})` : '';
+      const commitMessage = `${message}${issueRef}
 
 🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
 

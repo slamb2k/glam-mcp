@@ -11,7 +11,7 @@ import os from "os";
  * Default configuration
  */
 const DEFAULT_CONFIG = {
-  // Git flow settings
+  // GitHub flow settings
   gitFlow: {
     defaultBranch: "main",
     branchPrefixes: {

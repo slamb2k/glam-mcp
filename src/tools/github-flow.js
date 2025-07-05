@@ -332,18 +332,60 @@ async function finishBranch(
       execGitCommand(`git push -u origin ${currentBranch}`, { silent: true });
     }
 
+    // Check if this branch has associated issue metadata
+    let issueNumber = null;
+    let issueTitle = null;
+    let issueUrl = null;
+    
+    try {
+      issueNumber = execGitCommand(`git config branch.${currentBranch}.issue-number`, { silent: true }).trim();
+      issueTitle = execGitCommand(`git config branch.${currentBranch}.issue-title`, { silent: true }).trim();
+      issueUrl = execGitCommand(`git config branch.${currentBranch}.issue-url`, { silent: true }).trim();
+    } catch (e) {
+      // No issue metadata - that's okay
+    }
+
     // Generate title if not provided
-    const prTitle =
-      title ||
-      currentBranch
-        .replace(/^(feature|fix|docs|chore)\//, "")
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+    let prTitle = title;
+    if (!prTitle) {
+      if (issueNumber && issueTitle) {
+        // Use issue title if available
+        prTitle = issueTitle;
+      } else {
+        // Fallback to branch name parsing
+        prTitle = currentBranch
+          .replace(/^(feature|fix|docs|chore|issue)\//, "")
+          .replace(/^\d+-/, "") // Remove issue number prefix if present
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
+      }
+    }
 
     // Generate description
-    const prDescription =
-      description ||
-      `## Changes
+    let prDescription = description;
+    if (!prDescription) {
+      if (issueNumber) {
+        // Include issue reference in description
+        prDescription = `## Summary
+Fixes #${issueNumber}${issueTitle ? ` - ${issueTitle}` : ''}
+
+## Changes
+- Implement ${prTitle.toLowerCase()}
+
+## Testing
+- [ ] Manual testing completed
+- [ ] All tests pass
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated if needed
+${issueUrl ? `\n## Related Issue\n${issueUrl}` : ''}
+
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+      } else {
+        // Standard description without issue reference
+        prDescription = `## Changes
 - Implement ${prTitle.toLowerCase()}
 
 ## Testing
@@ -356,6 +398,8 @@ async function finishBranch(
 - [ ] Documentation updated if needed
 
 🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+      }
+    }
 
     // Create PR
     let createCommand = `gh pr create --title "${prTitle}" --body "${prDescription}" --base ${mainBranch}`;
