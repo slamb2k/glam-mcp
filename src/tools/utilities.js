@@ -1138,7 +1138,11 @@ Thumbs.db
 /**
  * Cleanup merged branches
  */
-async function cleanupMergedBranches({ dry_run = false, include_remote = true, force = false }) {
+async function cleanupMergedBranches({
+  dry_run = false,
+  include_remote = true,
+  force = false,
+}) {
   if (!isGitRepository()) {
     return createErrorResponse("Not a git repository");
   }
@@ -1147,10 +1151,13 @@ async function cleanupMergedBranches({ dry_run = false, include_remote = true, f
     const mainBranch = getMainBranch();
     const currentBranch = getCurrentBranch();
     const mergedBranches = getMergedBranches(mainBranch);
-    
+
     // Filter out current branch and main branch
     const branchesToDelete = mergedBranches.filter(
-      branch => branch !== currentBranch && branch !== mainBranch && branch !== "master"
+      (branch) =>
+        branch !== currentBranch &&
+        branch !== mainBranch &&
+        branch !== "master",
     );
 
     if (branchesToDelete.length === 0) {
@@ -1162,22 +1169,21 @@ async function cleanupMergedBranches({ dry_run = false, include_remote = true, f
     }
 
     // Get additional info for each branch
-    const branchInfo = branchesToDelete.map(branch => {
+    const branchInfo = branchesToDelete.map((branch) => {
       let lastCommit = "unknown";
       let lastCommitDate = "unknown";
-      
+
       try {
-        const info = execGitCommand(
-          `git log -1 --format="%h %ar" ${branch}`,
-          { silent: true }
-        ).trim();
+        const info = execGitCommand(`git log -1 --format="%h %ar" ${branch}`, {
+          silent: true,
+        }).trim();
         const [hash, ...dateParts] = info.split(" ");
         lastCommit = hash;
         lastCommitDate = dateParts.join(" ");
       } catch (e) {
         // Ignore errors getting commit info
       }
-      
+
       return {
         name: branch,
         lastCommit,
@@ -1192,7 +1198,7 @@ async function cleanupMergedBranches({ dry_run = false, include_remote = true, f
           branches: branchInfo,
           dryRun: true,
           includeRemote: include_remote,
-        }
+        },
       );
     }
 
@@ -1213,7 +1219,8 @@ async function cleanupMergedBranches({ dry_run = false, include_remote = true, f
           } else {
             failedBranches.push({
               branch,
-              reason: "Branch has unmerged changes (use --force to delete anyway)",
+              reason:
+                "Branch has unmerged changes (use --force to delete anyway)",
             });
           }
         } catch (e) {
@@ -1243,7 +1250,7 @@ async function cleanupMergedBranches({ dry_run = false, include_remote = true, f
         failedBranches,
         prunedRemotes,
         totalChecked: branchesToDelete.length,
-      }
+      },
     );
   } catch (error) {
     return createErrorResponse(`Failed to cleanup branches: ${error.message}`);

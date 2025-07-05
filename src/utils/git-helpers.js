@@ -253,24 +253,24 @@ export function isBranchBehind(targetBranch = null) {
   try {
     const target = targetBranch || getMainBranch();
     const currentBranch = getCurrentBranch();
-    
+
     if (currentBranch === target) {
       return false;
     }
-    
+
     // Fetch latest remote changes without merging
     try {
       execSync(`git fetch origin ${target}`, { stdio: "pipe" });
     } catch (e) {
       // Ignore fetch errors (offline, etc)
     }
-    
+
     // Check if current branch is behind target
-    const behind = execSync(
-      `git rev-list --count HEAD..origin/${target}`,
-      { encoding: "utf8", stdio: "pipe" }
-    ).trim();
-    
+    const behind = execSync(`git rev-list --count HEAD..origin/${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
     return parseInt(behind) > 0;
   } catch (error) {
     return false;
@@ -284,25 +284,25 @@ export function getBranchDivergence(targetBranch = null) {
   try {
     const target = targetBranch || getMainBranch();
     const currentBranch = getCurrentBranch();
-    
+
     if (currentBranch === target) {
       return { behind: 0, ahead: 0 };
     }
-    
+
     // Check commits behind and ahead
-    const behind = execSync(
-      `git rev-list --count HEAD..origin/${target}`,
-      { encoding: "utf8", stdio: "pipe" }
-    ).trim();
-    
-    const ahead = execSync(
-      `git rev-list --count origin/${target}..HEAD`,
-      { encoding: "utf8", stdio: "pipe" }
-    ).trim();
-    
+    const behind = execSync(`git rev-list --count HEAD..origin/${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
+    const ahead = execSync(`git rev-list --count origin/${target}..HEAD`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+
     return {
       behind: parseInt(behind) || 0,
-      ahead: parseInt(ahead) || 0
+      ahead: parseInt(ahead) || 0,
     };
   } catch (error) {
     return { behind: 0, ahead: 0 };
@@ -319,14 +319,14 @@ export function safeRebase(targetBranch = null) {
     success: false,
     hadConflicts: false,
     message: "",
-    steps: []
+    steps: [],
   };
-  
+
   try {
     // Ensure we have latest target branch
     execSync(`git fetch origin ${target}`, { stdio: "pipe" });
     result.steps.push(`Fetched latest ${target}`);
-    
+
     // Attempt rebase
     try {
       execSync(`git rebase origin/${target}`, { stdio: "pipe" });
@@ -339,7 +339,7 @@ export function safeRebase(targetBranch = null) {
         result.hadConflicts = true;
         result.message = "Rebase failed due to conflicts";
         result.steps.push("Conflicts detected during rebase");
-        
+
         // Abort the rebase
         try {
           execSync("git rebase --abort", { stdio: "pipe" });
@@ -351,10 +351,96 @@ export function safeRebase(targetBranch = null) {
         throw rebaseError;
       }
     }
-    
+
     return result;
   } catch (error) {
     result.message = `Rebase failed: ${error.message}`;
+    return result;
+  }
+}
+
+/**
+ * Check if a branch has been merged into target branch
+ */
+export function isBranchMerged(branchName, targetBranch = null) {
+  try {
+    const target = targetBranch || getMainBranch();
+
+    // Get list of merged branches
+    const mergedBranches = execSync(`git branch --merged ${target}`, {
+      encoding: "utf8",
+      stdio: "pipe",
+    })
+      .split("\n")
+      .map((branch) => branch.trim().replace(/^\*?\s*/, ""))
+      .filter((branch) => branch);
+
+    return mergedBranches.includes(branchName);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Check if remote branch exists
+ */
+export function hasRemoteBranch(branchName) {
+  try {
+    // Check if remote branch exists
+    const remoteBranches = execSync(
+      `git ls-remote --heads origin ${branchName}`,
+      { encoding: "utf8", stdio: "pipe" },
+    ).trim();
+
+    return remoteBranches.length > 0;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Force pull and rebase on origin/main
+ */
+export function forceRebaseOnMain(targetBranch = null) {
+  const target = targetBranch || getMainBranch();
+  const currentBranch = getCurrentBranch();
+  const result = {
+    success: false,
+    message: "",
+    steps: [],
+  };
+
+  try {
+    // First fetch latest changes
+    execSync(`git fetch origin ${target}`, { stdio: "pipe" });
+    result.steps.push(`Fetched latest ${target} from origin`);
+
+    // Perform pull --rebase
+    try {
+      execSync(`git pull --rebase origin ${target}`, { stdio: "pipe" });
+      result.success = true;
+      result.message = `Successfully rebased ${currentBranch} on origin/${target}`;
+      result.steps.push(`Rebased ${currentBranch} on latest origin/${target}`);
+    } catch (rebaseError) {
+      if (rebaseError.toString().includes("conflict")) {
+        result.message = "Rebase failed due to conflicts";
+        result.steps.push("Conflicts detected during rebase");
+
+        // Abort the rebase
+        try {
+          execSync("git rebase --abort", { stdio: "pipe" });
+          result.steps.push("Aborted rebase due to conflicts");
+        } catch (e) {
+          // Ignore abort errors
+        }
+      } else {
+        throw rebaseError;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    result.message = `Force rebase failed: ${error.message}`;
     return result;
   }
 }

@@ -19,6 +19,9 @@ import {
   isBranchBehind,
   getBranchDivergence,
   safeRebase,
+  isBranchMerged,
+  hasRemoteBranch,
+  forceRebaseOnMain,
 } from "../utils/git-helpers.js";
 import {
   createSuccessResponse,
@@ -79,7 +82,8 @@ export function registerAutomationTools(server) {
         },
         branch_strategy: {
           type: "string",
-          description: "Strategy for handling stale branches: 'auto' (prompt if interactive), 'rebase', 'new'",
+          description:
+            "Strategy for handling stale branches: 'auto' (prompt if interactive), 'rebase', 'new'",
           enum: ["auto", "rebase", "new"],
           default: "auto",
         },
@@ -479,6 +483,36 @@ async function autoCommit({
     const currentBranch = getCurrentBranch();
     const mainBranch = getMainBranch();
 
+    // Check if working on already-merged or deleted remote branch
+    if (currentBranch !== mainBranch) {
+      const isMerged = isBranchMerged(currentBranch, mainBranch);
+      const hasRemote = hasRemoteBranch(currentBranch);
+
+      if (isMerged || !hasRemote) {
+        steps.push(
+          isMerged
+            ? `Branch '${currentBranch}' was already merged to ${mainBranch}`
+            : `Branch '${currentBranch}' has no remote (was deleted)`,
+        );
+        steps.push(`Forcing rebase on origin/${mainBranch} as required...`);
+
+        // Force rebase on origin/main
+        const rebaseResult = forceRebaseOnMain(mainBranch);
+        steps.push(...rebaseResult.steps);
+
+        if (!rebaseResult.success) {
+          return createErrorResponse(
+            `Failed to rebase on origin/${mainBranch}: ${rebaseResult.message}. ` +
+              `Please resolve conflicts manually or checkout a fresh branch.`,
+          );
+        }
+
+        steps.push(
+          `Successfully ensured branch is based on latest origin/${mainBranch}`,
+        );
+      }
+    }
+
     // Check for changes
     const changedFiles = getChangedFiles();
     const hasChanges = changedFiles.length > 0;
@@ -500,44 +534,46 @@ async function autoCommit({
       branchName = currentBranch;
       needsCommit = false;
       needsPush = true;
-      
+
       // Check if branch is stale
       const divergence = getBranchDivergence(mainBranch);
       if (divergence.behind > 0) {
         steps.push(
           `Branch ${branchName} is ${divergence.behind} commits behind ${mainBranch}`,
         );
-        
+
         // For no-changes scenario, we can ask if they want to rebase before pushing
         let shouldRebase = true;
-        
+
         if (branch_strategy === "auto" && isInteractive()) {
           console.log(`\n🔄 Branch Status:`);
-          console.log(`   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`);
+          console.log(
+            `   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`,
+          );
           console.log(`   You have no uncommitted changes.\n`);
-          
+
           const answer = await inquirer.prompt([
             {
-              type: 'confirm',
-              name: 'rebase',
-              message: 'Would you like to rebase before creating the PR?',
-              default: true
-            }
+              type: "confirm",
+              name: "rebase",
+              message: "Would you like to rebase before creating the PR?",
+              default: true,
+            },
           ]);
-          
+
           shouldRebase = answer.rebase;
         } else if (branch_strategy === "new") {
           // Can't create new branch with no changes
           return createErrorResponse(
-            'Cannot create new branch with no changes. Use --branch-strategy=rebase or commit changes first.'
+            "Cannot create new branch with no changes. Use --branch-strategy=rebase or commit changes first.",
           );
         }
-        
+
         if (shouldRebase) {
           // Attempt to rebase
           const rebaseResult = safeRebase(mainBranch);
           steps.push(...rebaseResult.steps);
-          
+
           if (!rebaseResult.success) {
             if (rebaseResult.hadConflicts) {
               return createErrorResponse(
@@ -547,8 +583,10 @@ async function autoCommit({
               return createErrorResponse(rebaseResult.message);
             }
           }
-          
-          steps.push(`Successfully rebased ${branchName} on latest ${mainBranch}`);
+
+          steps.push(
+            `Successfully rebased ${branchName} on latest ${mainBranch}`,
+          );
           needsPush = true;
           needsForcePush = true; // Force push needed after rebase
         } else {
@@ -584,78 +622,84 @@ async function autoCommit({
       // If we're already on a feature branch, check if it's stale
       if (currentBranch !== mainBranch && !branch_name) {
         const divergence = getBranchDivergence(mainBranch);
-        
+
         if (divergence.behind > 0) {
           steps.push(
             `Current branch ${currentBranch} is ${divergence.behind} commits behind ${mainBranch}`,
           );
-          
+
           // Determine strategy based on branch_strategy parameter
           let strategy = branch_strategy;
-          
+
           // If auto mode and interactive, prompt the user
           if (strategy === "auto" && isInteractive()) {
             console.log(`\n🔄 Branch Status:`);
-            console.log(`   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`);
-            console.log(`   You have uncommitted changes for: ${message || 'new work'}\n`);
-            
+            console.log(
+              `   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`,
+            );
+            console.log(
+              `   You have uncommitted changes for: ${message || "new work"}\n`,
+            );
+
             const answer = await inquirer.prompt([
               {
-                type: 'list',
-                name: 'strategy',
-                message: 'Are these changes related to the current branch?',
+                type: "list",
+                name: "strategy",
+                message: "Are these changes related to the current branch?",
                 choices: [
                   {
                     name: `Yes - Rebase and continue on '${currentBranch}'`,
-                    value: 'rebase',
-                    short: 'Rebase current branch'
+                    value: "rebase",
+                    short: "Rebase current branch",
                   },
                   {
-                    name: 'No - Create a new feature branch',
-                    value: 'new',
-                    short: 'New branch'
+                    name: "No - Create a new feature branch",
+                    value: "new",
+                    short: "New branch",
                   },
                   {
-                    name: 'Cancel operation',
-                    value: 'cancel',
-                    short: 'Cancel'
-                  }
+                    name: "Cancel operation",
+                    value: "cancel",
+                    short: "Cancel",
+                  },
                 ],
-                default: 'rebase'
-              }
+                default: "rebase",
+              },
             ]);
-            
+
             strategy = answer.strategy;
-            
-            if (strategy === 'cancel') {
-              return createErrorResponse('Operation cancelled by user');
+
+            if (strategy === "cancel") {
+              return createErrorResponse("Operation cancelled by user");
             }
           } else if (strategy === "auto") {
             // Non-interactive auto mode - default to rebase
             strategy = "rebase";
             steps.push("Non-interactive mode: defaulting to rebase strategy");
           }
-          
+
           // Execute chosen strategy
           if (strategy === "rebase") {
             steps.push("Attempting to rebase current branch...");
-            
+
             // Stash changes before rebasing
             execGitCommand("git stash", { silent: true });
             steps.push("Stashed uncommitted changes");
-            
+
             // Attempt to rebase
             const rebaseResult = safeRebase(mainBranch);
             steps.push(...rebaseResult.steps);
-            
+
             // Restore stashed changes
             try {
               execGitCommand("git stash pop", { silent: true });
               steps.push("Restored stashed changes");
             } catch (e) {
-              steps.push("Failed to restore stashed changes - manual intervention may be needed");
+              steps.push(
+                "Failed to restore stashed changes - manual intervention may be needed",
+              );
             }
-            
+
             if (!rebaseResult.success) {
               if (rebaseResult.hadConflicts) {
                 // Rebase failed due to conflicts
@@ -663,20 +707,24 @@ async function autoCommit({
                   console.log(`\n⚠️  Rebase failed due to conflicts.`);
                   const fallback = await inquirer.prompt([
                     {
-                      type: 'confirm',
-                      name: 'createNew',
-                      message: 'Would you like to create a new branch instead?',
-                      default: true
-                    }
+                      type: "confirm",
+                      name: "createNew",
+                      message: "Would you like to create a new branch instead?",
+                      default: true,
+                    },
                   ]);
-                  
+
                   if (!fallback.createNew) {
-                    return createErrorResponse('Rebase has conflicts. Please resolve manually.');
+                    return createErrorResponse(
+                      "Rebase has conflicts. Please resolve manually.",
+                    );
                   }
-                  
+
                   strategy = "new"; // Fall through to new branch creation
                 } else {
-                  return createErrorResponse('Rebase failed due to conflicts. Use --branch-strategy=new to create a new branch.');
+                  return createErrorResponse(
+                    "Rebase failed due to conflicts. Use --branch-strategy=new to create a new branch.",
+                  );
                 }
               } else {
                 return createErrorResponse(rebaseResult.message);
@@ -684,43 +732,51 @@ async function autoCommit({
             } else {
               // Successfully rebased - continue with existing branch
               branchName = currentBranch;
-              steps.push(`Successfully rebased and continuing with branch: ${branchName}`);
+              steps.push(
+                `Successfully rebased and continuing with branch: ${branchName}`,
+              );
               needsForcePush = true; // Force push needed after rebase
             }
           }
-          
+
           // Create new branch (either by choice or fallback)
           if (strategy === "new" || !branchName) {
             steps.push("Creating new feature branch...");
             branchName = generateBranchName(message, branch_prefix);
-            
+
             // If we have stashed changes from failed rebase, they're still stashed
             // Otherwise, stash current changes
-            const hasStash = execGitCommand("git stash list", { silent: true }).trim().length > 0;
+            const hasStash =
+              execGitCommand("git stash list", { silent: true }).trim().length >
+              0;
             if (!hasStash) {
               execGitCommand("git stash", { silent: true });
               steps.push("Stashed uncommitted changes");
             }
-            
+
             // Switch to main and create new branch
             execGitCommand(`git checkout ${mainBranch}`, { silent: true });
-            
+
             try {
               execGitCommand("git pull origin HEAD", { silent: true });
               steps.push("Updated main branch");
             } catch (e) {
-              steps.push("Could not pull latest changes (no remote or network issue)");
+              steps.push(
+                "Could not pull latest changes (no remote or network issue)",
+              );
             }
-            
+
             execGitCommand(`git checkout -b ${branchName}`, { silent: true });
             steps.push(`Created new branch: ${branchName}`);
-            
+
             // Apply stashed changes to new branch
             try {
               execGitCommand("git stash pop", { silent: true });
               steps.push("Applied changes to new branch");
             } catch (e) {
-              return createErrorResponse("Failed to apply changes to new branch");
+              return createErrorResponse(
+                "Failed to apply changes to new branch",
+              );
             }
           }
         } else {
@@ -728,7 +784,7 @@ async function autoCommit({
           branchName = currentBranch;
           steps.push(`Branch is up to date, continuing with: ${branchName}`);
         }
-        
+
         needsPush = true;
       } else {
         // On main branch or explicit branch name provided - create new branch
@@ -797,12 +853,16 @@ async function autoCommit({
       if (needsForcePush) {
         // Force push after rebase
         try {
-          execGitCommand(`git push --force-with-lease origin ${branchName}`, { silent: true });
-          steps.push("Force pushed rebased branch to remote (using --force-with-lease for safety)");
+          execGitCommand(`git push --force-with-lease origin ${branchName}`, {
+            silent: true,
+          });
+          steps.push(
+            "Force pushed rebased branch to remote (using --force-with-lease for safety)",
+          );
         } catch (e) {
           // If force-with-lease fails, it means remote has changes we don't have
           return createErrorResponse(
-            `Force push failed. Remote branch has been updated. Please pull and resolve manually.`
+            `Force push failed. Remote branch has been updated. Please pull and resolve manually.`,
           );
         }
       } else {
