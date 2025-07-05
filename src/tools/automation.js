@@ -508,23 +508,52 @@ async function autoCommit({
           `Branch ${branchName} is ${divergence.behind} commits behind ${mainBranch}`,
         );
         
-        // Attempt to rebase
-        const rebaseResult = safeRebase(mainBranch);
-        steps.push(...rebaseResult.steps);
+        // For no-changes scenario, we can ask if they want to rebase before pushing
+        let shouldRebase = true;
         
-        if (!rebaseResult.success) {
-          if (rebaseResult.hadConflicts) {
-            return createErrorResponse(
-              `Cannot auto-rebase due to conflicts. Please manually resolve conflicts or create a fresh branch.`,
-            );
-          } else {
-            return createErrorResponse(rebaseResult.message);
-          }
+        if (branch_strategy === "auto" && isInteractive()) {
+          console.log(`\n🔄 Branch Status:`);
+          console.log(`   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`);
+          console.log(`   You have no uncommitted changes.\n`);
+          
+          const answer = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'rebase',
+              message: 'Would you like to rebase before creating the PR?',
+              default: true
+            }
+          ]);
+          
+          shouldRebase = answer.rebase;
+        } else if (branch_strategy === "new") {
+          // Can't create new branch with no changes
+          return createErrorResponse(
+            'Cannot create new branch with no changes. Use --branch-strategy=rebase or commit changes first.'
+          );
         }
         
-        steps.push(`Successfully rebased ${branchName} on latest ${mainBranch}`);
-        needsPush = true;
-        needsForcePush = true; // Force push needed after rebase
+        if (shouldRebase) {
+          // Attempt to rebase
+          const rebaseResult = safeRebase(mainBranch);
+          steps.push(...rebaseResult.steps);
+          
+          if (!rebaseResult.success) {
+            if (rebaseResult.hadConflicts) {
+              return createErrorResponse(
+                `Cannot auto-rebase due to conflicts. Please manually resolve conflicts or checkout a new branch.`,
+              );
+            } else {
+              return createErrorResponse(rebaseResult.message);
+            }
+          }
+          
+          steps.push(`Successfully rebased ${branchName} on latest ${mainBranch}`);
+          needsPush = true;
+          needsForcePush = true; // Force push needed after rebase
+        } else {
+          steps.push(`Proceeding without rebase as requested`);
+        }
       } else {
         steps.push(
           `No changes to commit, continuing with push + PR workflow for branch: ${branchName}`,
