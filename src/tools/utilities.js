@@ -289,6 +289,75 @@ export function registerUtilityTools(server) {
     handler: async (params) => cleanupMergedBranches(params),
   });
 
+  // Branch protection management
+  server.addTool({
+    name: "branch_protection",
+    description: "Manage GitHub branch protection rules",
+    inputSchema: {
+      type: "object",
+      properties: {
+        branch: {
+          type: "string",
+          description: "Branch to protect (defaults to main)",
+          default: "main",
+        },
+        operation: {
+          type: "string",
+          enum: ["enable", "disable", "status"],
+          description: "Operation to perform",
+          default: "enable",
+        },
+        require_pr_reviews: {
+          type: "boolean",
+          description: "Require pull request reviews before merging",
+          default: true,
+        },
+        dismiss_stale_reviews: {
+          type: "boolean",
+          description: "Dismiss stale PR reviews when new commits are pushed",
+          default: true,
+        },
+        require_status_checks: {
+          type: "boolean",
+          description: "Require status checks to pass before merging",
+          default: true,
+        },
+        strict_status_checks: {
+          type: "boolean",
+          description: "Require branches to be up-to-date before merging",
+          default: true,
+        },
+        status_check_contexts: {
+          type: "array",
+          items: { type: "string" },
+          description: "Required status check contexts",
+          default: ["lint", "test", "build"],
+        },
+        enforce_admins: {
+          type: "boolean",
+          description: "Apply rules to administrators",
+          default: false,
+        },
+        allow_force_pushes: {
+          type: "boolean",
+          description: "Allow force pushes to the branch",
+          default: false,
+        },
+        allow_deletions: {
+          type: "boolean",
+          description: "Allow branch deletion",
+          default: false,
+        },
+        required_approving_review_count: {
+          type: "number",
+          description: "Number of required approving reviews",
+          default: 0,
+        },
+      },
+    },
+    handler: async (params) => branchProtection(params),
+  });
+
   // NPM package creation
   server.addTool({
     name: "create_npm_package",
@@ -894,6 +963,33 @@ async function repoHealthCheck({ fix_issues = false }) {
       // Ignore if no remote
     }
 
+    // Check branch protection status
+    const mainBranch = getMainBranch();
+    const remoteUrl = getRemoteUrl();
+    if (remoteUrl && remoteUrl.includes("github.com")) {
+      const match = remoteUrl.match(
+        /github\.com[:/]([^/]+)\/([^/.]+)(\.git)?$/,
+      );
+      if (match) {
+        const [, owner, repo] = match;
+        try {
+          execSync(
+            `gh api repos/${owner}/${repo}/branches/${mainBranch}/protection`,
+            { stdio: "pipe" },
+          );
+          // Protection exists, all good
+        } catch (e) {
+          issues.push(`Branch protection not enabled on '${mainBranch}'`);
+          if (!fix_issues) {
+            health.recommendations = health.recommendations || [];
+            health.recommendations.push(
+              `Enable branch protection: slambed protection enable --branch ${mainBranch}`,
+            );
+          }
+        }
+      }
+    }
+
     const health = {
       issues,
       fixes,
@@ -1257,6 +1353,181 @@ async function cleanupMergedBranches({
   }
 }
 
+/**
+ * Branch protection tool
+ */
+async function branchProtection({
+  branch = "main",
+  operation = "enable",
+  require_pr_reviews = true,
+  dismiss_stale_reviews = true,
+  require_status_checks = true,
+  strict_status_checks = true,
+  status_check_contexts = ["lint", "test", "build"],
+  enforce_admins = false,
+  allow_force_pushes = false,
+  allow_deletions = false,
+  required_approving_review_count = 0,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const steps = [];
+
+    // Get repository info
+    const remoteUrl = getRemoteUrl();
+    if (!remoteUrl || !remoteUrl.includes("github.com")) {
+      return createErrorResponse("This tool requires a GitHub repository");
+    }
+
+    // Extract owner and repo name from remote URL
+    const match = remoteUrl.match(/github\.com[:/]([^/]+)\/([^/.]+)(\.git)?$/);
+    if (!match) {
+      return createErrorResponse("Could not parse GitHub repository URL");
+    }
+
+    const [, owner, repo] = match;
+    const repoPath = `${owner}/${repo}`;
+
+    if (operation === "status") {
+      // Check current branch protection status
+      try {
+        const protection = execSync(
+          `gh api repos/${repoPath}/branches/${branch}/protection`,
+          { encoding: "utf8" },
+        );
+
+        return createSuccessResponse(
+          `Branch protection status for '${branch}'`,
+          {
+            branch,
+            protected: true,
+            settings: JSON.parse(protection),
+            operation: "branch-protection-status",
+          },
+        );
+      } catch (error) {
+        return createSuccessResponse(`Branch '${branch}' is not protected`, {
+          branch,
+          protected: false,
+          operation: "branch-protection-status",
+        });
+      }
+    }
+
+    if (operation === "disable") {
+      // Remove branch protection
+      try {
+        execSync(
+          `gh api repos/${repoPath}/branches/${branch}/protection -X DELETE`,
+          { stdio: "pipe" },
+        );
+        steps.push(`✓ Removed protection from branch '${branch}'`);
+
+        return createSuccessResponse(
+          `Branch protection disabled for '${branch}'`,
+          {
+            branch,
+            steps,
+            operation: "branch-protection-disable",
+          },
+        );
+      } catch (error) {
+        return createErrorResponse(
+          `Failed to disable branch protection: ${error.message}`,
+        );
+      }
+    }
+
+    // Enable branch protection
+    const protectionCmd = [
+      `gh api repos/${repoPath}/branches/${branch}/protection -X PUT`,
+    ];
+
+    // Configure required status checks
+    if (require_status_checks && status_check_contexts.length > 0) {
+      protectionCmd.push(
+        `-f "required_status_checks[strict]=${strict_status_checks}"`,
+      );
+      status_check_contexts.forEach((context) => {
+        protectionCmd.push(
+          `-f "required_status_checks[contexts][]=${context}"`,
+        );
+      });
+    } else {
+      protectionCmd.push(`-f "required_status_checks=null"`);
+    }
+
+    // Configure PR reviews
+    if (require_pr_reviews) {
+      protectionCmd.push(
+        `-f "required_pull_request_reviews[require_code_owner_reviews]=false"`,
+      );
+      protectionCmd.push(
+        `-f "required_pull_request_reviews[required_approving_review_count]=${required_approving_review_count}"`,
+      );
+      protectionCmd.push(
+        `-f "required_pull_request_reviews[dismiss_stale_reviews]=${dismiss_stale_reviews}"`,
+      );
+    } else {
+      protectionCmd.push(`-f "required_pull_request_reviews=null"`);
+    }
+
+    // Other settings
+    protectionCmd.push(`-f "enforce_admins=${enforce_admins}"`);
+    protectionCmd.push(`-f "restrictions=null"`);
+    protectionCmd.push(`-f "allow_force_pushes=${allow_force_pushes}"`);
+    protectionCmd.push(`-f "allow_deletions=${allow_deletions}"`);
+
+    const fullCmd = protectionCmd.join(" \\\n  ");
+
+    try {
+      execSync(fullCmd, { stdio: "pipe" });
+      steps.push(`✓ Enabled branch protection for '${branch}'`);
+
+      if (require_status_checks) {
+        steps.push(
+          `✓ Required status checks: ${status_check_contexts.join(", ")}`,
+        );
+      }
+      if (require_pr_reviews) {
+        steps.push(
+          `✓ Required PR reviews: ${required_approving_review_count} approvals`,
+        );
+      }
+      if (enforce_admins) {
+        steps.push("✓ Protection applies to administrators");
+      }
+
+      return createSuccessResponse(
+        `Branch protection enabled for '${branch}'`,
+        {
+          branch,
+          settings: {
+            requireStatusChecks: require_status_checks,
+            statusCheckContexts: status_check_contexts,
+            requirePRReviews: require_pr_reviews,
+            requiredApprovals: required_approving_review_count,
+            enforceAdmins: enforce_admins,
+          },
+          steps,
+          operation: "branch-protection-enable",
+        },
+      );
+    } catch (error) {
+      return createErrorResponse(
+        `Failed to enable branch protection: ${error.message}`,
+      );
+    }
+  } catch (error) {
+    return createErrorResponse(
+      `Branch protection operation failed: ${error.message}`,
+    );
+  }
+}
+
 // Export individual functions for CLI usage
 export {
   getRepoInfo,
@@ -1271,4 +1542,5 @@ export {
   repoHealthCheck,
   createNpmPackage,
   cleanupMergedBranches,
+  branchProtection,
 };

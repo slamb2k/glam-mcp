@@ -34,10 +34,11 @@ Transform your development workflow with powerful automation tools that handle e
 - **🚀 GitHub Flow** - Simple, branch-based workflow (no complex branching)
 - **⚙️ GitHub Actions** - Automated CI/CD workflow creation
 - **🧠 Smart Analysis** - AI-powered commit message suggestions
-- **📦 Project Initialization** - Complete project setup automation
+- **📦 Project Initialization** - Complete project setup automation with branch protection
 - **🔧 Dual Interface** - Both MCP server and CLI tools
 - **⚙️ Configurable** - Hierarchical configuration system
 - **🛡️ Safe Operations** - Built-in safety checks and rollback capabilities
+- **🔒 Branch Protection** - Automated setup and management of GitHub branch protection rules
 
 ## 🚀 Quick Start
 
@@ -125,6 +126,18 @@ Add to your Claude Desktop config:
 - `slambed util analyze` - Change analysis
 - `slambed util health` - Repository health check
 - `slambed util branches` - List and categorize branches
+
+### 🛡️ Branch Protection
+
+- `slambed protection enable` - Enable branch protection with required status checks
+- `slambed protection disable` - Remove branch protection
+- `slambed protection status` - Check protection status
+- Options:
+  - `-b, --branch <branch>` - Branch to protect (default: main)
+  - `--no-pr-reviews` - Don't require PR reviews
+  - `--no-status-checks` - Don't require status checks
+  - `-c, --contexts <contexts...>` - Required status checks (default: lint, test, build)
+  - `-a, --approvals <count>` - Required approving reviews (default: 0)
 
 ## 🎯 Examples
 

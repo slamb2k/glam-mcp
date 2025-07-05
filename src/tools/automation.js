@@ -16,7 +16,6 @@ import {
   hasScript,
   generateBranchName,
   execGitCommand,
-  isBranchBehind,
   getBranchDivergence,
   safeRebase,
   isBranchMerged,
@@ -485,6 +484,7 @@ async function autoCommit({
     const steps = [];
     const currentBranch = getCurrentBranch();
     const mainBranch = getMainBranch();
+    let hasStashedChanges = false;
 
     // Check if working on already-merged or deleted remote branch
     if (currentBranch !== mainBranch) {
@@ -688,6 +688,7 @@ async function autoCommit({
             // Stash changes before rebasing
             execGitCommand("git stash", { silent: true });
             steps.push("Stashed uncommitted changes");
+            hasStashedChanges = true;
 
             // Attempt to rebase
             const rebaseResult = safeRebase(mainBranch);
@@ -755,6 +756,7 @@ async function autoCommit({
             if (!hasStash) {
               execGitCommand("git stash", { silent: true });
               steps.push("Stashed uncommitted changes");
+              hasStashedChanges = true;
             }
 
             // Switch to main and create new branch
@@ -800,6 +802,22 @@ async function autoCommit({
                       `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
                   );
                 }
+              } else if (
+                updateResult.divergence.ahead > 0 &&
+                updateResult.divergence.behind > 0
+              ) {
+                // Diverged - always fail regardless of config
+                // Restore stashed changes before failing
+                try {
+                  execGitCommand("git stash pop", { silent: true });
+                } catch (e) {
+                  // Ignore stash pop errors
+                }
+
+                return createErrorResponse(
+                  `Cannot create new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
+                    `Please resolve the divergence manually before proceeding.`,
+                );
               } else if (updateResult.divergence.behind > 0) {
                 // Behind but update failed (uncommitted changes on main?)
                 if (config.gitFlow.allowOutdatedBase) {
@@ -822,22 +840,6 @@ async function autoCommit({
                       `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
                   );
                 }
-              } else if (
-                updateResult.divergence.ahead > 0 &&
-                updateResult.divergence.behind > 0
-              ) {
-                // Diverged - always fail regardless of config
-                // Restore stashed changes before failing
-                try {
-                  execGitCommand("git stash pop", { silent: true });
-                } catch (e) {
-                  // Ignore stash pop errors
-                }
-
-                return createErrorResponse(
-                  `Cannot create new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
-                    `Please resolve the divergence manually before proceeding.`,
-                );
               }
             }
 
@@ -902,6 +904,15 @@ async function autoCommit({
                   `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
               );
             }
+          } else if (
+            updateResult.divergence.ahead > 0 &&
+            updateResult.divergence.behind > 0
+          ) {
+            // Diverged - always fail regardless of config
+            return createErrorResponse(
+              `Cannot create new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
+                `Please resolve the divergence manually before proceeding.`,
+            );
           } else if (updateResult.divergence.behind > 0) {
             // Behind but update failed (uncommitted changes on main?)
             if (config.gitFlow.allowOutdatedBase) {
@@ -917,15 +928,6 @@ async function autoCommit({
                   `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
               );
             }
-          } else if (
-            updateResult.divergence.ahead > 0 &&
-            updateResult.divergence.behind > 0
-          ) {
-            // Diverged - always fail regardless of config
-            return createErrorResponse(
-              `Cannot create new branch: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
-                `Please resolve the divergence manually before proceeding.`,
-            );
           }
         }
 
@@ -952,10 +954,22 @@ async function autoCommit({
       // Run linting if available and requested
       if (run_lint && hasScript("lint")) {
         try {
-          execSync("npm run lint", { stdio: "pipe" });
+          execSync("npm run lint", { stdio: "inherit" });
           steps.push("Linting passed");
         } catch (e) {
-          steps.push("Linting issues found, continuing...");
+          // Restore stashed changes before failing
+          if (hasStashedChanges) {
+            try {
+              execGitCommand("git stash pop", { silent: true });
+            } catch (stashError) {
+              // Ignore stash pop errors
+            }
+          }
+
+          return createErrorResponse(
+            `Linting failed. Please fix linting errors before committing.\n` +
+              `To skip linting, use --no-lint flag or set automation.runLint: false in .slambed.json`,
+          );
         }
       } else if (run_lint) {
         steps.push("No lint script found, skipping linting");
@@ -1792,7 +1806,6 @@ async function initProject({
       const genericFiles = createGenericTemplate(
         finalProjectName,
         description,
-        author,
         license,
         create_readme,
         create_gitignore,
@@ -1834,10 +1847,21 @@ async function initProject({
           { cwd: currentDir, stdio: "pipe" },
         );
 
-        execSync(
-          `gh api repos/${finalProjectName}/branches/main/protection -X PUT -f required_status_checks='null' -f enforce_admins=false -f required_pull_request_reviews='{"require_code_owner_reviews":false,"required_approving_review_count":1}' -f restrictions='null'`,
-          { cwd: currentDir, stdio: "pipe" },
-        );
+        // Configure branch protection with required status checks
+        const protectionCmd = `gh api repos/${finalProjectName}/branches/main/protection -X PUT \
+          -f "required_status_checks[strict]=true" \
+          -f "required_status_checks[contexts][]=lint" \
+          -f "required_status_checks[contexts][]=test" \
+          -f "required_status_checks[contexts][]=build" \
+          -f "enforce_admins=false" \
+          -f "required_pull_request_reviews[require_code_owner_reviews]=false" \
+          -f "required_pull_request_reviews[required_approving_review_count]=0" \
+          -f "required_pull_request_reviews[dismiss_stale_reviews]=true" \
+          -f "restrictions=null" \
+          -f "allow_force_pushes=false" \
+          -f "allow_deletions=false"`;
+
+        execSync(protectionCmd, { cwd: currentDir, stdio: "pipe" });
 
         steps.push("✓ Enabled branch protection for main branch");
       } catch (error) {
@@ -2101,7 +2125,6 @@ ${license}
 function createGenericTemplate(
   projectName,
   description,
-  author,
   license,
   createReadme,
   createGitignore,
@@ -2260,6 +2283,15 @@ async function npmPublish({
               `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
           );
         }
+      } else if (
+        updateResult.divergence.ahead > 0 &&
+        updateResult.divergence.behind > 0
+      ) {
+        // Diverged - always fail regardless of config
+        return createErrorResponse(
+          `Cannot publish: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
+            `Please resolve the divergence manually before publishing.`,
+        );
       } else if (updateResult.divergence.behind > 0) {
         // Behind but update failed (uncommitted changes on main?)
         if (config.gitFlow.allowOutdatedBase) {
@@ -2279,15 +2311,6 @@ async function npmPublish({
               `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
           );
         }
-      } else if (
-        updateResult.divergence.ahead > 0 &&
-        updateResult.divergence.behind > 0
-      ) {
-        // Diverged - always fail regardless of config
-        return createErrorResponse(
-          `Cannot publish: base branch (${mainBranch}) has diverged from origin/${mainBranch}.\n` +
-            `Please resolve the divergence manually before publishing.`,
-        );
       }
     }
 
