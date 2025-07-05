@@ -15,6 +15,9 @@ import {
   hasScript,
   generateBranchName,
   execGitCommand,
+  isBranchBehind,
+  getBranchDivergence,
+  safeRebase,
 } from "../utils/git-helpers.js";
 import {
   createSuccessResponse,
@@ -475,17 +478,45 @@ async function autoCommit({
     let branchName;
     let needsCommit = hasChanges;
     let needsPush = false;
+    let needsForcePush = false;
 
     if (!hasChanges && currentBranch !== mainBranch) {
-      // No changes but on feature branch - continue with push + PR workflow
+      // No changes but on feature branch - check if it needs rebasing
       branchName = currentBranch;
       needsCommit = false;
       needsPush = true;
-      steps.push(
-        `No changes to commit, but continuing with push + PR workflow for branch: ${branchName}`,
-      );
+      
+      // Check if branch is stale
+      const divergence = getBranchDivergence(mainBranch);
+      if (divergence.behind > 0) {
+        steps.push(
+          `Branch ${branchName} is ${divergence.behind} commits behind ${mainBranch}`,
+        );
+        
+        // Attempt to rebase
+        const rebaseResult = safeRebase(mainBranch);
+        steps.push(...rebaseResult.steps);
+        
+        if (!rebaseResult.success) {
+          if (rebaseResult.hadConflicts) {
+            return createErrorResponse(
+              `Cannot auto-rebase due to conflicts. Please manually resolve conflicts or create a fresh branch.`,
+            );
+          } else {
+            return createErrorResponse(rebaseResult.message);
+          }
+        }
+        
+        steps.push(`Successfully rebased ${branchName} on latest ${mainBranch}`);
+        needsPush = true;
+        needsForcePush = true; // Force push needed after rebase
+      } else {
+        steps.push(
+          `No changes to commit, continuing with push + PR workflow for branch: ${branchName}`,
+        );
+      }
     } else if (hasChanges) {
-      // Has changes - normal commit workflow
+      // Has changes - check if we should reuse existing feature branch or create new one
       if (!message) {
         // Generate AI message when none provided
         try {
@@ -506,25 +537,86 @@ async function autoCommit({
 
       steps.push(`Found ${changedFiles.length} changed files`);
 
-      // Generate branch name if not provided
-      branchName = branch_name || generateBranchName(message, branch_prefix);
-      steps.push(`Generated branch name: ${branchName}`);
+      // If we're already on a feature branch, check if it's stale
+      if (currentBranch !== mainBranch && !branch_name) {
+        const divergence = getBranchDivergence(mainBranch);
+        
+        if (divergence.behind > 0) {
+          steps.push(
+            `Current branch ${currentBranch} is ${divergence.behind} commits behind ${mainBranch}`,
+          );
+          
+          // Stash changes before rebasing
+          execGitCommand("git stash", { silent: true });
+          steps.push("Stashed uncommitted changes");
+          
+          // Attempt to rebase
+          const rebaseResult = safeRebase(mainBranch);
+          steps.push(...rebaseResult.steps);
+          
+          // Restore stashed changes
+          try {
+            execGitCommand("git stash pop", { silent: true });
+            steps.push("Restored stashed changes");
+          } catch (e) {
+            steps.push("Failed to restore stashed changes - manual intervention may be needed");
+          }
+          
+          if (!rebaseResult.success) {
+            if (rebaseResult.hadConflicts) {
+              // Create a new branch instead
+              steps.push("Creating new branch due to rebase conflicts");
+              branchName = generateBranchName(message, branch_prefix);
+              
+              // Switch to main and create new branch
+              execGitCommand(`git checkout ${mainBranch}`, { silent: true });
+              execGitCommand("git pull origin HEAD", { silent: true });
+              execGitCommand(`git checkout -b ${branchName}`, { silent: true });
+              
+              // Apply stashed changes to new branch
+              try {
+                execGitCommand("git stash pop", { silent: true });
+                steps.push("Applied changes to new branch");
+              } catch (e) {
+                return createErrorResponse("Failed to apply changes to new branch");
+              }
+            } else {
+              return createErrorResponse(rebaseResult.message);
+            }
+          } else {
+            // Successfully rebased - continue with existing branch
+            branchName = currentBranch;
+            steps.push(`Continuing with rebased branch: ${branchName}`);
+            needsForcePush = true; // Force push needed after rebase
+          }
+        } else {
+          // Branch is up to date, continue using it
+          branchName = currentBranch;
+          steps.push(`Continuing with existing branch: ${branchName}`);
+        }
+        
+        needsPush = true;
+      } else {
+        // On main branch or explicit branch name provided - create new branch
+        branchName = branch_name || generateBranchName(message, branch_prefix);
+        steps.push(`Generated branch name: ${branchName}`);
 
-      // Create and switch to new branch
-      execGitCommand(`git checkout ${mainBranch}`, { silent: true });
+        // Create and switch to new branch
+        execGitCommand(`git checkout ${mainBranch}`, { silent: true });
 
-      try {
-        execGitCommand("git pull origin HEAD", { silent: true });
-        steps.push("Updated main branch");
-      } catch (e) {
-        steps.push(
-          "Could not pull latest changes (no remote or network issue)",
-        );
+        try {
+          execGitCommand("git pull origin HEAD", { silent: true });
+          steps.push("Updated main branch");
+        } catch (e) {
+          steps.push(
+            "Could not pull latest changes (no remote or network issue)",
+          );
+        }
+
+        execGitCommand(`git checkout -b ${branchName}`, { silent: true });
+        steps.push(`Created and switched to branch: ${branchName}`);
+        needsPush = true;
       }
-
-      execGitCommand(`git checkout -b ${branchName}`, { silent: true });
-      steps.push(`Created and switched to branch: ${branchName}`);
-      needsPush = true;
     }
 
     // Only run formatting and linting if we have changes to commit
@@ -568,16 +660,30 @@ async function autoCommit({
 
     // Push branch to remote if needed
     if (needsPush) {
-      try {
-        execGitCommand(`git push -u origin ${branchName}`, { silent: true });
-        steps.push("Branch pushed to remote");
-      } catch (e) {
-        // Branch might already be pushed, try without -u flag
+      if (needsForcePush) {
+        // Force push after rebase
         try {
-          execGitCommand(`git push origin ${branchName}`, { silent: true });
-          steps.push("Branch updated on remote");
-        } catch (e2) {
-          steps.push("Push failed, continuing with PR creation...");
+          execGitCommand(`git push --force-with-lease origin ${branchName}`, { silent: true });
+          steps.push("Force pushed rebased branch to remote (using --force-with-lease for safety)");
+        } catch (e) {
+          // If force-with-lease fails, it means remote has changes we don't have
+          return createErrorResponse(
+            `Force push failed. Remote branch has been updated. Please pull and resolve manually.`
+          );
+        }
+      } else {
+        // Normal push
+        try {
+          execGitCommand(`git push -u origin ${branchName}`, { silent: true });
+          steps.push("Branch pushed to remote");
+        } catch (e) {
+          // Branch might already be pushed, try without -u flag
+          try {
+            execGitCommand(`git push origin ${branchName}`, { silent: true });
+            steps.push("Branch updated on remote");
+          } catch (e2) {
+            steps.push("Push failed, continuing with PR creation...");
+          }
         }
       }
     }
