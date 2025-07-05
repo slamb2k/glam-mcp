@@ -8,6 +8,9 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import inquirer from "inquirer";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 // Import banner utility
 import { showBanner, getStyledBanner } from "../src/utils/banner.js";
@@ -48,6 +51,74 @@ import {
   repoHealthCheck,
 } from "../src/tools/utilities.js";
 
+// Load user aliases
+function loadAliases() {
+  const aliasFiles = [
+    path.join(process.cwd(), ".slambed-aliases"),
+    path.join(os.homedir(), ".slambed-aliases"),
+  ];
+
+  for (const file of aliasFiles) {
+    try {
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, "utf8");
+        const aliases = {};
+
+        content.split("\n").forEach((line) => {
+          line = line.trim();
+          if (line && !line.startsWith("#")) {
+            const [alias, ...commandParts] = line.split("=");
+            if (alias && commandParts.length > 0) {
+              aliases[alias.trim()] = commandParts.join("=").trim();
+            }
+          }
+        });
+
+        return aliases;
+      }
+    } catch (error) {
+      // Ignore errors in alias files
+    }
+  }
+
+  return {};
+}
+
+// Check if command is an alias
+function checkAlias(args) {
+  const aliases = loadAliases();
+  const command = args[2]; // First argument after 'node' and 'slambed'
+
+  if (command && aliases[command]) {
+    // Replace alias with actual command
+    const aliasCommand = aliases[command];
+    const expandedArgs = aliasCommand.split(" ");
+
+    // Merge with any additional arguments
+    const newArgs = [
+      args[0], // node
+      args[1], // slambed
+      ...expandedArgs,
+      ...args.slice(3), // any additional args after the alias
+    ];
+
+    console.log(
+      chalk.dim(
+        `→ Expanding alias '${command}' to: slambed ${expandedArgs.join(" ")}`,
+      ),
+    );
+    console.log("");
+
+    return newArgs;
+  }
+
+  return args;
+}
+
+// Apply alias expansion
+const originalArgs = process.argv.slice();
+process.argv = checkAlias(process.argv);
+
 const program = new Command();
 
 // Show banner for specific commands
@@ -61,7 +132,11 @@ program.hook("preAction", (thisCommand) => {
 program
   .name("slambed")
   .description("Comprehensive GitHub Flow Automation with MCP and CLI Support")
-  .version("1.0.0");
+  .version("1.0.0")
+  .option(
+    "-q, --quick",
+    "Quick mode - automatically perform the most likely action",
+  );
 
 // Automation commands
 const automationCmd = program
@@ -502,6 +577,129 @@ flowCmd
     }
   });
 
+// Natural command aliases for common operations
+program
+  .command("commit")
+  .description("Commit changes with smart workflow")
+  .option("-m, --message <message>", "Commit message")
+  .option("--no-merge", "Skip auto-merge")
+  .action(async (options) => {
+    try {
+      const result = await autoCommit({
+        message: options.message,
+        auto_merge: options.merge,
+      });
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("pr")
+  .description("Create pull request from current branch")
+  .option("-t, --title <title>", "PR title")
+  .option("-d, --description <description>", "PR description")
+  .option("--draft", "Create as draft PR")
+  .action(async (options) => {
+    try {
+      const result = await finishBranch(
+        options.title,
+        options.description,
+        options.draft,
+        true, // auto-merge by default
+        true, // delete branch by default
+      );
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("sync")
+  .description("Sync current branch with main")
+  .option(
+    "-s, --strategy <strategy>",
+    "Sync strategy (merge, rebase)",
+    "rebase",
+  )
+  .action(async (options) => {
+    try {
+      const result = await syncWithMain(options.strategy);
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("publish")
+  .description("Publish package to npm")
+  .option("-v, --version <type>", "Version bump type", "patch")
+  .option("--dry-run", "Perform dry run")
+  .action(async (options) => {
+    try {
+      const result = await npmPublish({
+        version_type: options.version,
+        dry_run: options.dryRun,
+      });
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("status")
+  .description("Show repository status")
+  .action(async () => {
+    try {
+      const result = await getGitHubFlowStatus();
+      console.log(result.message || result.data);
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("feature <name>")
+  .description("Start a new feature branch")
+  .action(async (name) => {
+    try {
+      const result = await startBranch(name, "feature");
+      console.log(
+        result.success
+          ? chalk.green(result.message)
+          : chalk.red(result.message),
+      );
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
 // Utility commands
 const utilCmd = program.command("util").description("Utility operations");
 
@@ -609,37 +807,73 @@ program
   .description("Interactive mode with guided prompts")
   .action(async () => {
     try {
-      console.log(chalk.blue("🎯 Slambed Interactive Mode"));
-      console.log("===========================\n");
+      // Don't show banner again if already shown
+      if (process.argv.slice(2).length > 0) {
+        console.log(chalk.blue("🎯 Slambed Interactive Mode"));
+        console.log("===========================\n");
+      }
+
+      // Get context if not already detected
+      const context = await detectContext();
+
+      // Build context-aware menu choices
+      const choices = [];
+
+      // Primary actions based on context
+      if (context && context.hasChanges) {
+        choices.push({
+          name: "🚀 Commit changes (smart workflow)",
+          value: "auto-commit",
+        });
+        choices.push({
+          name: "⚡ Quick commit (minimal prompts)",
+          value: "quick-commit",
+        });
+      }
+
+      if (context && !context.isOnMain && !context.hasChanges) {
+        choices.push({
+          name: "🏁 Create pull request",
+          value: "feature-finish",
+        });
+      }
+
+      if (context && context.isOnMain) {
+        choices.push({
+          name: "🌿 Start new feature branch",
+          value: "feature-start",
+        });
+      }
+
+      // Add separator if we have primary actions
+      if (choices.length > 0) {
+        choices.push(new inquirer.Separator("─── Other Actions ───"));
+      }
+
+      // Always available actions
+      choices.push(
+        { name: "📊 Repository status", value: "status" },
+        { name: "🔍 Analyze changes", value: "analyze" },
+        { name: "🔄 Sync with main", value: "sync" },
+        { name: "📋 List branches", value: "branches" },
+        { name: "🏥 Health check", value: "health" },
+        { name: "📦 Publish to npm", value: "publish" },
+        new inquirer.Separator("─── Setup ───"),
+        { name: "⚙️ Create PR workflow", value: "create-pr-workflow" },
+        {
+          name: "🚀 Create release workflow",
+          value: "create-release-workflow",
+        },
+        new inquirer.Separator(),
+        { name: "❌ Exit", value: "exit" },
+      );
 
       const { operation } = await inquirer.prompt([
         {
           type: "list",
           name: "operation",
           message: "What would you like to do?",
-          choices: [
-            {
-              name: "🚀 Auto Commit (Complete workflow)",
-              value: "auto-commit",
-            },
-            { name: "⚡ Quick Commit (Smart defaults)", value: "quick-commit" },
-            {
-              name: "🧠 Smart Analysis (Analyze changes)",
-              value: "smart-analysis",
-            },
-            { name: "🌿 Start Feature Branch", value: "feature-start" },
-            { name: "🏁 Finish Feature Branch", value: "feature-finish" },
-            { name: "📊 Repository Status", value: "status" },
-            { name: "🔍 Analyze Changes", value: "analyze" },
-            { name: "🏥 Health Check", value: "health" },
-            { name: "📋 List Branches", value: "branches" },
-            { name: "⚙️ Create PR Workflow", value: "create-pr-workflow" },
-            {
-              name: "🚀 Create Release Workflow",
-              value: "create-release-workflow",
-            },
-            { name: "❌ Exit", value: "exit" },
-          ],
+          choices,
         },
       ]);
 
@@ -705,7 +939,105 @@ program
           );
           break;
 
-        // Add more cases for other operations...
+        case "quick-commit":
+          const quickResult = await quickCommit({});
+          console.log(
+            quickResult.success
+              ? chalk.green("\n✅ " + quickResult.message)
+              : chalk.red("\n❌ " + quickResult.message),
+          );
+          break;
+
+        case "feature-start":
+          const featureName = await inquirer.prompt([
+            {
+              type: "input",
+              name: "name",
+              message: "Feature branch name:",
+              validate: (input) =>
+                input.trim().length > 0 || "Branch name required",
+            },
+          ]);
+          const startResult = await startBranch(featureName.name, "feature");
+          console.log(
+            startResult.success
+              ? chalk.green("\n✅ " + startResult.message)
+              : chalk.red("\n❌ " + startResult.message),
+          );
+          break;
+
+        case "feature-finish":
+          const finishResult = await finishBranch();
+          console.log(
+            finishResult.success
+              ? chalk.green("\n✅ " + finishResult.message)
+              : chalk.red("\n❌ " + finishResult.message),
+          );
+          break;
+
+        case "sync":
+          const syncResult = await syncWithMain("rebase");
+          console.log(
+            syncResult.success
+              ? chalk.green("\n✅ " + syncResult.message)
+              : chalk.red("\n❌ " + syncResult.message),
+          );
+          break;
+
+        case "analyze":
+          const analyzeResult = await analyzeChanges({ detailed: true });
+          console.log(
+            analyzeResult.success
+              ? chalk.green("\n✅ " + analyzeResult.message)
+              : chalk.red("\n❌ " + analyzeResult.message),
+          );
+          if (analyzeResult.data) {
+            console.log("\n" + JSON.stringify(analyzeResult.data, null, 2));
+          }
+          break;
+
+        case "branches":
+          const branchResult = await listBranches({ include_remote: false });
+          console.log(
+            branchResult.success
+              ? chalk.green("\n✅ " + branchResult.message)
+              : chalk.red("\n❌ " + branchResult.message),
+          );
+          if (branchResult.data) {
+            console.log("\n" + JSON.stringify(branchResult.data, null, 2));
+          }
+          break;
+
+        case "health":
+          const healthResult = await repoHealthCheck({ fix_issues: false });
+          console.log(
+            healthResult.success
+              ? chalk.green("\n✅ " + healthResult.message)
+              : chalk.red("\n❌ " + healthResult.message),
+          );
+          if (healthResult.data) {
+            console.log("\n" + JSON.stringify(healthResult.data, null, 2));
+          }
+          break;
+
+        case "publish":
+          const publishConfirm = await inquirer.prompt([
+            {
+              type: "confirm",
+              name: "proceed",
+              message: "This will publish to NPM. Continue?",
+              default: false,
+            },
+          ]);
+          if (publishConfirm.proceed) {
+            const publishResult = await npmPublish({});
+            console.log(
+              publishResult.success
+                ? chalk.green("\n✅ " + publishResult.message)
+                : chalk.red("\n❌ " + publishResult.message),
+            );
+          }
+          break;
 
         default:
           console.log(
@@ -718,13 +1050,137 @@ program
     }
   });
 
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
-  showBanner();
-  console.log(""); // Add spacing after banner
-  program.outputHelp();
-  process.exit(0);
+// Add smart context detection function
+async function detectContext() {
+  const {
+    getCurrentBranch,
+    getMainBranch,
+    getChangedFiles,
+    hasUncommittedChanges,
+  } = await import("../src/utils/git-helpers.js");
+
+  try {
+    const currentBranch = getCurrentBranch();
+    const mainBranch = getMainBranch();
+    const changedFiles = getChangedFiles();
+    const hasChanges = hasUncommittedChanges();
+
+    return {
+      currentBranch,
+      mainBranch,
+      isOnMain: currentBranch === mainBranch,
+      hasChanges,
+      changedFiles: changedFiles.length,
+      suggestedAction: determineSuggestedAction(
+        currentBranch,
+        mainBranch,
+        hasChanges,
+      ),
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
-// Parse command line arguments
-program.parse();
+function determineSuggestedAction(currentBranch, mainBranch, hasChanges) {
+  const isOnMain = currentBranch === mainBranch;
+
+  if (hasChanges) {
+    return isOnMain ? "start-feature" : "commit";
+  } else {
+    return isOnMain ? "start-feature" : "create-pr";
+  }
+}
+
+// Handle quick mode or smart interactive mode
+async function handleSmartMode() {
+  const opts = program.opts();
+  const context = await detectContext();
+
+  showBanner({ compact: true });
+  console.log(""); // Add spacing after banner
+
+  if (context) {
+    console.log(chalk.blue("📍 Current context:"));
+    console.log(`  Branch: ${chalk.cyan(context.currentBranch)}`);
+    if (context.hasChanges) {
+      console.log(
+        `  Changes: ${chalk.yellow(context.changedFiles + " files modified")}`,
+      );
+    } else {
+      console.log(`  Changes: ${chalk.green("Working directory clean")}`);
+    }
+    console.log("");
+  }
+
+  // Quick mode - execute suggested action automatically
+  if (opts.quick && context) {
+    console.log(chalk.green("⚡ Quick mode - executing suggested action..."));
+    console.log("");
+
+    switch (context.suggestedAction) {
+      case "commit":
+        console.log(chalk.blue("🚀 Running smart commit workflow..."));
+        const commitResult = await autoCommit({});
+        console.log(
+          commitResult.success
+            ? chalk.green(commitResult.message)
+            : chalk.red(commitResult.message),
+        );
+        break;
+
+      case "create-pr":
+        console.log(chalk.blue("🏁 Creating pull request..."));
+        const prResult = await finishBranch();
+        console.log(
+          prResult.success
+            ? chalk.green(prResult.message)
+            : chalk.red(prResult.message),
+        );
+        break;
+
+      case "start-feature":
+        console.log(chalk.blue("🌿 Please specify a feature name:"));
+        console.log(chalk.yellow("  slambed feature <name>"));
+        console.log(
+          chalk.yellow(
+            "  or use: slambed (without --quick) for interactive mode",
+          ),
+        );
+        break;
+    }
+    return;
+  }
+
+  // Show suggested action for interactive mode
+  if (context) {
+    const suggestions = {
+      commit: "🚀 Commit your changes",
+      "create-pr": "🏁 Create a pull request",
+      "start-feature": "🌿 Start a new feature",
+    };
+
+    if (suggestions[context.suggestedAction]) {
+      console.log(
+        chalk.green(
+          "💡 Suggested action: " + suggestions[context.suggestedAction],
+        ),
+      );
+      console.log("");
+    }
+  }
+
+  // Run interactive mode
+  await program.parseAsync(["node", "slambed", "interactive"]);
+}
+
+// Show smart interactive mode if no command provided
+if (
+  !process.argv.slice(2).length ||
+  (process.argv.length === 3 && process.argv[2] === "--quick")
+) {
+  handleSmartMode();
+} else {
+  // Parse command line arguments normally
+  program.parse();
+}
