@@ -38,10 +38,15 @@ program
     "Branch type (feature, fix, docs, chore)",
     "feature",
   )
+  .option("--allow-outdated-base", "Allow operations on outdated base branch")
   .action(async (name, options) => {
     try {
       console.log(chalk.blue(`Starting ${options.type} branch: ${name}`));
-      const result = await startBranch(name, options.type);
+      const result = await startBranch(
+        name,
+        options.type,
+        options.allowOutdatedBase,
+      );
       console.log(
         result.success
           ? chalk.green(result.message)

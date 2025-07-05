@@ -28,6 +28,7 @@ const DEFAULT_CONFIG = {
     branchStrategy: "auto", // auto | auto-fresh | reuse-with-check | always-reuse
     autoCleanupMerged: false, // Automatically cleanup merged branches before creating new ones
     warnOnMergedBranch: true, // Show warnings when working on merged branches
+    allowOutdatedBase: false, // When true, allows operations on outdated base branches
   },
 
   // Automation settings

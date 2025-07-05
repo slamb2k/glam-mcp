@@ -233,7 +233,8 @@ Create `.slambed.json` in your project:
 {
   "gitFlow": {
     "defaultBranch": "main",
-    "autoMerge": true
+    "autoMerge": true,
+    "allowOutdatedBase": false
   },
   "automation": {
     "runFormat": true,
@@ -241,6 +242,39 @@ Create `.slambed.json` in your project:
     "runTests": false
   }
 }
+```
+
+### Configuration Options
+
+#### gitFlow.allowOutdatedBase (default: false)
+
+Controls whether operations can proceed when the base branch (main/master) is outdated:
+
+- `false` (default): Operations will fail if base branch is outdated and cannot be updated
+- `true`: Operations will continue with warnings even if base branch is outdated
+
+This is useful for:
+
+- **Offline work**: Set to `true` when working without network access
+- **CI environments**: May need `true` if CI has limited git access
+- **Strict workflows**: Keep as `false` to ensure all work starts from latest base
+
+Example scenarios:
+
+```bash
+# With allowOutdatedBase: false (default)
+$ slambed auto commit
+⚠️  Base branch (main) is 3 commits behind origin/main
+  Fetched latest main from origin
+  Attempting to update base branch...
+  ✅ Successfully updated base branch
+✓ Created branch: feature/add-authentication-2025-01-05
+
+# With allowOutdatedBase: true
+$ slambed auto commit
+⚠️  Base branch (main) is 3 commits behind origin/main
+⚠️  Could not update base branch due to network issue. Continuing anyway due to config...
+✓ Created branch: feature/add-authentication-2025-01-05
 ```
 
 ## 🛠️ Installation
