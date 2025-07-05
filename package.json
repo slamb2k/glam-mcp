@@ -46,6 +46,7 @@
     "commander": "^11.1.0",
     "inquirer": "^9.2.12",
     "simple-git": "^3.20.0",
+    "slambed-mcp": "^1.1.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
