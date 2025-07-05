@@ -41,17 +41,30 @@ Transform your development workflow with powerful automation tools that handle e
 
 ## 🚀 Quick Start
 
-### CLI Usage
+### Simplified Commands
 
 ```bash
-# Main unified CLI
+# Just run slambed - it knows what you need!
+slambed                    # Smart interactive mode with context-aware suggestions
+
+# Natural one-word commands
+slambed commit             # Commit changes with AI-generated message
+slambed pr                 # Create pull request from current branch
+slambed sync               # Sync with main branch
+slambed status             # Show repository status
+slambed feature my-feature # Start a new feature branch
+
+# Quick mode - one command does it all
+slambed --quick            # Automatically perform the suggested action
+```
+
+### Classic Commands (still supported)
+
+```bash
+# Detailed control when you need it
 slambed auto commit -m "Add user authentication"
-
-# Automation-focused CLI
-slamb-commit auto -m "Fix login bug"
-
-# GitHub Flow-focused CLI
-slamb-flow feature start user-profile
+slambed flow start feature-name
+slambed util health
 ```
 
 ### MCP Integration
@@ -71,33 +84,115 @@ Add to your Claude Desktop config:
 
 ## 📋 Available Commands
 
-### Auto-Commit Workflows
+### 🎯 Smart Mode (NEW!)
 
-- `slambed auto commit` - Complete automation workflow
-- `slamb-commit quick` - Quick commit with smart defaults
-- `slamb-commit smart` - AI-powered analysis and suggestions
+- `slambed` - Interactive mode with context-aware suggestions
+- `slambed --quick` - Automatically perform the most likely action
 
-### GitHub Actions Workflows
+### ⚡ Simplified Commands (NEW!)
+
+- `slambed commit` - Smart commit workflow with AI message generation
+- `slambed pr` - Create pull request from current branch
+- `slambed sync` - Sync current branch with main
+- `slambed status` - Show repository status
+- `slambed publish` - Publish package to npm
+- `slambed feature <name>` - Start a new feature branch
+
+### 🤖 Automation Workflows
+
+- `slambed auto commit` - Complete workflow: branch → format → lint → commit → push → PR → merge
+- `slambed auto quick` - Quick commit with smart defaults
+- `slambed auto smart` - Analyze changes and suggest commit message
+- `slambed auto sync` - Sync current branch with target
+- `slambed auto publish` - Automated npm publishing
+
+### 🚀 GitHub Actions
 
 - `slambed auto create-pr-workflow` - Create PR check workflow (lint, test, build)
-- `slamb-commit create-release-workflow` - Create automated release workflow
+- `slambed auto create-release-workflow` - Create automated release workflow
 
-### GitHub Flow Operations
+### 🌿 GitHub Flow
 
-- `slamb-flow start <name>` - Start a new branch from main
-- `slamb-flow finish` - Create PR for current branch
-- `slamb-flow quick <name>` - Quick: branch + commit + PR
-- `slamb-flow sync` - Sync current branch with main
+- `slambed flow start <name>` - Start a new branch from main
+- `slambed flow finish` - Create PR for current branch
+- `slambed flow quick <name>` - Quick: branch + commit + PR
+- `slambed flow sync` - Sync current branch with main
+- `slambed flow cleanup` - Clean up merged branches
 
-### Utilities
+### 🔧 Utilities
 
 - `slambed util info` - Repository information
 - `slambed util analyze` - Change analysis
 - `slambed util health` - Repository health check
+- `slambed util branches` - List and categorize branches
 
 ## 🎯 Examples
 
-### Complete Feature Development
+### Simplest Workflow Ever
+
+```bash
+# Start your work
+slambed feature user-auth
+
+# Make your changes...
+# Then just run:
+slambed
+
+# Slambed detects you have changes and suggests committing
+# Select "🚀 Commit changes" and you're done!
+```
+
+### One-Command Workflow
+
+```bash
+# Made some changes? Just run:
+slambed --quick
+
+# Slambed automatically:
+# - Detects your changes
+# - Creates a feature branch if needed
+# - Generates an AI commit message
+# - Pushes and creates a PR
+# - Auto-merges when checks pass
+```
+
+### Natural Commands
+
+```bash
+# Commit your work
+slambed commit
+
+# Ready to ship?
+slambed pr
+
+# Stay in sync
+slambed sync
+
+# Check status
+slambed status
+```
+
+### Custom Aliases
+
+Create a `.slambed-aliases` file in your project or home directory:
+
+```bash
+# ~/.slambed-aliases
+c=commit
+p=pr
+s=sync
+ship=commit --no-merge
+done=auto commit
+```
+
+Then use your shortcuts:
+
+```bash
+slambed c     # Same as: slambed commit
+slambed ship  # Same as: slambed commit --no-merge
+```
+
+### Complete Feature Development (Classic)
 
 ```bash
 # Start feature, make changes, then auto-commit

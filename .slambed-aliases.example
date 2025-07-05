@@ -1,0 +1,28 @@
+# Slambed Alias Configuration
+# Format: alias=command
+# Lines starting with # are comments
+
+# Quick shortcuts
+c=commit
+p=pr
+s=sync
+st=status
+
+# Common workflows
+ship=commit --no-merge
+done=auto commit
+
+# Feature development
+nf=feature
+start=flow start
+
+# Maintenance
+cleanup=flow cleanup
+check=util health
+
+# Publishing
+release=publish --version minor
+hotfix=publish --version patch
+
+# Custom workflows
+# Add your own aliases here!
