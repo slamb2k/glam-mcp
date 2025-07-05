@@ -262,6 +262,33 @@ export function registerUtilityTools(server) {
     handler: async (params) => repoHealthCheck(params),
   });
 
+  // Cleanup merged branches
+  server.addTool({
+    name: "cleanup_merged_branches",
+    description: "Remove local branches that have been merged to main/master",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dry_run: {
+          type: "boolean",
+          description: "Show what would be deleted without actually deleting",
+          default: false,
+        },
+        include_remote: {
+          type: "boolean",
+          description: "Also prune remote tracking branches",
+          default: true,
+        },
+        force: {
+          type: "boolean",
+          description: "Skip confirmation prompts",
+          default: false,
+        },
+      },
+    },
+    handler: async (params) => cleanupMergedBranches(params),
+  });
+
   // NPM package creation
   server.addTool({
     name: "create_npm_package",
@@ -1108,6 +1135,121 @@ Thumbs.db
   }
 }
 
+/**
+ * Cleanup merged branches
+ */
+async function cleanupMergedBranches({ dry_run = false, include_remote = true, force = false }) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const mainBranch = getMainBranch();
+    const currentBranch = getCurrentBranch();
+    const mergedBranches = getMergedBranches(mainBranch);
+    
+    // Filter out current branch and main branch
+    const branchesToDelete = mergedBranches.filter(
+      branch => branch !== currentBranch && branch !== mainBranch && branch !== "master"
+    );
+
+    if (branchesToDelete.length === 0) {
+      return createSuccessResponse("No merged branches to clean up", {
+        checkedBranches: mergedBranches.length,
+        currentBranch,
+        mainBranch,
+      });
+    }
+
+    // Get additional info for each branch
+    const branchInfo = branchesToDelete.map(branch => {
+      let lastCommit = "unknown";
+      let lastCommitDate = "unknown";
+      
+      try {
+        const info = execGitCommand(
+          `git log -1 --format="%h %ar" ${branch}`,
+          { silent: true }
+        ).trim();
+        const [hash, ...dateParts] = info.split(" ");
+        lastCommit = hash;
+        lastCommitDate = dateParts.join(" ");
+      } catch (e) {
+        // Ignore errors getting commit info
+      }
+      
+      return {
+        name: branch,
+        lastCommit,
+        lastCommitDate,
+      };
+    });
+
+    if (dry_run) {
+      return createSuccessResponse(
+        `Found ${branchesToDelete.length} merged branches that would be deleted`,
+        {
+          branches: branchInfo,
+          dryRun: true,
+          includeRemote: include_remote,
+        }
+      );
+    }
+
+    // Delete the branches
+    const deletedBranches = [];
+    const failedBranches = [];
+
+    for (const branch of branchesToDelete) {
+      try {
+        execGitCommand(`git branch -d ${branch}`, { silent: true });
+        deletedBranches.push(branch);
+      } catch (error) {
+        // Try force delete if regular delete fails
+        try {
+          if (force) {
+            execGitCommand(`git branch -D ${branch}`, { silent: true });
+            deletedBranches.push(branch);
+          } else {
+            failedBranches.push({
+              branch,
+              reason: "Branch has unmerged changes (use --force to delete anyway)",
+            });
+          }
+        } catch (e) {
+          failedBranches.push({
+            branch,
+            reason: error.message,
+          });
+        }
+      }
+    }
+
+    // Prune remote tracking branches if requested
+    let prunedRemotes = false;
+    if (include_remote && deletedBranches.length > 0) {
+      try {
+        execGitCommand("git remote prune origin", { silent: true });
+        prunedRemotes = true;
+      } catch (e) {
+        // Ignore remote prune errors
+      }
+    }
+
+    return createSuccessResponse(
+      `Cleaned up ${deletedBranches.length} merged branches`,
+      {
+        deletedBranches,
+        failedBranches,
+        prunedRemotes,
+        totalChecked: branchesToDelete.length,
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Failed to cleanup branches: ${error.message}`);
+  }
+}
+
 // Export individual functions for CLI usage
 export {
   getRepoInfo,
@@ -1121,4 +1263,5 @@ export {
   stashOperations,
   repoHealthCheck,
   createNpmPackage,
+  cleanupMergedBranches,
 };
