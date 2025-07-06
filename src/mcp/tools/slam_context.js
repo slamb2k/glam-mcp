@@ -644,9 +644,7 @@ export class SlamContextTool {
     if (context.activity.predictions.length > 0) {
       activityNode.nodes.push({
         label: 'Predictions',
-        nodes: context.activity.predictions.map(p => 
-          `${p.value} ${chalk.gray(`(${p.confidence}%)`
-        )})
+        nodes: context.activity.predictions.map(p => `${p.value} ${chalk.gray(`(${p.confidence}%)`)}`)
       });
     }
 

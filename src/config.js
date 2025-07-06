@@ -148,7 +148,10 @@ export class ConfigManager {
         try {
           const fileConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
           this.mergeConfig(fileConfig);
-          console.log(`[Config] Loaded configuration from: ${configPath}`);
+          // In MCP mode, don't log to console
+          if (!process.env.MCP_MODE) {
+            console.log(`[Config] Loaded configuration from: ${configPath}`);
+          }
           break;
         } catch (error) {
           console.warn(
@@ -192,7 +195,10 @@ export class ConfigManager {
 
     if (Object.keys(envConfig).length > 0) {
       this.mergeConfig(envConfig);
-      console.log("[Config] Loaded configuration from environment variables");
+      // In MCP mode, don't log to console
+      if (!process.env.MCP_MODE) {
+        console.log("[Config] Loaded configuration from environment variables");
+      }
     }
   }
 
@@ -304,7 +310,10 @@ export class ConfigManager {
       }
 
       fs.writeFileSync(configPath, JSON.stringify(this.config, null, 2));
-      console.log(`[Config] Configuration saved to: ${configPath}`);
+      // In MCP mode, don't log to console
+      if (!process.env.MCP_MODE) {
+        console.log(`[Config] Configuration saved to: ${configPath}`);
+      }
       return true;
     } catch (error) {
       console.error(`[Config] Error saving configuration: ${error.message}`);

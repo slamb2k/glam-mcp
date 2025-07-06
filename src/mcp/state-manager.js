@@ -105,8 +105,8 @@ export class StateManager {
     const umzug = new Umzug({
       migrations: {
         glob: path.join(migrationsPath, '*.js'),
-        resolve: ({ name, path: migrationPath }) => {
-          const migration = require(migrationPath);
+        resolve: async ({ name, path: migrationPath }) => {
+          const migration = await import(migrationPath);
           return {
             name,
             up: async () => migration.up(this.db),
@@ -225,7 +225,7 @@ export async function down(db) {
     const { db, release } = await this.getConnection();
     try {
       const id = sessionData.id || this.generateId();
-      const result = await db.run(
+      await db.run(
         `INSERT INTO sessions (id, user_id, data, expires_at) VALUES (?, ?, ?, ?)`,
         [id, sessionData.userId, JSON.stringify(sessionData.data), sessionData.expiresAt]
       );
@@ -749,5 +749,20 @@ class QueryBuilder {
   }
 }
 
-// Export singleton instance
-export default new StateManager();
+// Export singleton instance with lazy initialization
+let instance = null;
+const getStateManager = () => {
+  if (!instance && process.env.MCP_MODE !== 'true') {
+    instance = new StateManager();
+  }
+  return instance || {
+    getState: () => null,
+    setState: () => {},
+    updateState: () => {},
+    subscribe: () => ({ unsubscribe: () => {} }),
+    transaction: async (fn) => fn(),
+    clear: () => {}
+  };
+};
+
+export default getStateManager();

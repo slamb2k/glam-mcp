@@ -168,7 +168,7 @@ export class ContextInferenceEngine {
   /**
    * Generate recommendations based on inferences
    */
-  generateRecommendations(inferences, context) {
+  generateRecommendations(inferences, _context) {
     const recommendations = [];
 
     // Git state recommendations

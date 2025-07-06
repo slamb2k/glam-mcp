@@ -1,13 +1,16 @@
 {
   "name": "slambed-mcp",
-  "version": "1.1.11",
+  "version": "3.0.5",
   "description": "Slambed MCP Server - Comprehensive Git Flow Automation with MCP and CLI Support",
   "main": "src/index.js",
   "type": "module",
   "bin": {
     "slambed": "./bin/slambed.js",
     "slamb-flow": "./bin/slamb-flow.js",
-    "slamb-commit": "./bin/slamb-commit.js"
+    "slamb-commit": "./bin/slamb-commit.js",
+    "slambed-mcp": "./bin/slambed-mcp.js",
+    "slambed-mcp-server": "./bin/slambed-mcp-server.js",
+    "mcp-server": "./bin/mcp-server.js"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -15,8 +18,19 @@
     "test": "node test/test-runner.js",
     "lint": "eslint src/**/*.js",
     "format": "prettier --write .",
-    "build": "npm run lint && npm run test"
+    "build": "npm run lint && npm run test",
+    "postinstall": "node scripts/postinstall.js",
+    "prepare:publish": "node scripts/prepare-npm-publish.js"
   },
+  "files": [
+    "src/",
+    "bin/",
+    "scripts/",
+    "docs/",
+    ".env.example",
+    "README.md",
+    "LICENSE"
+  ],
   "mcp": {
     "mcpVersion": "0.1.0",
     "server": {
@@ -56,11 +70,28 @@
     "openai": "^5.8.2",
     "rxjs": "^7.8.2",
     "simple-git": "^3.20.0",
-    "slambed-mcp": "^1.1.4",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "umzug": "^3.8.2",
     "winston": "^3.17.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "express-session": "^1.18.0",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
+    "ot": "^0.0.15",
+    "ml-kmeans": "^6.0.0",
+    "natural": "^6.10.4",
+    "node-cron": "^3.0.3",
+    "redis": "^4.6.12",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "mysql2": "^3.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

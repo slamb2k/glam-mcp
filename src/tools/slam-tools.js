@@ -3,12 +3,15 @@
  * Advanced MCP tools for intelligent development workflows
  */
 
-import slam_tool from '../mcp/tools/slam_mcp.js';
-import slam_develop_tool from '../mcp/tools/slam_develop_mcp.js';
-import slam_ship_tool from '../mcp/tools/slam_ship_mcp.js';
-import slam_commit_tool from '../mcp/tools/slam_commit_mcp.js';
-import slam_suggest_tool from '../mcp/tools/slam_suggest_mcp.js';
-import slam_context_tool from '../mcp/tools/slam_context_mcp.js';
+import slam_tool from '../mcp/tools/slam.js';
+import slam_develop_tool from '../mcp/tools/slam_develop.js';
+import slam_ship_tool from '../mcp/tools/slam_ship.js';
+import slam_commit_tool from '../mcp/tools/slam_commit.js';
+import slam_suggest_tool from '../mcp/tools/slam_suggest.js';
+import slam_context_tool from '../mcp/tools/slam_context.js';
+import slam_learn_tool from '../mcp/tools/slam_learn.js';
+import slam_collaborate_tool from '../mcp/tools/slam_collaborate.js';
+import slam_recover_tool from '../mcp/tools/slam_recover.js';
 
 /**
  * Register SLAM tools with MCP server
@@ -32,5 +35,12 @@ export function registerSlamTools(server) {
   // Rich context visualization tool
   server.addTool(slam_context_tool);
   
-  console.log('[Slambed MCP] Registered SLAM tools');
+  // User personalization and learning tool
+  server.addTool(slam_learn_tool);
+  
+  // Team collaboration tool
+  server.addTool(slam_collaborate_tool);
+  
+  // Time machine recovery tool
+  server.addTool(slam_recover_tool);
 }

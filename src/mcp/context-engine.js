@@ -1,4 +1,4 @@
-import { Subject, BehaviorSubject, filter, map, debounceTime } from 'rxjs';
+import { Subject, BehaviorSubject, debounceTime } from 'rxjs';
 import fs from 'fs-extra';
 import path from 'path';
 import { simpleGit } from 'simple-git';
@@ -324,7 +324,7 @@ export class ContextEngine {
   /**
    * Track user activity
    */
-  trackUserActivity(activity) {
+  async trackUserActivity(activity) {
     const activityRecord = {
       ...activity,
       timestamp: new Date().toISOString()
@@ -394,7 +394,7 @@ export class ContextEngine {
   /**
    * Get context for a specific tool or operation
    */
-  getToolContext(toolName) {
+  getToolContext(_toolName) {
     return {
       git: this.data.git,
       project: {
@@ -487,5 +487,18 @@ export class ContextEngine {
   }
 }
 
-// Export singleton instance
-export default new ContextEngine();
+// Export singleton instance with lazy initialization
+let instance = null;
+const getContextEngine = () => {
+  if (!instance && process.env.MCP_MODE !== 'true') {
+    instance = new ContextEngine();
+  }
+  return instance || {
+    query: () => null,
+    data: { update: () => {}, getCached: () => null },
+    updateGitContext: async () => {},
+    getInferredContext: async () => ({ projectState: {} })
+  };
+};
+
+export default getContextEngine();

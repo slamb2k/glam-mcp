@@ -1,0 +1,76 @@
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+.DS_Store
+*.log
+*.lock
+yarn.lock
+pnpm-lock.yaml
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+
+# Source control
+.gitignore
+.gitattributes
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.circleci/
+.github/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+*.tgz
+
+# Local configuration
+.slambed/
+*.local
+.claude/
+.taskmaster/
+
+# Temporary files
+tmp/
+temp/
+
+# Documentation source files (keep compiled docs)
+docs-src/
+*.md.backup
+
+# Development scripts that users don't need
+scripts/dev-*.js
+scripts/test-*.js
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-*
+.atom/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Examples that are too large
+examples/large-demos/
+
+# Personal notes
+NOTES.md
+TODO.md
+SCRATCH.md

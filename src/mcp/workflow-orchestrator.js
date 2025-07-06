@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { EventEmitter } from 'events';
+import { execSync } from 'child_process';
 import stateManager from './state-manager.js';
 import contextEngine from './context-engine.js';
 import logger from '../utils/logger.js';
@@ -434,6 +435,7 @@ export class WorkflowOrchestrator extends EventEmitter {
     const maxWait = 300000; // 5 minutes
     const startTime = Date.now();
     
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const allCompleted = dependencies.every(dep => {
         const depState = instance.tasks.get(dep);
@@ -454,8 +456,6 @@ export class WorkflowOrchestrator extends EventEmitter {
    * Execute command task
    */
   async executeCommand(task) {
-    const { execSync } = require('child_process');
-    
     try {
       const output = execSync(task.command, {
         encoding: 'utf8',
@@ -491,8 +491,9 @@ export class WorkflowOrchestrator extends EventEmitter {
    * Execute HTTP request task
    */
   async executeHttpRequest(task) {
-    // Simple fetch implementation
+    // Simple fetch implementation (requires Node.js 18+)
     try {
+      // eslint-disable-next-line no-undef
       const response = await fetch(task.url, {
         method: task.method || 'GET',
         headers: task.headers || {},
@@ -556,7 +557,7 @@ export class WorkflowOrchestrator extends EventEmitter {
       .filter(([_, state]) => state.status === 'completed')
       .reverse();
     
-    for (const [taskId, _] of completedTasks) {
+    for (const [taskId] of completedTasks) {
       const task = instance.workflow.tasks.find(t => t.id === taskId);
       
       if (task && task.rollback) {
@@ -641,7 +642,7 @@ export class WorkflowOrchestrator extends EventEmitter {
     instance.status = 'cancelled';
     
     // Update all pending tasks
-    for (const [taskId, state] of instance.tasks) {
+    for (const [, state] of instance.tasks) {
       if (state.status === 'pending' || state.status === 'running') {
         state.status = 'cancelled';
       }

@@ -5,6 +5,35 @@
  * Comprehensive GitHub Flow Automation with MCP and CLI Support
  */
 
+// In MCP mode, suppress all console output
+if (process.argv[1] && (process.argv[1].includes('mcp') || process.env.MCP_MODE)) {
+  process.env.MCP_MODE = 'true';
+  
+  // Suppress console methods  
+  const noop = () => {};
+  console.log = noop;
+  console.error = noop;
+  console.warn = noop;
+  console.info = noop;
+  console.debug = noop;
+  
+  // Also suppress process.stdout.write and stderr for dotenv
+  const originalStdoutWrite = process.stdout.write;
+  const originalStderrWrite = process.stderr.write;
+  
+  process.stdout.write = function(chunk, encoding, callback) {
+    // Only allow JSON-RPC messages
+    if (typeof chunk === 'string' && (chunk.includes('"jsonrpc"') || chunk === '\n')) {
+      return originalStdoutWrite.call(process.stdout, chunk, encoding, callback);
+    }
+    return true;
+  };
+  
+  process.stderr.write = function() {
+    return true;
+  };
+}
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -86,7 +115,8 @@ class SlamBedMCPServer {
 
   setupErrorHandling() {
     this.server.onerror = (error) => {
-      console.error("[MCP Error]", error);
+      // Don't log to console in MCP mode - it interferes with protocol
+      // Errors are handled by the MCP protocol
     };
 
     process.on("SIGINT", async () => {
@@ -104,7 +134,7 @@ class SlamBedMCPServer {
     registerUtilityTools(this);
     registerSlamTools(this);
 
-    console.log(`[Slambed MCP] Registered ${this.tools.length} tools`);
+    // Don't log to console in MCP mode - it interferes with protocol
   }
 
   addTool(tool) {
@@ -119,7 +149,7 @@ class SlamBedMCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    console.log("[Slambed MCP] Server started successfully");
+    // Don't log to console in MCP mode - it interferes with protocol
   }
 }
 
@@ -130,7 +160,8 @@ export { SlamBedMCPServer };
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new SlamBedMCPServer();
   server.start().catch((error) => {
-    console.error("[Slambed MCP] Failed to start server:", error);
+    // Don't log to console in MCP mode - it interferes with protocol
+    // Exit with error code to indicate failure
     process.exit(1);
   });
 }

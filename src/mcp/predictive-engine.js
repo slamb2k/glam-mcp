@@ -536,7 +536,7 @@ class CommandPredictionModel {
     }
   }
 
-  updateContext(context) {
+  updateContext(_context) {
     // Update based on context changes
   }
 
@@ -572,7 +572,7 @@ class WorkflowPredictionModel {
     this.transitions = new Map();
   }
 
-  predict(input, history) {
+  predict(input, _history) {
     const predictions = [];
     const currentContext = contextEngine.getSnapshot();
     
@@ -649,7 +649,7 @@ class WorkflowPredictionModel {
     }
   }
 
-  updateContext(context) {
+  updateContext(_context) {
     // Update based on context
   }
 
@@ -685,7 +685,7 @@ class FilePredictionModel {
     this.associations = new Map();
   }
 
-  predict(input, history) {
+  predict(input, _history) {
     const predictions = [];
     const currentFile = contextEngine.getSnapshot().currentFile;
     
@@ -763,7 +763,7 @@ class FilePredictionModel {
     }
   }
 
-  updateContext(context) {
+  updateContext(_context) {
     // Update based on context
   }
 
@@ -799,7 +799,7 @@ class CompletionPredictionModel {
     this.prefixes = new Map();
   }
 
-  predict(input, history) {
+  predict(input, _history) {
     const predictions = [];
     
     // Prefix-based completions
@@ -882,7 +882,7 @@ class CompletionPredictionModel {
     }
   }
 
-  updateContext(context) {
+  updateContext(_context) {
     // Update based on context
   }
 
@@ -908,5 +908,18 @@ class CompletionPredictionModel {
   }
 }
 
-// Export singleton instance
-export default new PredictiveEngine();
+// Export singleton instance with lazy initialization
+let instance = null;
+const getPredictiveEngine = () => {
+  if (!instance && process.env.MCP_MODE !== 'true') {
+    instance = new PredictiveEngine();
+  }
+  return instance || {
+    predict: async () => ({ suggestions: [] }),
+    getPrediction: async () => ({ suggestions: [] }),
+    learnFromAction: async () => {},
+    generateSuggestions: async () => []
+  };
+};
+
+export default getPredictiveEngine();

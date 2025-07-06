@@ -42,13 +42,17 @@ const consoleFormat = winston.format.combine(
 );
 
 // Create transports
-const transports = [
-  // Console transport
-  new winston.transports.Console({
-    format: consoleFormat,
-    level: process.env.LOG_LEVEL || 'debug',
-  }),
-];
+const transports = [];
+
+// Only add console transport if not in MCP mode
+if (!process.env.MCP_MODE && process.argv[1] && !process.argv[1].includes('mcp')) {
+  transports.push(
+    new winston.transports.Console({
+      format: consoleFormat,
+      level: process.env.LOG_LEVEL || 'debug',
+    })
+  );
+}
 
 // Add file transport in production
 if (process.env.NODE_ENV === 'production') {
@@ -72,6 +76,7 @@ const logger = winston.createLogger({
   format,
   transports,
   exitOnError: false,
+  silent: process.env.MCP_MODE === 'true', // Completely silence logger in MCP mode
 });
 
 // Create stream for Morgan HTTP logger

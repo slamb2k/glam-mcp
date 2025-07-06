@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "slambed": {
+      "command": "node",
+      "args": ["src/index.js"],
+      "env": {
+        "MCP_MODE": "true"
+      }
+    }
+  }
+}

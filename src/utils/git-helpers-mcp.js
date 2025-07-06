@@ -241,7 +241,6 @@ export class GitHelpersMCP {
       const divergence = this.legacyHelpers.getBranchDivergence(target);
       
       // Get recommendations from inference engine
-      const inference = await contextEngine.getInferredContext();
       const recommendations = [];
       
       if (divergence.behind > 0) {
