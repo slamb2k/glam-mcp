@@ -2,40 +2,32 @@
  * Response utilities for consistent MCP tool responses
  */
 
+import { ResponseFactory } from '../core/enhanced-response.js';
+import { toLegacyResponse } from './enhanced-response-utils.js';
+
 /**
- * Create a success response
+ * Create a success response (legacy format for backward compatibility)
  */
 export function createSuccessResponse(message, data = {}) {
-  return {
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  };
+  const enhanced = ResponseFactory.success(message, data);
+  return toLegacyResponse(enhanced);
 }
 
 /**
- * Create an error response
+ * Create an error response (legacy format for backward compatibility)
  */
 export function createErrorResponse(message, error = null) {
-  return {
-    success: false,
-    message,
-    error: error?.message || error,
-    timestamp: new Date().toISOString(),
-  };
+  const enhanced = ResponseFactory.error(message, error);
+  return toLegacyResponse(enhanced);
 }
 
 /**
- * Create a status response
+ * Create a status response (legacy format for backward compatibility)
  */
 export function createStatusResponse(status, message, data = {}) {
-  return {
-    status,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  };
+  const enhanced = ResponseFactory.info(message, data);
+  enhanced.originalStatus = status; // Mark for legacy conversion
+  return toLegacyResponse(enhanced);
 }
 
 /**
@@ -54,3 +46,7 @@ export function formatMCPResponse(result) {
 
   return { text: JSON.stringify(result, null, 2) };
 }
+
+// Export enhanced response utilities for gradual migration
+export { ResponseFactory } from '../core/enhanced-response.js';
+export { fromLegacyResponse, toLegacyResponse } from './enhanced-response-utils.js';
