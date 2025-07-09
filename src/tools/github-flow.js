@@ -339,7 +339,7 @@ async function startBranch(name, type, allow_outdated_base) {
         } else {
           return createErrorResponse(
             `Cannot start new branch: base branch (${mainBranch}) needs updating but network is unavailable.\n` +
-              `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
+              `To work offline, set gitFlow.allowOutdatedBase: true in .glam.json`,
           );
         }
       } else if (
@@ -360,7 +360,7 @@ async function startBranch(name, type, allow_outdated_base) {
         } else {
           return createErrorResponse(
             `Cannot start new branch: base branch (${mainBranch}) is ${updateResult.divergence.behind} commits behind origin/${mainBranch} and could not be updated.\n` +
-              `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
+              `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .glam.json`,
           );
         }
       }

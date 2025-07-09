@@ -1,5 +1,5 @@
 /**
- * Configuration system for Slambed MCP
+ * Configuration system for Glam MCP
  * Supports both file-based and environment variable configuration
  */
 
@@ -130,11 +130,8 @@ export class ConfigManager {
     const home = os.homedir();
 
     return [
-      path.join(cwd, ".slambed.json"),
-      path.join(cwd, ".slambed.config.json"),
-      path.join(cwd, "slambed.config.json"),
-      path.join(home, ".slambed.json"),
-      path.join(home, ".config", "slambed", "config.json"),
+      path.join(cwd, ".glam.json"),              // Project-specific config
+      path.join(home, ".config", "glam", "config.json"),  // User global config (XDG standard)
     ];
   }
 
@@ -170,17 +167,17 @@ export class ConfigManager {
 
     // Map environment variables to config paths
     const envMappings = {
-      SLAMBED_DEFAULT_BRANCH: "gitFlow.defaultBranch",
-      SLAMBED_AUTO_MERGE: "automation.autoMerge",
-      SLAMBED_RUN_FORMAT: "automation.runFormat",
-      SLAMBED_RUN_LINT: "automation.runLint",
-      SLAMBED_RUN_TESTS: "automation.runTests",
-      SLAMBED_TARGET_BRANCH: "gitFlow.targetBranch",
-      SLAMBED_DELETE_BRANCH: "gitFlow.deleteBranch",
-      SLAMBED_MAX_BRANCH_LENGTH: "branchNaming.maxLength",
-      SLAMBED_VERBOSE: "cli.verboseOutput",
-      SLAMBED_NO_COLORS: "cli.colors",
-      SLAMBED_LOG_LEVEL: "mcp.logLevel",
+      GLAM_DEFAULT_BRANCH: "gitFlow.defaultBranch",
+      GLAM_AUTO_MERGE: "automation.autoMerge",
+      GLAM_RUN_FORMAT: "automation.runFormat",
+      GLAM_RUN_LINT: "automation.runLint",
+      GLAM_RUN_TESTS: "automation.runTests",
+      GLAM_TARGET_BRANCH: "gitFlow.targetBranch",
+      GLAM_DELETE_BRANCH: "gitFlow.deleteBranch",
+      GLAM_MAX_BRANCH_LENGTH: "branchNaming.maxLength",
+      GLAM_VERBOSE: "cli.verboseOutput",
+      GLAM_NO_COLORS: "cli.colors",
+      GLAM_LOG_LEVEL: "mcp.logLevel",
     };
 
     for (const [envVar, configPath] of Object.entries(envMappings)) {
