@@ -27,7 +27,7 @@ import {
   createErrorResponse,
 } from "../utils/responses.js";
 import { createNpmPackage } from "./utilities.js";
-import { getConfig } from "../config.js";
+import { getConfig } from "../core/config.js";
 
 /**
  * Register automation tools

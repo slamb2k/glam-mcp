@@ -24,7 +24,7 @@ import {
   createSuccessResponse,
   createErrorResponse,
 } from "../utils/responses.js";
-import { getConfig } from "../config.js";
+import { getConfig } from "../core/config.js";
 
 /**
  * Register GitHub Flow tools
