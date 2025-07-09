@@ -285,9 +285,10 @@ async function startBranch(name, type, allow_outdated_base) {
     }
     const updateResult = ensureMainUpdated(mainBranch);
 
+    const warnings = [];
     if (updateResult.divergence.behind > 0) {
-      console.log(
-        `\n⚠️  Main branch is ${updateResult.divergence.behind} commits behind origin/${mainBranch}`,
+      warnings.push(
+        `Main branch is ${updateResult.divergence.behind} commits behind origin/${mainBranch}`
       );
     }
 
@@ -298,7 +299,8 @@ async function startBranch(name, type, allow_outdated_base) {
         step.includes("❌") ||
         step.includes("Attempting")
       ) {
-        console.log(`  ${step}`);
+        // Important steps are added to warnings
+      warnings.push(step);
       }
     });
 
@@ -308,8 +310,8 @@ async function startBranch(name, type, allow_outdated_base) {
       if (updateResult.networkError) {
         // Network issue - check config for whether to continue
         if (config.gitFlow.allowOutdatedBase) {
-          console.log(
-            `⚠️  Could not update base branch (${mainBranch}) due to network issue. Continuing anyway due to config...`,
+          warnings.push(
+            `Could not update base branch (${mainBranch}) due to network issue. Continuing anyway due to config...`
           );
         } else {
           return createErrorResponse(
@@ -329,8 +331,8 @@ async function startBranch(name, type, allow_outdated_base) {
       } else if (updateResult.divergence.behind > 0) {
         // Behind but update failed (uncommitted changes on main?)
         if (config.gitFlow.allowOutdatedBase) {
-          console.log(
-            `⚠️  Base branch (${mainBranch}) is outdated but cannot be updated. Continuing anyway due to config...`,
+          warnings.push(
+            `Base branch (${mainBranch}) is outdated but cannot be updated. Continuing anyway due to config...`
           );
         } else {
           return createErrorResponse(
@@ -349,6 +351,7 @@ async function startBranch(name, type, allow_outdated_base) {
       type,
       baseBranch: mainBranch,
       operation: "github-flow-start",
+      warnings,
     });
   } catch (error) {
     return createErrorResponse(`Failed to start branch: ${error.message}`);

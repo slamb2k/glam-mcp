@@ -1,21 +1,19 @@
 {
   "name": "slambed-mcp",
   "version": "1.1.11",
-  "description": "Slambed MCP Server - Comprehensive Git Flow Automation with MCP and CLI Support",
+  "description": "Slambed MCP Server - Comprehensive Git Flow Automation for Model Context Protocol",
   "main": "src/index.js",
   "type": "module",
-  "bin": {
-    "slambed": "./bin/slambed.js",
-    "slamb-flow": "./bin/slamb-flow.js",
-    "slamb-commit": "./bin/slamb-commit.js"
-  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node test/test-runner.js",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "lint": "eslint src/**/*.js",
     "format": "prettier --write .",
-    "build": "npm run lint && npm run test"
+    "build": "npm run lint && npm run test",
+    "prepare": "husky"
   },
   "mcp": {
     "mcpVersion": "0.1.0",
@@ -32,7 +30,6 @@
     "automation",
     "workflow",
     "github-flow",
-    "cli",
     "development",
     "branching",
     "pull-requests",
@@ -42,16 +39,17 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.0",
-    "chalk": "^5.3.0",
-    "commander": "^11.1.0",
-    "inquirer": "^9.2.12",
     "simple-git": "^3.20.0",
-    "slambed-mcp": "^1.1.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@types/jest": "^30.0.0",
     "eslint": "^8.57.0",
+    "husky": "^9.1.7",
+    "jest": "^30.0.4",
+    "jest-environment-node": "^30.0.4",
+    "lint-staged": "^16.1.2",
     "nodemon": "^3.0.2",
     "prettier": "^3.1.1"
   },
@@ -65,5 +63,15 @@
   "bugs": {
     "url": "https://github.com/your-username/slambed-mcp/issues"
   },
-  "homepage": "https://github.com/your-username/slambed-mcp#readme"
+  "homepage": "https://github.com/your-username/slambed-mcp#readme",
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "NODE_OPTIONS='--experimental-vm-modules' jest --bail --findRelatedTests --passWithNoTests"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
 }

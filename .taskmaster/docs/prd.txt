@@ -1,0 +1,115 @@
+# Product Requirements Document: MCP-Centric Slambed Architecture
+
+## Project Overview
+Transform Slambed from a hybrid CLI/MCP tool into a pure MCP server that provides rich, contextual responses for AI assistants. This shift embraces the MCP paradigm where AI assistants handle user interaction while Slambed provides intelligent development experiences.
+
+## Key Objectives
+- Remove all CLI interfaces and dependencies to create a pure MCP server
+- Enhance tool responses with rich contextual information and metadata
+- Implement session state tracking and team awareness features
+- Leverage AI assistant capabilities for natural language understanding and workflow orchestration
+- Create a development experience like "pair programming with a senior developer"
+
+## Core Features
+
+### 1. Pure MCP Server Architecture
+Remove all CLI components including the bin/ directory and CLI dependencies (commander, inquirer). Focus entirely on providing MCP tools with rich, contextual responses that AI assistants can use to deliver intelligent development experiences.
+
+### 2. Enhanced Response System
+Implement a new response structure that includes:
+- Core operation results (success/failure, data)
+- Context object with suggestions, risks, related tools, team activity, and best practices
+- Metadata including operation type, timestamp, affected files, and session context
+All responses should provide enough information for AI assistants to guide users effectively.
+
+### 3. Session Context Management
+Build stateful context tracking that maintains:
+- Current branch and repository state
+- Recently modified files and uncommitted changes
+- Operation history within the current session
+- User preferences (in-memory storage)
+This allows for more intelligent, context-aware tool suggestions and warnings.
+
+### 4. Team Awareness Features
+Implement tools and response enrichment to:
+- Detect when other team members are working on related code
+- Suggest appropriate reviewers based on file ownership
+- Warn about potential conflicts before they occur
+- Track recent team activity on branches and files
+
+### 5. New Tool Categories
+Add three new categories of tools:
+- Context Tools: get_session_context, set_user_preference, get_recent_operations
+- Team Tools: check_team_activity, find_related_work, suggest_reviewers
+- Safety Tools: analyze_operation_risk, check_for_conflicts, validate_preconditions
+
+### 6. Tool Enhancement
+Enhance all existing tools with:
+- Semantic descriptions explaining "when to use" and "what it solves"
+- Usage examples in tool descriptions
+- Risk assessment metadata
+- Contextual suggestions for next steps
+- Related tool recommendations
+
+## Technical Requirements
+
+### Response Enrichment Layer
+Create enhancers for:
+- Metadata generation (operation details, timestamps, affected files)
+- Suggestion generation (next steps based on current state)
+- Risk analysis (potential issues, conflicts, safety concerns)
+- Team activity detection (who's working on what)
+
+### Directory Structure
+Reorganize to support pure MCP architecture:
+- src/index.js - Pure MCP server entry point
+- src/tools/ - Enhanced tool implementations (github-flow, automation, utilities, context, team)
+- src/enhancers/ - Response enrichment modules
+- src/context/ - Session and preference management
+- src/utils/ - Existing utilities (git-helpers, responses)
+
+### Integration Points
+Maintain capability to integrate with:
+- Git for version control operations
+- GitHub CLI for PR and issue management
+- Team collaboration tools (future: Jira, Slack)
+- CI/CD systems for workflow automation
+
+## Implementation Phases
+
+### Phase 1: Simplify to Pure MCP
+Remove CLI components and update package.json to focus on MCP server functionality. This includes deleting the bin/ directory, removing CLI dependencies, and simplifying the entry point.
+
+### Phase 2: Enhanced Response System
+Implement the new response structure with context and metadata. Start with high-value tools like github_flow_start and auto_commit.
+
+### Phase 3: Session Context Management
+Build the stateful context tracking system including current branch tracking, file modification history, and operation history.
+
+### Phase 4: Tool Enhancement
+Add semantic descriptions, usage examples, and risk metadata to all tools. Include "when to use" guidance and related tool suggestions.
+
+### Phase 5: New Tool Categories
+Implement context tools, team tools, and safety tools to provide richer development experiences.
+
+## Success Criteria
+- All CLI components successfully removed
+- Every tool returns rich contextual responses
+- Session state properly tracked across operations
+- Team awareness features prevent conflicts
+- AI assistants can orchestrate complex workflows using tool responses
+- Development experience feels like intelligent pair programming
+
+## Non-Functional Requirements
+- Maintain backward compatibility with existing MCP tool interfaces
+- Ensure response times remain under 500ms for most operations
+- Keep memory footprint reasonable for session tracking
+- Provide clear error messages with recovery suggestions
+- Support concurrent operations where safe
+
+## Future Considerations
+- Plugin system for custom tool additions
+- Persistent preference storage
+- Advanced team collaboration features
+- Integration with more external services
+- Machine learning for pattern detection

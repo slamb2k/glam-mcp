@@ -414,10 +414,4 @@ These commands make AI calls and may take up to a minute:
 
 ---
 
-## MCP Servers
-
-- When the user requests code examples, setup or configuration steps, or library/API documentation use Context7.
-- When reasoning or researching topics, use sequential thinking to break down the topics into structured/ordered steps.
-- When planning use task-master to create detailed steps that are ordered and respect dependencies.
-
 _This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._

@@ -6,7 +6,6 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import inquirer from "inquirer";
 import {
   isGitRepository,
   getMainBranch,
@@ -454,12 +453,6 @@ export function registerAutomationTools(server) {
   });
 }
 
-/**
- * Check if running in interactive mode (TTY)
- */
-function isInteractive() {
-  return process.stdin.isTTY && process.stdout.isTTY;
-}
 
 /**
  * Complete automation workflow
@@ -482,6 +475,7 @@ async function autoCommit({
 
   try {
     const steps = [];
+    const warnings = [];
     const currentBranch = getCurrentBranch();
     const mainBranch = getMainBranch();
     let hasStashedChanges = false;
@@ -548,23 +542,16 @@ async function autoCommit({
         // For no-changes scenario, we can ask if they want to rebase before pushing
         let shouldRebase = true;
 
-        if (branch_strategy === "auto" && isInteractive()) {
-          console.log(`\n🔄 Branch Status:`);
-          console.log(
-            `   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`,
+        if (branch_strategy === "auto") {
+          // Add warning about branch status
+          warnings.push(
+            `Branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`
           );
-          console.log(`   You have no uncommitted changes.\n`);
-
-          const answer = await inquirer.prompt([
-            {
-              type: "confirm",
-              name: "rebase",
-              message: "Would you like to rebase before creating the PR?",
-              default: true,
-            },
-          ]);
-
-          shouldRebase = answer.rebase;
+          warnings.push(`You have no uncommitted changes.`);
+          warnings.push(`Defaulting to rebase before creating PR.`);
+          
+          // Default to rebasing in non-interactive mode
+          shouldRebase = true;
         } else if (branch_strategy === "new") {
           // Can't create new branch with no changes
           return createErrorResponse(
@@ -634,48 +621,17 @@ async function autoCommit({
           // Determine strategy based on branch_strategy parameter
           let strategy = branch_strategy;
 
-          // If auto mode and interactive, prompt the user
-          if (strategy === "auto" && isInteractive()) {
-            console.log(`\n🔄 Branch Status:`);
-            console.log(
-              `   Your branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`,
+          // If auto mode, default to rebase
+          if (strategy === "auto") {
+            // Add warnings about branch status
+            warnings.push(
+              `Branch '${currentBranch}' is ${divergence.behind} commits behind ${mainBranch}.`
             );
-            console.log(
-              `   You have uncommitted changes for: ${message || "new work"}\n`,
+            warnings.push(
+              `You have uncommitted changes for: ${message || "new work"}`
             );
-
-            const answer = await inquirer.prompt([
-              {
-                type: "list",
-                name: "strategy",
-                message: "Are these changes related to the current branch?",
-                choices: [
-                  {
-                    name: `Yes - Rebase and continue on '${currentBranch}'`,
-                    value: "rebase",
-                    short: "Rebase current branch",
-                  },
-                  {
-                    name: "No - Create a new feature branch",
-                    value: "new",
-                    short: "New branch",
-                  },
-                  {
-                    name: "Cancel operation",
-                    value: "cancel",
-                    short: "Cancel",
-                  },
-                ],
-                default: "rebase",
-              },
-            ]);
-
-            strategy = answer.strategy;
-
-            if (strategy === "cancel") {
-              return createErrorResponse("Operation cancelled by user");
-            }
-          } else if (strategy === "auto") {
+            warnings.push(`Defaulting to rebase strategy.`);
+            
             // Non-interactive auto mode - default to rebase
             strategy = "rebase";
             steps.push("Non-interactive mode: defaulting to rebase strategy");
@@ -707,24 +663,11 @@ async function autoCommit({
             if (!rebaseResult.success) {
               if (rebaseResult.hadConflicts) {
                 // Rebase failed due to conflicts
-                if (isInteractive() && branch_strategy === "auto") {
-                  console.log(`\n⚠️  Rebase failed due to conflicts.`);
-                  const fallback = await inquirer.prompt([
-                    {
-                      type: "confirm",
-                      name: "createNew",
-                      message: "Would you like to create a new branch instead?",
-                      default: true,
-                    },
-                  ]);
-
-                  if (!fallback.createNew) {
-                    return createErrorResponse(
-                      "Rebase has conflicts. Please resolve manually.",
-                    );
-                  }
-
+                if (branch_strategy === "auto") {
+                  warnings.push(`Rebase failed due to conflicts.`);
+                  // In non-interactive mode, default to creating new branch
                   strategy = "new"; // Fall through to new branch creation
+                  steps.push("Defaulting to new branch strategy due to rebase conflicts");
                 } else {
                   return createErrorResponse(
                     "Rebase failed due to conflicts. Use --branch-strategy=new to create a new branch.",
@@ -770,8 +713,8 @@ async function autoCommit({
             const updateResult = ensureMainUpdated(mainBranch);
 
             if (updateResult.divergence.behind > 0) {
-              console.log(
-                `\n⚠️  Main branch is ${updateResult.divergence.behind} commits behind origin/${mainBranch}`,
+              warnings.push(
+                `Main branch is ${updateResult.divergence.behind} commits behind origin/${mainBranch}`
               );
             }
 
@@ -783,8 +726,8 @@ async function autoCommit({
               if (updateResult.networkError) {
                 // Network issue - check config for whether to continue
                 if (config.gitFlow.allowOutdatedBase) {
-                  console.log(
-                    `⚠️  Could not update base branch (${mainBranch}) due to network issue. Continuing anyway due to config...`,
+                  warnings.push(
+                    `Could not update base branch (${mainBranch}) due to network issue. Continuing anyway due to config...`
                   );
                   steps.push(
                     "Continuing despite network issue (allowOutdatedBase: true)",
@@ -821,11 +764,11 @@ async function autoCommit({
               } else if (updateResult.divergence.behind > 0) {
                 // Behind but update failed (uncommitted changes on main?)
                 if (config.gitFlow.allowOutdatedBase) {
-                  console.log(
-                    `⚠️  Base branch (${mainBranch}) is outdated but cannot be updated. Continuing anyway due to config...`,
+                  warnings.push(
+                    `Base branch (${mainBranch}) is outdated but cannot be updated. Continuing anyway due to config...`
                   );
                   steps.push(
-                    "Continuing with outdated base (allowOutdatedBase: true)",
+                    "Continuing with outdated base (allowOutdatedBase: true)"
                   );
                 } else {
                   // Restore stashed changes before failing
@@ -1108,6 +1051,7 @@ ${message || "Push existing branch changes for review"}
         merged,
         deleted,
         steps,
+        warnings,
         changedFiles: changedFiles.length,
         operation: "auto-commit",
       },

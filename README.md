@@ -23,6 +23,10 @@
 
 # Slambed MCP Server
 
+![Coverage](https://img.shields.io/badge/coverage-pending-yellow)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 **Comprehensive GitHub Flow Automation with MCP and CLI Support**
 
 Transform your development workflow with powerful automation tools that handle everything from branch creation to PR merging. Slambed delivers git workflows that pack a punch! ✊
