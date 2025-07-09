@@ -27,6 +27,9 @@ User-focused documentation for getting started and using glam-mcp effectively.
 - **[Developer Guide](./guides/developer-guide.md)**  
   Extend glam-mcp with custom tools and enhancers
 
+- **[Platform Configuration Guide](./guides/platform-configuration.md)**  
+  Configure MCP clients (Claude Desktop, VS Code, etc.)
+
 ### 🏗️ Architecture
 
 Technical documentation about system design and implementation.
@@ -157,6 +160,7 @@ We welcome contributions! See our [Developer Guide](./guides/developer-guide.md)
 - [Quick Start Guide](./guides/quick-start.md)
 - [Migration Guide](./guides/migration-guide.md)
 - [Developer Guide](./guides/developer-guide.md)
+- [Platform Configuration Guide](./guides/platform-configuration.md)
 
 #### Architecture
 - [Architecture Overview](./architecture/overview.md)

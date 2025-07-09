@@ -991,7 +991,7 @@
           15,
           16
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -999,7 +999,7 @@
             "description": "Develop comprehensive user guides and installation documentation for end users.",
             "dependencies": [],
             "details": "Create detailed documentation covering: installation prerequisites, step-by-step installation process for different platforms, configuration options, getting started tutorials, basic usage examples, troubleshooting common issues, FAQ section, and system requirements. Include screenshots and diagrams where appropriate. Organize content for both beginners and advanced users with clear navigation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1010,7 +1010,7 @@
               1
             ],
             "details": "Document the system architecture including: component diagrams, data flow explanations, system boundaries and interfaces. For the API reference, include: endpoint descriptions, request/response formats, authentication methods, error codes and handling, rate limits, versioning information, and code examples in multiple languages. Include sequence diagrams for complex interactions and ensure all parameters and return values are thoroughly documented.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1021,7 +1021,7 @@
               2
             ],
             "details": "Develop comprehensive developer documentation including: SDK usage guides, plugin development tutorials, extension points explanation, best practices for integration, security considerations, performance optimization tips, testing methodologies, and contribution guidelines. Include sample projects, code snippets, and detailed walkthroughs for common development scenarios. Document the extension architecture and provide templates for custom components.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1032,7 +1032,7 @@
               3
             ],
             "details": "Develop a detailed migration guide covering: version compatibility matrix, breaking changes between versions, step-by-step migration instructions, automated migration tools (if available), data migration considerations, and fallback procedures. Create a comprehensive changelog documenting: new features, improvements, bug fixes, deprecated features, and security updates. Include examples of code changes required for migration and estimated effort levels for different migration paths.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1049,7 +1049,7 @@
           16,
           18
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -1243,7 +1243,7 @@
     ],
     "metadata": {
       "created": "2025-07-06T12:21:12.492Z",
-      "updated": "2025-07-09T14:15:56.659Z",
+      "updated": "2025-07-09T14:26:08.380Z",
       "description": "Tasks for master context"
     }
   }

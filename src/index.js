@@ -22,6 +22,7 @@ import { registerContextTools } from "./tools/context.js";
 import { registerTeamTools } from "./tools/team.js";
 import { registerSafetyTools } from "./tools/safety.js";
 import { registerDocumentationTools } from "./tools/documentation.js";
+import { registerConfigTools } from "./tools/config.js";
 
 // Import tool registry
 import { toolRegistry, ToolCategories } from "./core/tool-registry.js";
@@ -114,6 +115,7 @@ class GlamMCPServer {
     registerTeamTools(this);
     registerSafetyTools(this);
     registerDocumentationTools(this);
+    registerConfigTools(this);
     
     // Register registry management tools
     this.registerRegistryTools();

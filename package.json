@@ -4,6 +4,9 @@
   "description": "Pure MCP Server for Comprehensive Git Flow Automation - Model Context Protocol Integration",
   "main": "src/index.js",
   "type": "module",
+  "bin": {
+    "glam-config": "./src/config-tools/cli.js"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
@@ -49,7 +52,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.0",
     "simple-git": "^3.20.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
