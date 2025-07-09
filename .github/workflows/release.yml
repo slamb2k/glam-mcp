@@ -1,0 +1,391 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.2.3)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  validate-version:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Determine version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "push" ]]; then
+          # Extract version from tag
+          VERSION="${GITHUB_REF#refs/tags/v}"
+        else
+          # Use input version
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        
+        # Validate semantic version
+        if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+          echo "Error: Invalid version format: $VERSION"
+          exit 1
+        fi
+        
+        # Check if pre-release
+        IS_PRERELEASE="false"
+        if [[ "$VERSION" =~ - ]] || [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+          IS_PRERELEASE="true"
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "is-prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION (Pre-release: $IS_PRERELEASE)"
+    
+    - name: Verify package.json version
+      run: |
+        PACKAGE_VERSION=$(node -p "require('./package.json').version")
+        RELEASE_VERSION="${{ steps.version.outputs.version }}"
+        
+        if [[ "$PACKAGE_VERSION" != "$RELEASE_VERSION" ]]; then
+          echo "Error: package.json version ($PACKAGE_VERSION) does not match release version ($RELEASE_VERSION)"
+          echo "Please update package.json version before releasing"
+          exit 1
+        fi
+    
+    - name: Check npm registry
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        PACKAGE_NAME=$(node -p "require('./package.json').name")
+        
+        # Check if version already exists
+        if npm view "$PACKAGE_NAME@$VERSION" version 2>/dev/null; then
+          echo "Error: Version $VERSION already exists in npm registry"
+          exit 1
+        fi
+        
+        echo "Version $VERSION is available for publishing"
+
+  test-and-build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    needs: validate-version
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm test -- --coverage
+    
+    - name: Build project
+      run: npm run build || echo "No build script"
+    
+    - name: Upload coverage
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    needs: validate-version
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        CURRENT_VERSION="v${{ needs.validate-version.outputs.version }}"
+        
+        if [[ -z "$PREVIOUS_TAG" ]]; then
+          echo "No previous tag found, including all commits"
+          COMMIT_RANGE=""
+        else
+          echo "Generating changelog from $PREVIOUS_TAG to HEAD"
+          COMMIT_RANGE="$PREVIOUS_TAG..HEAD"
+        fi
+        
+        # Generate changelog
+        CHANGELOG=$(cat <<EOF
+        ## What's Changed
+        
+        ### Features
+        $(git log $COMMIT_RANGE --pretty=format:"* %s (%h)" --grep="^feat" || echo "* No new features")
+        
+        ### Bug Fixes
+        $(git log $COMMIT_RANGE --pretty=format:"* %s (%h)" --grep="^fix" || echo "* No bug fixes")
+        
+        ### Documentation
+        $(git log $COMMIT_RANGE --pretty=format:"* %s (%h)" --grep="^docs" || echo "* No documentation changes")
+        
+        ### Other Changes
+        $(git log $COMMIT_RANGE --pretty=format:"* %s (%h)" --grep="^(chore|refactor|style|test|build|ci)" || echo "* No other changes")
+        
+        ### Contributors
+        $(git log $COMMIT_RANGE --pretty=format:"* @%an" | sort -u || echo "* No contributors")
+        
+        **Full Changelog**: ${PREVIOUS_TAG:+https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${CURRENT_VERSION}}
+        EOF
+        )
+        
+        # Save changelog to file
+        echo "$CHANGELOG" > CHANGELOG_RELEASE.md
+        
+        # Set output
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+  publish-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: [validate-version, test-and-build]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Configure npm
+      run: |
+        echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        npm whoami
+    
+    - name: Publish to npm
+      run: |
+        if [[ "${{ needs.validate-version.outputs.is-prerelease }}" == "true" ]]; then
+          npm publish --tag beta
+        else
+          npm publish
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Verify publication
+      run: |
+        sleep 10  # Wait for npm to update
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        PACKAGE_NAME=$(node -p "require('./package.json').name")
+        
+        if ! npm view "$PACKAGE_NAME@$VERSION" version 2>/dev/null; then
+          echo "Warning: Package may not be immediately available in npm registry"
+        else
+          echo "Package successfully published to npm"
+        fi
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-version, test-and-build, generate-changelog, publish-npm]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+    
+    - name: Create release archive
+      run: |
+        # Create a release archive excluding unnecessary files
+        tar -czf "glam-mcp-${{ needs.validate-version.outputs.version }}.tar.gz" \
+          --exclude=node_modules \
+          --exclude=.git \
+          --exclude=coverage \
+          --exclude=tests \
+          --exclude=.github \
+          src/ package.json package-lock.json README.md LICENSE
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.validate-version.outputs.version }}
+        name: Release v${{ needs.validate-version.outputs.version }}
+        body: ${{ needs.generate-changelog.outputs.changelog }}
+        draft: false
+        prerelease: ${{ needs.validate-version.outputs.is-prerelease }}
+        files: |
+          glam-mcp-${{ needs.validate-version.outputs.version }}.tar.gz
+          coverage/lcov-report/index.html
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-version-bump-pr:
+    name: Create Version Bump PR
+    runs-on: ubuntu-latest
+    needs: [validate-version, create-github-release]
+    if: needs.validate-version.outputs.is-prerelease == 'false'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    
+    - name: Configure Git
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+    
+    - name: Create version bump branch
+      run: |
+        CURRENT_VERSION="${{ needs.validate-version.outputs.version }}"
+        # Parse semantic version
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+        
+        # Increment patch version
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+        
+        # Create branch
+        BRANCH_NAME="chore/bump-version-$NEW_VERSION"
+        git checkout -b "$BRANCH_NAME"
+        
+        # Update package.json
+        npm version "$NEW_VERSION" --no-git-tag-version
+        
+        # Update package-lock.json
+        npm install --package-lock-only
+        
+        # Commit changes
+        git add package.json package-lock.json
+        git commit -m "chore: bump version to $NEW_VERSION
+        
+        Preparing for next development iteration after v$CURRENT_VERSION release."
+        
+        # Push branch
+        git push origin "$BRANCH_NAME"
+        
+        # Store for PR creation
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+    
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ env.BRANCH_NAME }}
+        title: "chore: bump version to ${{ env.NEW_VERSION }}"
+        body: |
+          ## Version Bump
+          
+          This PR automatically bumps the version to `${{ env.NEW_VERSION }}` following the release of `v${{ needs.validate-version.outputs.version }}`.
+          
+          ### Changes
+          - Updated version in package.json
+          - Updated version in package-lock.json
+          
+          ### Next Steps
+          1. Review the version bump
+          2. Merge when ready to start development on the next version
+          
+          ---
+          *This PR was automatically created by the release workflow.*
+        labels: |
+          chore
+          version-bump
+          automated
+        assignees: ${{ github.actor }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [validate-version, create-github-release]
+    if: always()
+    
+    steps:
+    - name: Send notification
+      run: |
+        if [[ "${{ needs.create-github-release.result }}" == "success" ]]; then
+          echo "✅ Release v${{ needs.validate-version.outputs.version }} completed successfully!"
+          echo "📦 Package published to npm"
+          echo "🏷️ GitHub release created"
+        else
+          echo "❌ Release v${{ needs.validate-version.outputs.version }} failed"
+          echo "Please check the workflow logs for details"
+        fi
+
+# Release Process Documentation:
+# 1. Ensure package.json version is updated
+# 2. Create and push a tag: git tag v1.2.3 && git push origin v1.2.3
+# 3. The workflow will automatically:
+#    - Validate the version
+#    - Run tests on multiple Node.js versions
+#    - Generate changelog from commit history
+#    - Publish package to npm
+#    - Create GitHub release with assets
+#    - Create PR for next version bump
+# 
+# For manual releases:
+# - Go to Actions > Release > Run workflow
+# - Enter the version number (without 'v' prefix)
+# - Check "pre-release" if applicable

@@ -1,0 +1,55 @@
+# Development files
+tests/
+.github/
+.taskmaster/
+.claude/
+.cursor/
+.roo/
+.trae/
+.windsurf/
+.clinerules/
+ai_docs/
+docs/
+examples/
+
+# Configuration files
+.eslintrc*
+.prettierrc*
+jest.config.js
+.editorconfig
+.gitignore
+.npmignore
+
+# Build artifacts
+coverage/
+*.log
+.DS_Store
+node_modules/
+.env*
+
+# Session files
+.mcp-sessions/
+.sessions/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+*.test.js
+*.spec.js
+__tests__/
+__mocks__/
+
+# Documentation source
+*.md
+!README.md
+!CHANGELOG.md

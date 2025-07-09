@@ -1,6 +1,8 @@
 # glam-mcp
 
 [![PR Checks](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml)
+[![Release](https://github.com/slamb2k/slambed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/slamb2k/slambed-mcp/actions/workflows/release.yml)
+[![npm version](https://badge.fury.io/js/glam-mcp.svg)](https://www.npmjs.com/package/glam-mcp)
 
 A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. glam-mcp transforms AI-assisted development into a "pair programming with a senior developer" experience.
 
@@ -217,6 +219,34 @@ npm run format:check
 # Run security audit
 npm audit
 ```
+
+## Release Process
+
+This project uses automated releases through GitHub Actions. To create a new release:
+
+1. **Update Version**: Update the version in `package.json` according to [Semantic Versioning](https://semver.org/)
+2. **Update Changelog**: Add your changes to `CHANGELOG.md` under the "Unreleased" section
+3. **Commit Changes**: Commit with message like `chore: prepare release v1.2.3`
+4. **Create Tag**: `git tag v1.2.3 && git push origin v1.2.3`
+
+The automated workflow will:
+- Validate the version format
+- Run tests on Node.js 18.x and 20.x
+- Generate release notes from commit history
+- Publish to npm registry
+- Create a GitHub release with artifacts
+- Open a PR for the next version bump
+
+### Manual Release
+
+You can also trigger a release manually:
+1. Go to Actions → Release → Run workflow
+2. Enter the version number (e.g., `1.2.3`)
+3. Check "pre-release" if applicable
+
+### Pre-releases
+
+For pre-releases, use version numbers like `1.2.3-beta.1` or `1.2.3-rc.1`. These will be published to npm with the `beta` tag.
 
 ## Contributing
 

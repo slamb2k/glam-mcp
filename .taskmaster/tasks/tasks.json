@@ -1109,7 +1109,7 @@
           1,
           3
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -1117,7 +1117,7 @@
             "description": "Create a GitHub Actions workflow file that handles dependency installation and test execution",
             "dependencies": [],
             "details": "Create a .github/workflows/pr-checks.yml file that:\n- Triggers on pull requests to main branch\n- Sets up the appropriate Node.js version\n- Installs dependencies using npm/yarn\n- Runs the test suite\n- Caches dependencies to speed up future workflows\n- Includes appropriate timeout settings\n- Configures the workflow to run on Ubuntu latest",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1128,7 +1128,7 @@
               1
             ],
             "details": "Extend the workflow file to include:\n- ESLint for code linting with appropriate configuration\n- Jest or other test runner with coverage reporting\n- Configuration to fail the build if coverage drops below 80%\n- Add step to upload coverage reports as artifacts\n- Configure reporting of linting errors in PR comments\n- Add step to check for formatting issues using Prettier",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1140,7 +1140,7 @@
               2
             ],
             "details": "Complete the PR workflow by:\n- Setting up branch protection rules for the main branch\n- Requiring status checks to pass before merging\n- Making the workflow report detailed status back to GitHub\n- Configuring required reviewers for PRs\n- Setting up automatic PR labeling based on changed files\n- Adding documentation in README.md about the PR process and requirements",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1156,7 +1156,7 @@
           3,
           20
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -1243,7 +1243,7 @@
     ],
     "metadata": {
       "created": "2025-07-06T12:21:12.492Z",
-      "updated": "2025-07-09T14:08:40.961Z",
+      "updated": "2025-07-09T14:12:41.538Z",
       "description": "Tasks for master context"
     }
   }
