@@ -1,314 +1,179 @@
-```
-╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                                               ║
-║                                                                                                               ║
-║⠀⠀  ⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⡆⢀⣤⣤⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀                                                                        ║
-║⠀⠀⠀  ⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢀⣀⣤⣀⠀⠀⠀⠀⠀                                                                         ║
-║⠀  ⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣀⡀⠀⠀                                                                         ║
-║⠀⠀  ⠀⠀⠀⠀⠀⣼⣿⣿⣿⡟⢀⣿⣿⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣷⡄⠀           ▀██                     ▀██                  ▀██  ▄█▄       ║
-║⠀⠀  ⠀⠀⢠⠆⢰⣿⣿⣿⣿⠁⣼⣿⣿⣿⡿⠀⣼⣿⣿⣿⠿⢿⣿⣿⣿⠇⠀     ▄▄▄▄   ██   ▄▄▄▄   ▄▄ ▄▄ ▄▄    ██ ▄▄▄    ▄▄▄▄    ▄▄ ██  ███       ║
-║⠀  ⠀⠀⠀⣿⠀⣾⣿⣿⣿⡟⢰⣿⣿⣿⣿⠃⣸⣿⣿⣿⠏⢠⣿⣿⣿⡿⠀⠀     ██▄ ▀  ██  ▀▀ ▄██   ██ ██ ██   ██▀  ██ ▄█▄▄▄██ ▄▀  ▀██  ▀█▀       ║
-║⠀  ⠀⠀⢸⡇⢠⣿⣿⣿⡿⠀⣾⣿⣿⣿⠇⢠⣿⣿⣿⡏⢠⣿⣿⣿⣿⠁⠀     ▄ ▀█▄▄  ██  ▄█▀ ██   ██ ██ ██   ██    █ ██      █▄   ██   █        ║
-║⠀  ⠀⠀⣾⣧⡈⠛⢿⣿⠃⣸⣿⣿⣿⡏⢠⣿⣿⣿⡟⢀⣾⣿⣿⣿⠃⠀⠀⠀    █▀▄▄█▀ ▄██▄ ▀█▄▄▀█▀ ▄██ ██ ██▄  ▀█▄▄▄▀   ▀█▄▄▄▀ ▀█▄▄▀██▄  ▄        ║
-║⠀  ⠀⠀⠿⣿⣿⣶⣄⡉⠀⢿⣿⣿⡟⠀⣾⣿⣿⡿⢀⣾⣿⣿⡿⠁⠀⠀⠀⠀                                                              ▀█▀       ║
-║⠀⠀  ⠀⠀⠈⠉⠛⠛⠛⠒⠀⠈⠉⠁⠸⠿⠿⠿⠃⠾⠿⠟⠋⠀⠀⠀⠀⠀                                                                         ║
-║                                                                                                                ║
-║                                                                                                                ║
-║                                  🚀 GitHub Flow Automation & MCP Server 🚀                                     ║
-║                                                                                                                ║
-║                                     Git workflows that pack a punch! ✊                                        ║
-║                                                                                                                ║
-╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-```
+# glam-mcp Documentation
 
-# Slambed MCP Server
+Welcome to the glam-mcp documentation! This comprehensive guide covers everything you need to know about using and extending glam-mcp.
 
-![Coverage](https://img.shields.io/badge/coverage-pending-yellow)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+## Quick Links
 
-**Comprehensive GitHub Flow Automation with MCP and CLI Support**
+- 🚀 [Quick Start Guide](./guides/quick-start.md) - Get started in 5 minutes
+- 📦 [Installation Guide](./guides/installation.md) - Detailed setup instructions
+- 🔄 [Migration Guide](./guides/migration-guide.md) - Migrate from slambed
+- 🛠️ [API Reference](./api/tools-reference.md) - Complete tool documentation
 
-Transform your development workflow with powerful automation tools that handle everything from branch creation to PR merging. Slambed delivers git workflows that pack a punch! ✊
+## Documentation Structure
 
-## ✨ Features
+### 📚 Guides
 
-- **🤖 31+ Automation Tools** - Complete git workflow automation
-- **⚡ Auto-Commit Workflows** - Branch → format → lint → commit → push → PR → merge
-- **🚀 GitHub Flow** - Simple, branch-based workflow (no complex branching)
-- **⚙️ GitHub Actions** - Automated CI/CD workflow creation
-- **🧠 Smart Analysis** - AI-powered commit message suggestions
-- **📦 Project Initialization** - Complete project setup automation with branch protection
-- **🔧 Dual Interface** - Both MCP server and CLI tools
-- **⚙️ Configurable** - Hierarchical configuration system
-- **🛡️ Safe Operations** - Built-in safety checks and rollback capabilities
-- **🔒 Branch Protection** - Automated setup and management of GitHub branch protection rules
+User-focused documentation for getting started and using glam-mcp effectively.
 
-## 🚀 Quick Start
+- **[Installation Guide](./guides/installation.md)**  
+  Complete installation instructions for all platforms
+  
+- **[Quick Start Guide](./guides/quick-start.md)**  
+  Learn basic usage and common workflows
 
-### Simplified Commands
+- **[Migration Guide](./guides/migration-guide.md)**  
+  Migrate from slambed CLI to glam-mcp
 
-```bash
-# Just run slambed - it knows what you need!
-slambed                    # Smart interactive mode with context-aware suggestions
+- **[Developer Guide](./guides/developer-guide.md)**  
+  Extend glam-mcp with custom tools and enhancers
 
-# Natural one-word commands
-slambed commit             # Commit changes with AI-generated message
-slambed pr                 # Create pull request from current branch
-slambed sync               # Sync with main branch
-slambed status             # Show repository status
-slambed feature my-feature # Start a new feature branch
+### 🏗️ Architecture
 
-# Quick mode - one command does it all
-slambed --quick            # Automatically perform the suggested action
-```
+Technical documentation about system design and implementation.
 
-### Classic Commands (still supported)
+- **[Architecture Overview](./architecture/overview.md)**  
+  System design, components, and data flow
 
-```bash
-# Detailed control when you need it
-slambed auto commit -m "Add user authentication"
-slambed flow start feature-name
-slambed util health
-```
+- **[Enhanced Response System](./architecture/enhanced-response.md)**  
+  Deep dive into the response enhancement pipeline
 
-### MCP Integration
+### 🔧 API Reference
 
-Add to your Claude Desktop config:
+Complete reference documentation for all tools and APIs.
 
-```json
+- **[Tools Reference](./api/tools-reference.md)**  
+  Comprehensive documentation of all available tools
+
+## Key Concepts
+
+### Enhanced Responses
+
+Every tool in glam-mcp returns rich, structured responses:
+
+```javascript
 {
-  "mcpServers": {
-    "slambed": {
-      "command": "node",
-      "args": ["/path/to/slambed-mcp/src/index.js"]
-    }
-  }
-}
-```
-
-## 📋 Available Commands
-
-### 🎯 Smart Mode (NEW!)
-
-- `slambed` - Interactive mode with context-aware suggestions
-- `slambed --quick` - Automatically perform the most likely action
-
-### ⚡ Simplified Commands (NEW!)
-
-- `slambed commit` - Smart commit workflow with AI message generation
-- `slambed pr` - Create pull request from current branch
-- `slambed sync` - Sync current branch with main
-- `slambed status` - Show repository status
-- `slambed publish` - Publish package to npm
-- `slambed feature <name>` - Start a new feature branch
-
-### 🤖 Automation Workflows
-
-- `slambed auto commit` - Complete workflow: branch → format → lint → commit → push → PR → merge
-- `slambed auto quick` - Quick commit with smart defaults
-- `slambed auto smart` - Analyze changes and suggest commit message
-- `slambed auto sync` - Sync current branch with target
-- `slambed auto publish` - Automated npm publishing
-
-### 🚀 GitHub Actions
-
-- `slambed auto create-pr-workflow` - Create PR check workflow (lint, test, build)
-- `slambed auto create-release-workflow` - Create automated release workflow
-
-### 🌿 GitHub Flow
-
-- `slambed flow start <name>` - Start a new branch from main
-- `slambed flow finish` - Create PR for current branch
-- `slambed flow quick <name>` - Quick: branch + commit + PR
-- `slambed flow sync` - Sync current branch with main
-- `slambed flow cleanup` - Clean up merged branches
-
-### 🔧 Utilities
-
-- `slambed util info` - Repository information
-- `slambed util analyze` - Change analysis
-- `slambed util health` - Repository health check
-- `slambed util branches` - List and categorize branches
-
-### 🛡️ Branch Protection
-
-- `slambed protection enable` - Enable branch protection with required status checks
-- `slambed protection disable` - Remove branch protection
-- `slambed protection status` - Check protection status
-- Options:
-  - `-b, --branch <branch>` - Branch to protect (default: main)
-  - `--no-pr-reviews` - Don't require PR reviews
-  - `--no-status-checks` - Don't require status checks
-  - `-c, --contexts <contexts...>` - Required status checks (default: lint, test, build)
-  - `-a, --approvals <count>` - Required approving reviews (default: 0)
-
-## 🎯 Examples
-
-### Simplest Workflow Ever
-
-```bash
-# Start your work
-slambed feature user-auth
-
-# Make your changes...
-# Then just run:
-slambed
-
-# Slambed detects you have changes and suggests committing
-# Select "🚀 Commit changes" and you're done!
-```
-
-### One-Command Workflow
-
-```bash
-# Made some changes? Just run:
-slambed --quick
-
-# Slambed automatically:
-# - Detects your changes
-# - Creates a feature branch if needed
-# - Generates an AI commit message
-# - Pushes and creates a PR
-# - Auto-merges when checks pass
-```
-
-### Natural Commands
-
-```bash
-# Commit your work
-slambed commit
-
-# Ready to ship?
-slambed pr
-
-# Stay in sync
-slambed sync
-
-# Check status
-slambed status
-```
-
-### Custom Aliases
-
-Create a `.slambed-aliases` file in your project or home directory:
-
-```bash
-# ~/.slambed-aliases
-c=commit
-p=pr
-s=sync
-ship=commit --no-merge
-done=auto commit
-```
-
-Then use your shortcuts:
-
-```bash
-slambed c     # Same as: slambed commit
-slambed ship  # Same as: slambed commit --no-merge
-```
-
-### Complete Feature Development (Classic)
-
-```bash
-# Start feature, make changes, then auto-commit
-slamb-flow start user-auth
-# ... make your changes ...
-slambed auto commit -m "Implement user authentication"
-```
-
-### Project Initialization
-
-```bash
-# Initialize complete project with GitHub repo
-slambed init-project --project-name "my-app" --description "My awesome app"
-```
-
-### GitHub Actions Setup
-
-```bash
-# Create PR check workflow (lint, test, build)
-slambed auto create-pr-workflow --name "CI Pipeline"
-
-# Create automated release workflow
-slamb-commit create-release-workflow --type "both"
-```
-
-### Smart Development
-
-```bash
-# Let AI analyze your changes and suggest commits
-slamb-commit smart --execute
-```
-
-## 🔧 Configuration
-
-Create `.slambed.json` in your project:
-
-```json
-{
-  "gitFlow": {
-    "defaultBranch": "main",
-    "autoMerge": true,
-    "allowOutdatedBase": false
+  result: {       // What happened
+    success: boolean,
+    data: any,
+    message: string
   },
-  "automation": {
-    "runFormat": true,
-    "runLint": true,
-    "runTests": false
+  context: {      // Intelligent assistance
+    suggestions: string[],
+    risks: object,
+    teamActivity: object,
+    bestPractices: string[]
+  },
+  metadata: {     // Execution details
+    operation: string,
+    timestamp: string,
+    affectedFiles: string[]
   }
 }
 ```
 
-### Configuration Options
+### Tool Categories
 
-#### gitFlow.allowOutdatedBase (default: false)
+1. **GitHub Flow Tools** - Branch and PR management
+2. **Automation Tools** - Smart commits and workflows
+3. **Utility Tools** - Development utilities
+4. **Context Tools** - Session management
+5. **Team Tools** - Collaboration features
+6. **Safety Tools** - Risk assessment
 
-Controls whether operations can proceed when the base branch (main/master) is outdated:
+### Session Context
 
-- `false` (default): Operations will fail if base branch is outdated and cannot be updated
-- `true`: Operations will continue with warnings even if base branch is outdated
+glam-mcp maintains context across operations:
+- User preferences
+- Recent operations
+- Current repository state
+- Team activity
 
-This is useful for:
+## Common Use Cases
 
-- **Offline work**: Set to `true` when working without network access
-- **CI environments**: May need `true` if CI has limited git access
-- **Strict workflows**: Keep as `false` to ensure all work starts from latest base
+### Starting a New Feature
 
-Example scenarios:
+```
+You: "Start a new feature for user notifications"
 
-```bash
-# With allowOutdatedBase: false (default)
-$ slambed auto commit
-⚠️  Base branch (main) is 3 commits behind origin/main
-  Fetched latest main from origin
-  Attempting to update base branch...
-  ✅ Successfully updated base branch
-✓ Created branch: feature/add-authentication-2025-01-05
-
-# With allowOutdatedBase: true
-$ slambed auto commit
-⚠️  Base branch (main) is 3 commits behind origin/main
-⚠️  Could not update base branch due to network issue. Continuing anyway due to config...
-✓ Created branch: feature/add-authentication-2025-01-05
+AI + glam-mcp: Creates branch, checks conflicts, suggests setup steps
 ```
 
-## 🛠️ Installation
+### Creating Pull Requests
 
-```bash
-npm install -g slambed-mcp
+```
+You: "Create a PR for my current branch"
+
+AI + glam-mcp: Generates description, suggests reviewers, links issues
 ```
 
-Or clone and install locally:
+### Safety Checks
 
-```bash
-git clone https://github.com/your-username/slambed-mcp.git
-cd slambed-mcp
-npm install
-npm link
+```
+You: "Is it safe to merge to main?"
+
+AI + glam-mcp: Analyzes risks, checks CI, detects conflicts
 ```
 
-## License
+## Getting Help
 
-MIT
+### Support Resources
+
+- 📖 [GitHub Wiki](https://github.com/slamb2k/slambed-mcp/wiki) - Additional guides
+- 💬 [Discussions](https://github.com/slamb2k/slambed-mcp/discussions) - Community help
+- 🐛 [Issue Tracker](https://github.com/slamb2k/slambed-mcp/issues) - Report bugs
+- 📝 [Changelog](../CHANGELOG.md) - Version history
+
+### Troubleshooting
+
+Common issues and solutions:
+
+1. **Tool not found**
+   - Check MCP client configuration
+   - Verify glam-mcp is running
+
+2. **No response enhancement**
+   - Check session initialization
+   - Verify enhancers are loaded
+
+3. **Git operations fail**
+   - Ensure git is initialized
+   - Check repository permissions
+
+## Contributing
+
+We welcome contributions! See our [Developer Guide](./guides/developer-guide.md) for:
+
+- Setting up development environment
+- Creating custom tools
+- Writing tests
+- Submitting pull requests
+
+## Index
+
+### All Documentation Files
+
+#### Guides
+- [Installation Guide](./guides/installation.md)
+- [Quick Start Guide](./guides/quick-start.md)
+- [Migration Guide](./guides/migration-guide.md)
+- [Developer Guide](./guides/developer-guide.md)
+
+#### Architecture
+- [Architecture Overview](./architecture/overview.md)
+- [Enhanced Response System](./architecture/enhanced-response.md)
+
+#### API Reference
+- [Tools Reference](./api/tools-reference.md)
+
+#### Project Documentation
+- [Main README](../README.md)
+- [CHANGELOG](../CHANGELOG.md)
+- [CLAUDE.md](../CLAUDE.md) - AI assistant instructions
+
+## Version
+
+This documentation is for glam-mcp version 2.0.0. For documentation of other versions, see the [releases page](https://github.com/slamb2k/slambed-mcp/releases).
+
+---
+
+*Last updated: January 2024*
