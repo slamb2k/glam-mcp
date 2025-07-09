@@ -81,7 +81,7 @@ Add to your MCP settings configuration:
 
 ## Quick Start
 \`\`\`javascript
-import { EnhancedMCPServer } from 'slambed-mcp';
+import { EnhancedMCPServer } from 'glam-mcp';
 
 const server = new EnhancedMCPServer();
 await server.start({
@@ -317,7 +317,7 @@ This documentation is automatically generated from the source code.
       content += `## Classes
 
 ${extracted.classes.map(c => `### ${c}
-A class in the slambed-mcp system.
+A class in the glam-mcp system.
 `).join('\n')}
 `;
     }
@@ -326,7 +326,7 @@ A class in the slambed-mcp system.
       content += `## Functions
 
 ${extracted.functions.map(f => `### ${f}()
-A function in the slambed-mcp system.
+A function in the glam-mcp system.
 `).join('\n')}
 `;
     }
@@ -994,7 +994,7 @@ Configure logging output and verbosity:
     "level": "debug",
     "format": "text",
     "destination": "file",
-    "filename": "./logs/slambed.log"
+    "filename": "./logs/glam.log"
   }
 }
 \`\`\`

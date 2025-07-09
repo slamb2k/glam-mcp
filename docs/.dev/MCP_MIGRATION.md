@@ -1,4 +1,4 @@
-# MCP-Centric Slambed Architecture & Implementation Plan
+# MCP-Centric Glam Architecture & Implementation Plan
 
 ## Core Architecture
 
@@ -30,7 +30,7 @@
 
 ## Features Leveraging AI Assistant Capabilities
 
-### AI Handles These (No Slambed LLM Needed):
+### AI Handles These (No Glam LLM Needed):
 1. **Natural Language Understanding** - AI interprets user intent
 2. **Workflow Orchestration** - AI chains tool calls intelligently
 3. **Conversational Context** - AI maintains conversation state
@@ -38,7 +38,7 @@
 5. **Pattern Learning** - AI adapts to user preferences over time
 6. **Teaching Mode** - AI explains while executing
 
-### Slambed Provides These:
+### Glam Provides These:
 1. **Rich Tool Metadata** - Detailed context in every response
 2. **Session State Tracking** - Current branch, uncommitted files, recent ops
 3. **Team Awareness** - Detect conflicts, suggest reviewers
@@ -191,8 +191,8 @@ Update README and create comprehensive MCP tool documentation
 ## Vision Alignment
 
 This approach fully embraces the MCP paradigm from the vision document where:
-- "MCP transforms Slambed from a tool into a development partner"
+- "MCP transforms Glam from a tool into a development partner"
 - "The AI assistant becomes the intelligent interface"
 - "The command line is dead. Long live the conversation"
 
-By making Slambed a pure MCP server that provides intelligent development experiences through AI assistants, we achieve the goal of creating a development experience that "feels like pair programming with a senior developer who never forgets, never gets tired, and is always learning."
+By making Glam a pure MCP server that provides intelligent development experiences through AI assistants, we achieve the goal of creating a development experience that "feels like pair programming with a senior developer who never forgets, never gets tired, and is always learning."

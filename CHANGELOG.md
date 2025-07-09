@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ASCII art branding and welcome messages
 
 ### Changed
-- Renamed project from slambed-mcp to glam-mcp
+- Renamed project from glam-mcp to glam-mcp
 - Refactored entire codebase to remove CLI components
 - Updated all documentation to reflect pure MCP architecture
 
@@ -38,4 +38,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-For a detailed list of changes, see the [commit history](https://github.com/slamb2k/slambed-mcp/commits/main).
+For a detailed list of changes, see the [commit history](https://github.com/slamb2k/glam-mcp/commits/main).

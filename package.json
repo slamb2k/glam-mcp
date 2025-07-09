@@ -71,12 +71,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/glam-mcp.git"
+    "url": "https://github.com/slamb2k/glam-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/glam-mcp/issues"
+    "url": "https://github.com/slamb2k/glam-mcp/issues"
   },
-  "homepage": "https://github.com/your-username/glam-mcp#readme",
+  "homepage": "https://github.com/slamb2k/glam-mcp#readme",
   "lint-staged": {
     "*.js": [
       "eslint --fix",

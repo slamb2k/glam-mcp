@@ -70,7 +70,7 @@ ${modifiedFiles.map(f => `- ${f}`).join('\n')}
 - [ ] Self-review completed
 ${commitAnalysis.hasDocs ? '- [x] Documentation updated' : '- [ ] Documentation updated if needed'}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [Glam MCP](https://github.com/your-username/glam-mcp)`;
 
       expect(template).toContain('Add new feature');
       expect(template).toContain('- [x] feat');

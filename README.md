@@ -1,7 +1,7 @@
 # glam-mcp
 
-[![PR Checks](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml)
-[![Release](https://github.com/slamb2k/slambed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/slamb2k/slambed-mcp/actions/workflows/release.yml)
+[![PR Checks](https://github.com/slamb2k/glam-mcp/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/slamb2k/glam-mcp/actions/workflows/pr-checks.yml)
+[![Release](https://github.com/slamb2k/glam-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/slamb2k/glam-mcp/actions/workflows/release.yml)
 [![npm version](https://badge.fury.io/js/glam-mcp.svg)](https://www.npmjs.com/package/glam-mcp)
 
 A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. glam-mcp transforms AI-assisted development into a "pair programming with a senior developer" experience.
@@ -85,7 +85,7 @@ The AI assistant will use glam-mcp to:
 ```
 "Let's create a PR for this feature"
 ```
-Slambed provides:
+Glam provides:
 - Automatic commit grouping
 - PR description generation
 - Reviewer suggestions based on touched files
@@ -258,8 +258,8 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-- Issues: [GitHub Issues](https://github.com/slambrouskii/slambed-mcp/issues)
-- Documentation: [Full Documentation](https://github.com/slambrouskii/slambed-mcp/wiki)
+- Issues: [GitHub Issues](https://github.com/slambrouskii/glam-mcp/issues)
+- Documentation: [Full Documentation](https://github.com/slambrouskii/glam-mcp/wiki)
 
 ---
 

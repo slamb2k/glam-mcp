@@ -6,7 +6,7 @@ Welcome to the glam-mcp documentation! This comprehensive guide covers everythin
 
 - 🚀 [Quick Start Guide](./guides/quick-start.md) - Get started in 5 minutes
 - 📦 [Installation Guide](./guides/installation.md) - Detailed setup instructions
-- 🔄 [Migration Guide](./guides/migration-guide.md) - Migrate from slambed
+- 🔄 [Migration Guide](./guides/migration-guide.md) - Migrate from glam
 - 🛠️ [API Reference](./api/tools-reference.md) - Complete tool documentation
 
 ## Documentation Structure
@@ -22,7 +22,7 @@ User-focused documentation for getting started and using glam-mcp effectively.
   Learn basic usage and common workflows
 
 - **[Migration Guide](./guides/migration-guide.md)**  
-  Migrate from slambed CLI to glam-mcp
+  Migrate from glam CLI to glam-mcp
 
 - **[Developer Guide](./guides/developer-guide.md)**  
   Extend glam-mcp with custom tools and enhancers
@@ -121,9 +121,9 @@ AI + glam-mcp: Analyzes risks, checks CI, detects conflicts
 
 ### Support Resources
 
-- 📖 [GitHub Wiki](https://github.com/slamb2k/slambed-mcp/wiki) - Additional guides
-- 💬 [Discussions](https://github.com/slamb2k/slambed-mcp/discussions) - Community help
-- 🐛 [Issue Tracker](https://github.com/slamb2k/slambed-mcp/issues) - Report bugs
+- 📖 [GitHub Wiki](https://github.com/slamb2k/glam-mcp/wiki) - Additional guides
+- 💬 [Discussions](https://github.com/slamb2k/glam-mcp/discussions) - Community help
+- 🐛 [Issue Tracker](https://github.com/slamb2k/glam-mcp/issues) - Report bugs
 - 📝 [Changelog](../CHANGELOG.md) - Version history
 
 ### Troubleshooting
@@ -176,7 +176,7 @@ We welcome contributions! See our [Developer Guide](./guides/developer-guide.md)
 
 ## Version
 
-This documentation is for glam-mcp version 2.0.0. For documentation of other versions, see the [releases page](https://github.com/slamb2k/slambed-mcp/releases).
+This documentation is for glam-mcp version 2.0.0. For documentation of other versions, see the [releases page](https://github.com/slamb2k/glam-mcp/releases).
 
 ---
 

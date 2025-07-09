@@ -661,7 +661,7 @@ ${modifiedFiles.length > 10 ? `\n... and ${modifiedFiles.length - 10} more files
 - [ ] Self-review completed
 ${commitAnalysis.hasDocs ? '- [x] Documentation updated' : '- [ ] Documentation updated if needed'}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [Glam MCP](https://github.com/slamb2k/glam-mcp)`;
 
   templates.push({
     name: 'standard',
@@ -817,7 +817,7 @@ async function createPullRequest(title, description, draft) {
 - [ ] Manual testing completed
 - [ ] All tests pass
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [Glam MCP](https://github.com/slamb2k/glam-mcp)`;
 
     let createCommand = `gh pr create --title "${prTitle}" --body "${prBody}" --base ${mainBranch}`;
     if (draft) {

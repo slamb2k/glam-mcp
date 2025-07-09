@@ -52,7 +52,7 @@ const DEFAULT_CONFIG = {
 - [ ] Manual testing completed
 - [ ] Automated tests pass
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`,
+🤖 Generated with [Glam MCP](https://github.com/slamb2k/glam-mcp)`,
     },
   },
 

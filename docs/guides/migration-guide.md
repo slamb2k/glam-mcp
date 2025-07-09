@@ -1,12 +1,12 @@
-# Migration Guide: From Slambed to glam-mcp
+# Migration Guide: From Glam to glam-mcp
 
-This guide helps users migrate from the original slambed CLI/MCP hybrid to the new pure MCP glam-mcp architecture.
+This guide helps users migrate from the original glam CLI/MCP hybrid to the new pure MCP glam-mcp architecture.
 
 ## Overview of Changes
 
 ### Architecture Changes
 
-| Feature | Slambed (Old) | glam-mcp (New) |
+| Feature | Glam (Old) | glam-mcp (New) |
 |---------|---------------|----------------|
 | Architecture | CLI + MCP hybrid | Pure MCP server |
 | Command Interface | Direct CLI commands | MCP tools only |
@@ -24,16 +24,16 @@ This guide helps users migrate from the original slambed CLI/MCP hybrid to the n
 
 ## Installation Migration
 
-### Removing Slambed
+### Removing Glam
 
 1. **Uninstall global CLI**:
 ```bash
-npm uninstall -g slambed
+npm uninstall -g glam
 ```
 
 2. **Remove CLI configuration**:
 ```bash
-rm -rf ~/.slambed
+rm -rf ~/.glam
 ```
 
 3. **Update package.json** (if locally installed):
@@ -41,7 +41,7 @@ rm -rf ~/.slambed
 {
   "devDependencies": {
     // Remove this line
-    "slambed": "^1.0.0"
+    "glam": "^1.0.0"
   }
 }
 ```
@@ -68,10 +68,10 @@ Quick setup for Claude Desktop:
 
 ## Configuration Migration
 
-### Old Slambed Config
+### Old Glam Config
 
 ```json
-// ~/.slambed/config.json
+// ~/.glam/config.json
 {
   "defaultBranch": "main",
   "autoMerge": false,
@@ -110,42 +110,42 @@ Create `.glam.json` in your project root:
 
 ### Basic Commands
 
-| Slambed CLI | glam-mcp via AI Assistant |
+| Glam CLI | glam-mcp via AI Assistant |
 |-------------|---------------------------|
-| `slambed init` | "Initialize glam-mcp for this project" |
-| `slambed start feature-name` | "Start a new feature branch for feature-name" |
-| `slambed commit` | "Commit my changes" |
-| `slambed pr` | "Create a pull request" |
-| `slambed merge` | "Merge my branch" |
+| `glam init` | "Initialize glam-mcp for this project" |
+| `glam start feature-name` | "Start a new feature branch for feature-name" |
+| `glam commit` | "Commit my changes" |
+| `glam pr` | "Create a pull request" |
+| `glam merge` | "Merge my branch" |
 
 ### Advanced Commands
 
-| Slambed CLI | glam-mcp via AI Assistant |
+| Glam CLI | glam-mcp via AI Assistant |
 |-------------|---------------------------|
-| `slambed status` | "Show git status and team activity" |
-| `slambed check` | "Check if it's safe to merge" |
-| `slambed auto --all` | "Auto commit and create PR" |
-| `slambed sync` | "Sync my branch with main" |
+| `glam status` | "Show git status and team activity" |
+| `glam check` | "Check if it's safe to merge" |
+| `glam auto --all` | "Auto commit and create PR" |
+| `glam sync` | "Sync my branch with main" |
 
 ## Workflow Migration
 
-### Old Workflow (Slambed CLI)
+### Old Workflow (Glam CLI)
 
 ```bash
 # Start feature
-slambed start user-auth
+glam start user-auth
 
 # Make changes
 # ...
 
 # Commit
-slambed commit -m "Add user authentication"
+glam commit -m "Add user authentication"
 
 # Create PR
-slambed pr
+glam pr
 
 # Merge
-slambed merge --squash
+glam merge --squash
 ```
 
 ### New Workflow (glam-mcp)
@@ -178,9 +178,9 @@ AI: "Let me check for any risks or conflicts."
 
 ### Response Differences
 
-**Slambed CLI Output**:
+**Glam CLI Output**:
 ```
-$ slambed commit
+$ glam commit
 ✓ Changes committed
   message: "Add user authentication"
   files: 3 changed
@@ -242,11 +242,11 @@ $ slambed commit
 ### Config File Locations
 
 ```
-# Old (Slambed)
+# Old (Glam)
 project/
-├── .slambed.json       # Project config
-├── .slambed/           # Local cache
-└── ~/.slambed/         # Global config
+├── .glam.json       # Project config
+├── .glam/           # Local cache
+└── ~/.glam/         # Global config
 
 # New (glam-mcp)
 project/
@@ -256,22 +256,22 @@ project/
 
 ### Environment Variables
 
-| Slambed | glam-mcp | Purpose |
+| Glam | glam-mcp | Purpose |
 |---------|----------|---------|
-| `SLAMBED_TOKEN` | `GITHUB_TOKEN` | GitHub authentication |
-| `SLAMBED_VERBOSE` | `GLAM_LOG_LEVEL=debug` | Verbose output |
-| `SLAMBED_BRANCH` | `GLAM_DEFAULT_BRANCH` | Default branch |
+| `GLAM_TOKEN` | `GITHUB_TOKEN` | GitHub authentication |
+| `GLAM_VERBOSE` | `GLAM_LOG_LEVEL=debug` | Verbose output |
+| `GLAM_BRANCH` | `GLAM_DEFAULT_BRANCH` | Default branch |
 
 ## Troubleshooting Migration Issues
 
 ### Common Issues
 
 1. **"Command not found" errors**
-   - Solution: Remove slambed aliases from shell config
-   - Update scripts that use slambed CLI
+   - Solution: Remove glam aliases from shell config
+   - Update scripts that use glam CLI
 
 2. **Configuration not recognized**
-   - Solution: Rename `.slambed.json` to `.glam.json`
+   - Solution: Rename `.glam.json` to `.glam.json`
    - Update configuration structure (see above)
 
 3. **Workflows need updating**
@@ -286,13 +286,13 @@ project/
 
 If you encounter issues:
 
-1. Check [GitHub Issues](https://github.com/slamb2k/slambed-mcp/issues)
+1. Check [GitHub Issues](https://github.com/slamb2k/glam-mcp/issues)
 2. Review [FAQ](#frequently-asked-questions)
 3. Ask in discussions
 
 ## Frequently Asked Questions
 
-**Q: Can I use both slambed and glam-mcp?**
+**Q: Can I use both glam and glam-mcp?**
 A: Not recommended. They may conflict. Complete migration first.
 
 **Q: Will my git history be affected?**
@@ -301,7 +301,7 @@ A: No, glam-mcp uses standard git operations.
 **Q: Can I migrate gradually?**
 A: Yes, but you'll get the best experience after full migration.
 
-**Q: What about my custom scripts using slambed?**
+**Q: What about my custom scripts using glam?**
 A: You'll need to update them to use the MCP interface or natural language commands.
 
 **Q: Is there a compatibility mode?**

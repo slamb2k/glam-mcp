@@ -21,7 +21,7 @@
     "createPR": true,
     "prTemplate": {
       "title": "{{type}}: {{message}}",
-      "body": "## Summary\n{{message}}\n\n## Changes Made\n{{changes}}\n\n## Testing\n- [ ] Code formatting applied\n- [ ] Linting checks passed\n- [ ] Manual testing completed\n- [ ] Automated tests pass\n\n🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)"
+      "body": "## Summary\n{{message}}\n\n## Changes Made\n{{changes}}\n\n## Testing\n- [ ] Code formatting applied\n- [ ] Linting checks passed\n- [ ] Manual testing completed\n- [ ] Automated tests pass\n\n🤖 Generated with [Glam MCP](https://github.com/slamb2k/glam-mcp)"
     }
   },
   "scripts": {

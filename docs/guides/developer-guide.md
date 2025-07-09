@@ -15,8 +15,8 @@ This guide covers how to extend and customize glam-mcp for your specific needs.
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/slamb2k/slambed-mcp.git
-cd slambed-mcp
+git clone https://github.com/slamb2k/glam-mcp.git
+cd glam-mcp
 git checkout -b your-feature-branch
 ```
 
@@ -559,6 +559,6 @@ if (containsSecrets(data)) {
 ## Resources
 
 - [MCP Specification](https://modelcontextprotocol.io/docs)
-- [Project Issues](https://github.com/slamb2k/slambed-mcp/issues)
+- [Project Issues](https://github.com/slamb2k/glam-mcp/issues)
 - [Contributing Guide](../../CONTRIBUTING.md)
 - [Architecture Overview](../architecture/overview.md)

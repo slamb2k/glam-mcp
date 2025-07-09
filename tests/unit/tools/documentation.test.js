@@ -91,14 +91,14 @@ A comprehensive MCP server for development automation.
 
 ## Installation
 \`\`\`bash
-npm install slambed-mcp
+npm install glam-mcp
 \`\`\`
 
 ## Quick Start
 \`\`\`javascript
-import { SlamBedMCPServer } from 'slambed-mcp';
+import { GlamMCPServer } from 'glam-mcp';
 
-const server = new SlamBedMCPServer();
+const server = new GlamMCPServer();
 await server.start();
 \`\`\`
 `;
@@ -316,7 +316,7 @@ ${extractedDocs.types.map(t => `- ${t}`).join('\n')}
         const indexHtml = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Slambed MCP - Interactive Documentation</title>
+  <title>glam-mcp - Interactive Documentation</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
     .tool { border: 1px solid #ddd; padding: 20px; margin: 20px 0; }
@@ -325,7 +325,7 @@ ${extractedDocs.types.map(t => `- ${t}`).join('\n')}
   </style>
 </head>
 <body>
-  <h1>Slambed MCP Interactive Documentation</h1>
+  <h1>glam-mcp Interactive Documentation</h1>
   
   ${include_playground ? `
   <div class="playground">
@@ -390,7 +390,7 @@ ${extractedDocs.types.map(t => `- ${t}`).join('\n')}
             }
           },
           metadata: {
-            generator: 'slambed-docs',
+            generator: 'glam-docs',
             timestamp: new Date().toISOString()
           }
         };
@@ -545,7 +545,7 @@ ${extractedDocs.types.map(t => `- ${t}`).join('\n')}
       const result = await documentationTools.generateInteractiveDocs({});
       
       expect(result.metadata).toBeDefined();
-      expect(result.metadata.generator).toBe('slambed-docs');
+      expect(result.metadata.generator).toBe('glam-docs');
       expect(result.metadata.timestamp).toBeDefined();
     });
   });

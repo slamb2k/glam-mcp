@@ -40,8 +40,8 @@ npm install glam-mcp
 
 ```bash
 # Clone the repository
-git clone https://github.com/slamb2k/slambed-mcp.git
-cd slambed-mcp
+git clone https://github.com/slamb2k/glam-mcp.git
+cd glam-mcp
 
 # Install dependencies
 npm install
@@ -56,8 +56,8 @@ For contributors or developers who want to modify glam-mcp:
 
 ```bash
 # Clone with full history
-git clone https://github.com/slamb2k/slambed-mcp.git
-cd slambed-mcp
+git clone https://github.com/slamb2k/glam-mcp.git
+cd glam-mcp
 
 # Install dependencies including dev dependencies
 npm install
@@ -208,7 +208,7 @@ npm install
 
 If you encounter issues not covered here:
 
-1. Check the [GitHub Issues](https://github.com/slamb2k/slambed-mcp/issues)
+1. Check the [GitHub Issues](https://github.com/slamb2k/glam-mcp/issues)
 2. Review the [FAQ](#frequently-asked-questions)
 3. Create a new issue with:
    - Your OS and Node.js version
@@ -235,4 +235,4 @@ A: By default in `./.sessions` in your current directory. Configure with `GLAM_S
 - Read the [Quick Start Guide](./quick-start.md) to learn basic usage
 - Explore [Available Tools](../api/tools-reference.md) documentation
 - Learn about [Advanced Features](./advanced-features.md)
-- Join our [Community](https://github.com/slamb2k/slambed-mcp/discussions)
+- Join our [Community](https://github.com/slamb2k/glam-mcp/discussions)
