@@ -1259,7 +1259,7 @@ async function repoHealthCheck({ fix_issues = false }) {
           if (!fix_issues) {
             health.recommendations = health.recommendations || [];
             health.recommendations.push(
-              `Enable branch protection: slambed protection enable --branch ${mainBranch}`,
+              `Enable branch protection: glam protection enable --branch ${mainBranch}`,
             );
           }
         }

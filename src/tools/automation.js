@@ -817,7 +817,7 @@ async function autoCommit({
 
                   return createErrorResponse(
                     `Cannot create new branch: base branch (${mainBranch}) needs updating but network is unavailable.\n` +
-                      `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
+                      `To work offline, set gitFlow.allowOutdatedBase: true in .glam.json`,
                   );
                 }
               } else if (
@@ -855,7 +855,7 @@ async function autoCommit({
 
                   return createErrorResponse(
                     `Cannot create new branch: base branch (${mainBranch}) is ${updateResult.divergence.behind} commits behind origin/${mainBranch} and could not be updated.\n` +
-                      `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
+                      `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .glam.json`,
                   );
                 }
               }
@@ -919,7 +919,7 @@ async function autoCommit({
             } else {
               return createErrorResponse(
                 `Cannot create new branch: base branch (${mainBranch}) needs updating but network is unavailable.\n` +
-                  `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
+                  `To work offline, set gitFlow.allowOutdatedBase: true in .glam.json`,
               );
             }
           } else if (
@@ -943,7 +943,7 @@ async function autoCommit({
             } else {
               return createErrorResponse(
                 `Cannot create new branch: base branch (${mainBranch}) is ${updateResult.divergence.behind} commits behind origin/${mainBranch} and could not be updated.\n` +
-                  `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
+                  `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .glam.json`,
               );
             }
           }
@@ -986,7 +986,7 @@ async function autoCommit({
 
           return createErrorResponse(
             `Linting failed. Please fix linting errors before committing.\n` +
-              `To skip linting, use --no-lint flag or set automation.runLint: false in .slambed.json`,
+              `To skip linting, use --no-lint flag or set automation.runLint: false in .glam.json`,
           );
         }
       } else if (run_lint) {
@@ -998,7 +998,7 @@ async function autoCommit({
 
       const commitMessage = `${message}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
       execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
       steps.push("Changes committed successfully");
@@ -1055,7 +1055,7 @@ ${message}
 - [ ] Linting checks passed
 - [ ] Manual testing completed
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`
       : `## Summary
 ${message || "Push existing branch changes for review"}
 
@@ -1067,7 +1067,7 @@ ${message || "Push existing branch changes for review"}
 - [ ] Manual testing completed
 - [ ] Changes reviewed
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
     // Create PR - check if one already exists first
     let prUrl;
@@ -1913,7 +1913,7 @@ Project initialized with:
 - ${repo_visibility} repository
 ${enable_branch_protection ? "- Branch protection enabled" : ""}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
     execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
     steps.push("✓ Committed initial files");
@@ -1954,7 +1954,7 @@ ${createdFiles.map((file) => `- ${file}`).join("\n")}
 - [ ] Add any additional dependencies
 - [ ] Configure CI/CD if needed
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
         prUrl = execGitCommand(
           `gh pr create --title "${prTitle}" --body "${prBody}" --base main`,
@@ -2299,7 +2299,7 @@ async function npmPublish({
           return createErrorResponse(
             `Cannot publish: base branch (${mainBranch}) needs updating but network is unavailable.\n` +
               `Publishing with an outdated base branch could create version conflicts.\n` +
-              `To work offline, set gitFlow.allowOutdatedBase: true in .slambed.json`,
+              `To work offline, set gitFlow.allowOutdatedBase: true in .glam.json`,
           );
         }
       } else if (
@@ -2327,7 +2327,7 @@ async function npmPublish({
           return createErrorResponse(
             `Cannot publish: base branch (${mainBranch}) is ${updateResult.divergence.behind} commits behind origin/${mainBranch} and could not be updated.\n` +
               `Publishing with an outdated base branch could create version conflicts.\n` +
-              `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .slambed.json`,
+              `Please manually update ${mainBranch} or set gitFlow.allowOutdatedBase: true in .glam.json`,
           );
         }
       }
@@ -2416,7 +2416,7 @@ async function npmPublish({
 
 Version bump from ${currentVersion} to ${newVersion}
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
     execGitCommand(`git commit -m "${commitMessage}"`, { silent: true });
     steps.push("Committed version bump");
@@ -2469,7 +2469,7 @@ ${!dry_run ? "- [x] Published to NPM" : "- [ ] Published to NPM (dry run)"}
 - [ ] Update changelog if needed
 - [ ] Announce release if applicable
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
     const prUrl = execGitCommand(
       `gh pr create --title "${prTitle}" --body "${prBody}" --base ${mainBranch}`,
@@ -2520,7 +2520,7 @@ npm install ${packageJson.name}@${newVersion}
 ### Full Changelog
 See the [commit history](https://github.com/${packageJson.repository?.url?.split("/").slice(-2).join("/").replace(".git", "") || "owner/repo"}/compare/v${currentVersion}...v${newVersion}) for detailed changes.
 
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+🤖 Generated with [glam-mcp](https://github.com/your-username/glam-mcp)`;
 
         releaseUrl = execGitCommand(
           `gh release create ${tagName} --title "${releaseTitle}" --notes "${releaseBody}"`,

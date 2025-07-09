@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Slambed MCP Server
- * Comprehensive GitHub Flow Automation with MCP and CLI Support
+ * glam-mcp Server
+ * Comprehensive GitHub Flow Automation with MCP Support
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -28,11 +28,11 @@ import { toolRegistry, ToolCategories } from "./core/tool-registry.js";
 import { toolDiscovery } from "./services/tool-discovery.js";
 import { toolDocumentation } from "./services/tool-documentation.js";
 
-class SlamBedMCPServer {
+class GlamMCPServer {
   constructor() {
     this.server = new Server(
       {
-        name: "slambed-mcp",
+        name: "glam-mcp",
         version: "1.0.0",
       },
       {
@@ -115,8 +115,8 @@ class SlamBedMCPServer {
     // Register registry management tools
     this.registerRegistryTools();
 
-    console.log(`[Slambed MCP] Registered ${this.tools.length} tools`);
-    console.log(`[Slambed MCP] Tool Registry: ${toolRegistry.getStatistics().totalTools} tools cataloged`);
+    console.log(`[glam-mcp] Registered ${this.tools.length} tools`);
+    console.log(`[glam-mcp] Tool Registry: ${toolRegistry.getStatistics().totalTools} tools cataloged`);
   }
 
   addTool(tool) {
@@ -345,18 +345,18 @@ class SlamBedMCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    console.log("[Slambed MCP] Server started successfully");
+    console.log("[glam-mcp] Server started successfully");
   }
 }
 
 // Export for programmatic use
-export { SlamBedMCPServer };
+export { GlamMCPServer };
 
 // Start server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new SlamBedMCPServer();
+  const server = new GlamMCPServer();
   server.start().catch((error) => {
-    console.error("[Slambed MCP] Failed to start server:", error);
+    console.error("[glam-mcp] Failed to start server:", error);
     process.exit(1);
   });
 }

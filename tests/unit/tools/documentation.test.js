@@ -48,8 +48,8 @@ describe('Documentation Tools', () => {
       getMainBranch: jest.fn(() => 'main'),
       getCurrentBranch: jest.fn(() => 'feature/docs'),
       getRepoInfo: jest.fn(() => ({
-        name: 'slambed-mcp',
-        remoteUrl: 'https://github.com/user/slambed-mcp.git'
+        name: 'glam-mcp',
+        remoteUrl: 'https://github.com/user/glam-mcp.git'
       }))
     };
 
@@ -80,7 +80,7 @@ describe('Documentation Tools', () => {
         const sections = [];
         
         // Main README
-        const readme = `# Slambed MCP Server
+        const readme = `# glam-mcp
 
 ## Overview
 A comprehensive MCP server for development automation.

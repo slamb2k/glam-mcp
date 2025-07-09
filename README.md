@@ -1,10 +1,10 @@
-# Slambed MCP Server
+# glam-mcp
 
-A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. Slambed transforms AI-assisted development into a "pair programming with a senior developer" experience.
+A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. glam-mcp transforms AI-assisted development into a "pair programming with a senior developer" experience.
 
 ## Overview
 
-Slambed is a Model Context Protocol server designed to enhance AI assistant capabilities with deep development context, team awareness, and intelligent workflow orchestration. By providing rich metadata, contextual suggestions, and safety analysis with every operation, Slambed enables AI assistants to deliver more intelligent and helpful development experiences.
+glam-mcp is a Model Context Protocol server designed to enhance AI assistant capabilities with deep development context, team awareness, and intelligent workflow orchestration. By providing rich metadata, contextual suggestions, and safety analysis with every operation, glam-mcp enables AI assistants to deliver more intelligent and helpful development experiences.
 
 ## Key Features
 
@@ -41,7 +41,7 @@ Every tool response includes:
 ## Installation
 
 ```bash
-npm install slambed-mcp
+npm install glam-mcp
 ```
 
 ## Configuration
@@ -51,9 +51,9 @@ Add to your Claude Desktop configuration (`~/.claude/claude_desktop_config.json`
 ```json
 {
   "mcpServers": {
-    "slambed": {
+    "glam": {
       "command": "node",
-      "args": ["/path/to/slambed-mcp/src/index.js"]
+      "args": ["/path/to/glam-mcp/src/index.js"]
     }
   }
 }
@@ -63,7 +63,7 @@ For other MCP clients, refer to their specific configuration documentation.
 
 ## Usage
 
-Once configured, Slambed tools are available to your AI assistant. The AI will intelligently orchestrate these tools based on your natural language requests.
+Once configured, glam-mcp tools are available to your AI assistant. The AI will intelligently orchestrate these tools based on your natural language requests.
 
 ### Example Workflows
 
@@ -71,7 +71,7 @@ Once configured, Slambed tools are available to your AI assistant. The AI will i
 ```
 "I need to create a new feature for user authentication"
 ```
-The AI assistant will use Slambed to:
+The AI assistant will use glam-mcp to:
 - Check for existing related work
 - Create an appropriate branch
 - Set up the initial structure

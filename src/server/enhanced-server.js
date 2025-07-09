@@ -75,7 +75,7 @@ export class EnhancedMCPServer extends EventEmitter {
     // Initialize MCP server
     this.server = new Server(
       {
-        name: "slambed-mcp",
+        name: "glam-mcp",
         version: "2.0.0",
       },
       {

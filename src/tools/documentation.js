@@ -39,7 +39,7 @@ async function generateProjectDocs({
     const categories = toolRegistry.listCategories();
     
     // Generate README
-    const readmeContent = `# ${repoInfo.name || 'Slambed MCP Server'}
+    const readmeContent = `# ${repoInfo.name || 'glam-mcp'}
 
 ## Overview
 A comprehensive MCP (Model Context Protocol) server providing intelligent development automation tools with rich contextual responses and team awareness features.
@@ -59,7 +59,7 @@ ${categories.map(cat => `- **${formatCategoryName(cat.name)}** (${cat.count} too
 
 ### Via npm
 \`\`\`bash
-npm install slambed-mcp
+npm install glam-mcp
 \`\`\`
 
 ### Via MCP Settings
@@ -67,9 +67,9 @@ Add to your MCP settings configuration:
 \`\`\`json
 {
   "servers": {
-    "slambed": {
+    "glam": {
       "command": "npx",
-      "args": ["slambed-mcp"],
+      "args": ["glam-mcp"],
       "env": {
         "MCP_SERVER_PORT": "3000",
         "MCP_LOG_LEVEL": "info"
@@ -344,10 +344,10 @@ ${extracted.exports.map(e => `- ${e}`).join('\n')}
     
     // Generate TypeScript definitions if requested
     if (generate_types) {
-      const typesContent = `// Type definitions for slambed-mcp
+      const typesContent = `// Type definitions for glam-mcp
 // Auto-generated on ${new Date().toISOString()}
 
-declare module 'slambed-mcp' {
+declare module 'glam-mcp' {
 ${extracted.classes.map(c => `  export class ${c} {
     // Class implementation
   }`).join('\n\n')}
@@ -396,7 +396,7 @@ async function generateInteractiveDocs({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slambed MCP - Interactive Documentation</title>
+  <title>glam-mcp - Interactive Documentation</title>
   <style>
     :root {
       --primary: #3498db;
@@ -508,7 +508,7 @@ async function generateInteractiveDocs({
 </head>
 <body>
   <div class="header">
-    <h1>Slambed MCP Documentation</h1>
+    <h1>glam-mcp Documentation</h1>
     <p>${tools.length} tools across ${categories.length} categories</p>
   </div>
   
@@ -780,7 +780,7 @@ async function generateExamplesDoc() {
   const categories = toolRegistry.listCategories();
   let content = `# Examples
 
-This document provides practical examples for using Slambed MCP tools.
+This document provides practical examples for using glam-mcp tools.
 
 `;
 
@@ -849,7 +849,7 @@ async function generateChangelogDoc() {
   
   return `# Changelog
 
-All notable changes to the Slambed MCP Server project will be documented in this file.
+All notable changes to the glam-mcp project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -893,7 +893,7 @@ function generateConfigurationDoc() {
 
 ## Overview
 
-The Slambed MCP Server can be configured through:
+The glam-mcp server can be configured through:
 1. Configuration files (JSON)
 2. Environment variables
 3. Runtime options
@@ -1032,7 +1032,7 @@ function generateArchitectureDoc() {
 
 ## System Architecture
 
-The Slambed MCP Server follows a modular, event-driven architecture designed for extensibility and maintainability.
+The glam-mcp server follows a modular, event-driven architecture designed for extensibility and maintainability.
 
 ### Core Components
 
@@ -1150,7 +1150,7 @@ function generateToolHtml(tool, theme) {
 <html lang="en" data-theme="${theme}">
 <head>
   <meta charset="UTF-8">
-  <title>${tool.name} - Slambed MCP</title>
+  <title>${tool.name} - glam-mcp</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -1189,7 +1189,7 @@ function generateTutorialHtml(tutorial, theme) {
 <html lang="en" data-theme="${theme}">
 <head>
   <meta charset="UTF-8">
-  <title>${tutorial.title} - Slambed MCP</title>
+  <title>${tutorial.title} - glam-mcp</title>
 </head>
 <body>
   <div class="container">
@@ -1204,7 +1204,7 @@ function generateTutorialHtml(tutorial, theme) {
 function generateGettingStartedTutorial() {
   return `
     <h2>Installation</h2>
-    <p>Install Slambed MCP Server via npm or configure in your MCP client.</p>
+    <p>Install glam-mcp via npm or configure in your MCP client.</p>
     
     <h2>Basic Usage</h2>
     <p>Once installed, you can start using tools immediately.</p>

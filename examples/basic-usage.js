@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Basic usage examples for Slambed MCP
+ * Basic usage examples for glam-mcp
  */
 
-import { SlamBedMCPServer } from "../src/index.js";
+import { GlamMCPServer } from "../src/index.js";
 import { config } from "../src/config.js";
 import { showBanner } from "../src/utils/banner.js";
 
@@ -14,7 +14,7 @@ async function basicMCPExample() {
   console.log("===========================");
 
   // Create and start MCP server
-  const server = new SlamBedMCPServer();
+  const server = new GlamMCPServer();
 
   // This would normally be connected to Claude or another MCP client
   console.log("Server created with tools:");
@@ -57,26 +57,26 @@ async function workflowExamples() {
   console.log("====================");
 
   console.log("1. Auto-commit workflow:");
-  console.log('   slambed auto commit -m "Add user authentication"');
+  console.log('   glam auto commit -m "Add user authentication"');
   console.log(
     "   → Creates branch, formats, commits, pushes, creates PR, merges, cleans up",
   );
 
   console.log("\n2. GitHub Flow:");
-  console.log("   slamb-flow start user-auth");
-  console.log("   slamb-flow finish --auto-merge");
+  console.log("   glam-flow start user-auth");
+  console.log("   glam-flow finish --auto-merge");
 
   console.log("\n3. Quick development:");
-  console.log("   slam-commit quick");
+  console.log("   glam-commit quick");
   console.log("   → Auto-generates message and commits with smart defaults");
 
   console.log("\n4. Smart analysis:");
-  console.log("   slam-commit smart --execute");
+  console.log("   glam-commit smart --execute");
   console.log("   → Analyzes changes and suggests optimal commit strategy");
 
   console.log("\n5. GitHub Actions workflows:");
-  console.log("   slambed auto create-pr-workflow");
-  console.log("   slamb-commit create-release-workflow");
+  console.log("   glam auto create-pr-workflow");
+  console.log("   glam-commit create-release-workflow");
   console.log(
     "   → Creates CI/CD workflows for automated testing and releases",
   );
@@ -90,7 +90,7 @@ async function integrationExample() {
   console.log("Add to Claude Desktop config:");
   console.log(`{
   "mcpServers": {
-    "slambed": {
+    "glam": {
       "command": "node",
       "args": ["${process.cwd()}/src/index.js"]
     }
@@ -99,16 +99,16 @@ async function integrationExample() {
 
   console.log("\nCLI Integration:");
   console.log("Available commands:");
-  console.log("- slambed (main CLI)");
-  console.log("- slamb-commit (automation focus)");
-  console.log("- slamb-flow (GitHub Flow focus)");
+  console.log("- glam (main CLI)");
+  console.log("- glam-commit (automation focus)");
+  console.log("- glam-flow (GitHub Flow focus)");
 }
 
 async function customizationExample() {
   console.log("\n⚙️  Customization Example");
   console.log("=========================");
 
-  console.log("Create .slambed.json in your project:");
+  console.log("Create .glam.json in your project:");
   console.log(`{
   "gitFlow": {
     "branchPrefixes": {
@@ -130,9 +130,9 @@ async function customizationExample() {
 }`);
 
   console.log("\nEnvironment variables:");
-  console.log("export SLAMBED_AUTO_MERGE=false");
-  console.log("export SLAMBED_DEFAULT_BRANCH=develop");
-  console.log("export SLAMBED_VERBOSE=true");
+  console.log("export GLAM_AUTO_MERGE=false");
+  console.log("export GLAM_DEFAULT_BRANCH=develop");
+  console.log("export GLAM_VERBOSE=true");
 }
 
 // Run examples
@@ -146,9 +146,9 @@ async function runExamples() {
 
     console.log("\n🎉 Examples completed!");
     console.log("\nNext steps:");
-    console.log("1. Install: npm install -g slambed-mcp");
-    console.log("2. Configure: Create .slambed.json");
-    console.log('3. Use CLI: slambed auto commit -m "Your message"');
+    console.log("1. Install: npm install -g glam-mcp");
+    console.log("2. Configure: Create .glam.json");
+    console.log('3. Use CLI: glam auto commit -m "Your message"');
     console.log("4. Or MCP: Add to Claude Desktop config");
   } catch (error) {
     console.error("Example failed:", error.message);

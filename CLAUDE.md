@@ -1,8 +1,8 @@
-# Slambed MCP Server - Development Guide
+# glam-mcp - Development Guide
 
 ## Project Overview
 
-Slambed is a pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses. This project has been transformed from a hybrid CLI/MCP tool into a pure MCP server, focusing on enhancing AI assistant capabilities with deep development context, team awareness, and intelligent workflow orchestration.
+glam-mcp is a pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses. This project has been transformed from a hybrid CLI/MCP tool into a pure MCP server, focusing on enhancing AI assistant capabilities with deep development context, team awareness, and intelligent workflow orchestration.
 
 ## Current Architecture
 
@@ -150,4 +150,4 @@ Each enhancer adds its specific context without modifying others' contributions.
 
 ---
 
-This guide is specifically for AI assistants working on the Slambed codebase. The project follows MCP best practices and emphasizes rich, contextual responses to enable intelligent development experiences.
+This guide is specifically for AI assistants working on the glam-mcp codebase. The project follows MCP best practices and emphasizes rich, contextual responses to enable intelligent development experiences.
