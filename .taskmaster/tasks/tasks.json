@@ -956,7 +956,7 @@
         "dependencies": [
           16
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -964,7 +964,7 @@
             "description": "Create new ASCII art designs and update them in the codebase where they appear",
             "dependencies": [],
             "details": "1. Design new ASCII art for the CLI welcome screen\n2. Update the ASCII art in the following files:\n   - src/cli/welcome.js (main welcome screen)\n   - src/cli/help.js (help command output)\n   - src/cli/banner.js (if exists)\n3. Ensure the new ASCII art maintains readability across different terminal sizes\n4. Test the display on different terminal emulators to ensure compatibility\n5. Document the ASCII art specifications for future reference",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -975,7 +975,7 @@
               1
             ],
             "details": "1. Update branding elements in documentation:\n   - README.md\n   - docs/*.md files\n   - CONTRIBUTING.md\n   - Any other markdown files in the repository\n2. Update visual assets:\n   - logo files in assets/images/\n   - website graphics if applicable\n   - social media assets if included in the repository\n3. Update color schemes and typography to match new branding\n4. Ensure consistent branding across all GitHub repository elements (description, topics, etc.)\n5. Update any package.json or configuration files that may contain branding information",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1109,7 +1109,7 @@
           1,
           3
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -1243,7 +1243,7 @@
     ],
     "metadata": {
       "created": "2025-07-06T12:21:12.492Z",
-      "updated": "2025-07-09T14:02:25.220Z",
+      "updated": "2025-07-09T14:08:40.961Z",
       "description": "Tasks for master context"
     }
   }

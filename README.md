@@ -1,5 +1,7 @@
 # glam-mcp
 
+[![PR Checks](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/slamb2k/slambed-mcp/actions/workflows/pr-checks.yml)
+
 A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. glam-mcp transforms AI-assisted development into a "pair programming with a senior developer" experience.
 
 ## Overview
@@ -174,9 +176,51 @@ npm test
 npm run dev
 ```
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment. The pipeline ensures code quality and stability through automated testing and checks.
+
+### Pull Request Checks
+
+Every pull request triggers the following checks:
+
+- **Multiple Node.js Versions**: Tests run on Node.js 18.x and 20.x
+- **Test Suite**: Full test suite with coverage reporting
+- **Code Linting**: ESLint checks for code quality
+- **Format Checking**: Prettier validation for consistent formatting
+- **Security Audit**: npm audit for dependency vulnerabilities
+- **Build Verification**: Ensures the project builds successfully
+- **Auto-labeling**: PRs are automatically labeled based on changed files
+
+### Branch Protection
+
+The `main` branch is protected with the following requirements:
+
+- All CI checks must pass
+- Branches must be up to date before merging
+- Conversation resolution required before merging
+
+### Running CI Locally
+
+You can run the same checks locally before pushing:
+
+```bash
+# Run all tests with coverage
+npm test -- --coverage
+
+# Check linting
+npm run lint
+
+# Check formatting
+npm run format:check
+
+# Run security audit
+npm audit
+```
+
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit PRs for any enhancements.
+Contributions are welcome! Please ensure all CI checks pass before submitting your PR. The automated checks will provide feedback on any issues that need to be addressed.
 
 ## License
 

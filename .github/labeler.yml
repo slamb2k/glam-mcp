@@ -1,0 +1,82 @@
+# Configuration for PR auto-labeling
+# This file defines which labels to apply based on changed files
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - 'docs/**'
+      - 'README.md'
+      - 'CLAUDE.md'
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'tests/**'
+      - '**/*.test.js'
+      - '**/*.spec.js'
+      - 'jest.config.js'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'yarn.lock'
+
+github-actions:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**'
+
+tools:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/tools/**'
+
+core:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/core/**'
+      - 'src/index.js'
+
+enhancers:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/enhancers/**'
+
+utilities:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/utils/**'
+
+configuration:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.taskmaster/**'
+      - '.*rc'
+      - '.*rc.js'
+      - '.*rc.json'
+      - 'tsconfig.json'
+      - 'jsconfig.json'
+
+bugfix:
+  - head-branch:
+    - '^fix/.*'
+    - '^bugfix/.*'
+    - '^hotfix/.*'
+
+feature:
+  - head-branch:
+    - '^feat/.*'
+    - '^feature/.*'
+
+chore:
+  - head-branch:
+    - '^chore/.*'
+    - '^refactor/.*'
+
+breaking-change:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'BREAKING_CHANGES.md'

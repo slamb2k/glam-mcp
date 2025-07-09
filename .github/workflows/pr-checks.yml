@@ -1,0 +1,206 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [ opened, synchronize, reopened ]
+
+# Cancel in-progress runs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests and Linting
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better code analysis
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint
+      continue-on-error: false
+    
+    - name: Check code formatting
+      run: npm run format:check || true
+      continue-on-error: true
+    
+    - name: Run tests with coverage
+      run: npm test -- --coverage --ci --reporters=default --reporters=jest-junit
+      env:
+        JEST_JUNIT_OUTPUT_DIR: ./reports/junit/
+        JEST_JUNIT_OUTPUT_NAME: jest-results.xml
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: reports/junit/jest-results.xml
+    
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-${{ matrix.node-version }}
+        path: coverage/
+    
+    - name: Comment coverage on PR
+      uses: romeovs/lcov-reporter-action@v0.3.1
+      if: matrix.node-version == '20.x' && github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        lcov-file: ./coverage/lcov.info
+        delete-old-comments: true
+
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build || echo "No build script defined"
+    
+    - name: Check for TypeScript errors
+      run: npm run typecheck || echo "No typecheck script defined"
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate || true
+      continue-on-error: true
+    
+    - name: Run dependency check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'glam-mcp'
+        path: '.'
+        format: 'HTML'
+        out: 'reports'
+      continue-on-error: true
+    
+    - name: Upload dependency check results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-check-report
+        path: reports/
+
+  pr-labeler:
+    name: PR Auto-labeling
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - name: Label PR based on paths
+      uses: actions/labeler@v5
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: .github/labeler.yml
+      continue-on-error: true
+
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check for duplicate code
+      run: npx jscpd src --min-lines 5 --min-tokens 70 || true
+      continue-on-error: true
+    
+    - name: Check bundle size
+      run: |
+        if [ -f "package.json" ] && grep -q "\"size-limit\"" package.json; then
+          npx size-limit
+        else
+          echo "No size-limit configuration found"
+        fi
+      continue-on-error: true
+
+  status-check:
+    name: Final Status Check
+    runs-on: ubuntu-latest
+    needs: [tests, build, security, code-quality]
+    if: always()
+    
+    steps:
+    - name: Check job statuses
+      run: |
+        if [[ "${{ needs.tests.result }}" != "success" ]]; then
+          echo "Tests failed!"
+          exit 1
+        fi
+        if [[ "${{ needs.build.result }}" != "success" ]]; then
+          echo "Build verification failed!"
+          exit 1
+        fi
+        echo "All required checks passed!"
+
+# Add status check requirements in branch protection rules:
+# 1. Go to Settings > Branches
+# 2. Add rule for 'main' branch
+# 3. Enable "Require status checks to pass before merging"
+# 4. Select these checks:
+#    - Tests and Linting (18.x)
+#    - Tests and Linting (20.x)
+#    - Build Verification
+#    - Final Status Check
+# 5. Enable "Require branches to be up to date before merging"
+# 6. Enable "Require conversation resolution before merging"

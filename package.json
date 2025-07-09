@@ -11,7 +11,10 @@
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "echo 'No TypeScript in this project'",
     "build": "npm run lint && npm run test",
     "prepare": "husky"
   },
@@ -52,6 +55,7 @@
     "husky": "^9.1.7",
     "jest": "^30.0.4",
     "jest-environment-node": "^30.0.4",
+    "jest-junit": "^16.0.0",
     "lint-staged": "^16.1.2",
     "nodemon": "^3.0.2",
     "prettier": "^3.1.1"
