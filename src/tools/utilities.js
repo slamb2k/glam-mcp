@@ -20,15 +20,43 @@ import {
   createSuccessResponse,
   createErrorResponse,
 } from "../utils/responses.js";
+import { GitClient } from "../clients/git-client.js";
+import { SessionManager } from "../context/session-manager.js";
+
+// Create singleton instances
+const gitClient = new GitClient();
+const sessionManager = SessionManager.getInstance({ autoSave: false });
 
 /**
  * Register utility tools
  */
 export function registerUtilityTools(server) {
+  // Enhanced repository status
+  server.addTool({
+    name: "get_status",
+    description: "Get enhanced repository status with contextual information and suggestions. Use this when you need comprehensive information about the current state of the repository including branch status, file changes, and workflow recommendations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        include_history: {
+          type: "boolean",
+          description: "Include historical status information",
+          default: true,
+        },
+        include_suggestions: {
+          type: "boolean",
+          description: "Include workflow suggestions",
+          default: true,
+        },
+      },
+    },
+    handler: async (params) => getEnhancedStatus(params),
+  });
+
   // Repository information
   server.addTool({
     name: "repo_info",
-    description: "Get comprehensive repository information and statistics",
+    description: "Get comprehensive repository information and statistics with actionable insights. Use this when you need detailed metrics about repository structure, code quality indicators, and improvement suggestions.",
     inputSchema: {
       type: "object",
       properties: {
@@ -47,9 +75,42 @@ export function registerUtilityTools(server) {
           description: "Include recent commits",
           default: true,
         },
+        include_quality: {
+          type: "boolean",
+          description: "Include code quality metrics",
+          default: true,
+        },
       },
     },
     handler: async (params) => getRepoInfo(params),
+  });
+
+  // Repository map visualization
+  server.addTool({
+    name: "repo_map",
+    description: "Generate a visual map of the repository structure with file counts and sizes. Use this to understand project organization and identify large or complex areas.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        max_depth: {
+          type: "number",
+          description: "Maximum directory depth to display",
+          default: 3,
+        },
+        show_hidden: {
+          type: "boolean",
+          description: "Include hidden files and directories",
+          default: false,
+        },
+        sort_by: {
+          type: "string",
+          enum: ["name", "size", "files"],
+          description: "Sort directories by",
+          default: "name",
+        },
+      },
+    },
+    handler: async (params) => generateRepoMap(params),
   });
 
   // Change analysis
@@ -358,6 +419,61 @@ export function registerUtilityTools(server) {
     handler: async (params) => branchProtection(params),
   });
 
+  // Search TODO comments
+  server.addTool({
+    name: "search_todos",
+    description: "Search for TODO, FIXME, HACK, and other code comments that need attention. Use this to identify technical debt and pending tasks in the codebase.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        patterns: {
+          type: "array",
+          items: { type: "string" },
+          description: "Patterns to search for",
+          default: ["TODO", "FIXME", "HACK", "XXX", "OPTIMIZE", "REFACTOR"],
+        },
+        include_context: {
+          type: "boolean",
+          description: "Include surrounding code context",
+          default: true,
+        },
+        group_by_type: {
+          type: "boolean",
+          description: "Group results by comment type",
+          default: true,
+        },
+      },
+    },
+    handler: async (params) => searchTodos(params),
+  });
+
+  // Check dependencies
+  server.addTool({
+    name: "check_dependencies",
+    description: "Analyze project dependencies for updates, vulnerabilities, and unused packages. Use this to maintain dependency health and security.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        check_updates: {
+          type: "boolean",
+          description: "Check for outdated packages",
+          default: true,
+        },
+        check_security: {
+          type: "boolean",
+          description: "Check for security vulnerabilities",
+          default: true,
+        },
+        check_unused: {
+          type: "boolean",
+          description: "Check for unused dependencies",
+          default: true,
+        },
+      },
+    },
+    handler: async (params) => checkDependencies(params),
+  });
+
   // NPM package creation
   server.addTool({
     name: "create_npm_package",
@@ -414,24 +530,30 @@ export function registerUtilityTools(server) {
 }
 
 /**
- * Get repository information
+ * Get enhanced repository information with metrics and suggestions
  */
 async function getRepoInfo({
   include_stats = true,
   include_branches = true,
   include_commits = true,
+  include_quality = true,
 }) {
   if (!isGitRepository()) {
     return createErrorResponse("Not a git repository");
   }
 
   try {
+    const session = sessionManager.get();
     const info = {
       currentBranch: getCurrentBranch(),
       mainBranch: getMainBranch(),
       remoteUrl: getRemoteUrl(),
       workingDirectory: process.cwd(),
     };
+
+    // Get repository state from GitClient
+    const repoState = await gitClient.getRepoState();
+    const activeBranches = await gitClient.getActiveBranches();
 
     if (include_stats) {
       try {
@@ -452,9 +574,20 @@ async function getRepoInfo({
             };
           });
 
+        // Calculate repository size
+        let repoSize = "unknown";
+        try {
+          const sizeOutput = execGitCommand("du -sh .git", { silent: true }).trim();
+          repoSize = sizeOutput.split(/\s+/)[0];
+        } catch (e) {
+          // Ignore size calculation errors
+        }
+
         info.statistics = {
           totalCommits: parseInt(totalCommits),
           contributors,
+          fileCount: repoState.fileCount,
+          repoSize,
         };
       } catch (e) {
         info.statistics = { error: "Could not gather statistics" };
@@ -473,10 +606,19 @@ async function getRepoInfo({
               .replace("remotes/origin/", ""),
           );
 
+        // Identify stale branches
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const staleBranches = activeBranches.filter(
+          b => new Date(b.lastActivity) < thirtyDaysAgo
+        );
+
         info.branches = {
           local: branches.filter((b) => !b.includes("origin/")),
           remote: branches.filter((b) => b.includes("origin/")),
           total: branches.length,
+          active: activeBranches.length,
+          stale: staleBranches.length,
         };
       } catch (e) {
         info.branches = { error: "Could not list branches" };
@@ -487,7 +629,141 @@ async function getRepoInfo({
       info.recentCommits = getRecentCommits(10);
     }
 
-    return createSuccessResponse("Repository information retrieved", info);
+    if (include_quality) {
+      // Simple quality metrics
+      const metrics = {
+        filesByType: {},
+        largeFiles: [],
+        documentation: { hasReadme: false, hasDocs: false },
+        testing: { hasTests: false, testFileCount: 0 },
+        dependencies: {}
+      };
+
+      // Count files by type
+      try {
+        const files = execGitCommand("git ls-files", { silent: true })
+          .split("\n")
+          .filter(f => f.trim());
+        
+        files.forEach(file => {
+          const ext = path.extname(file) || 'no-extension';
+          metrics.filesByType[ext] = (metrics.filesByType[ext] || 0) + 1;
+          
+          // Check for documentation
+          if (file.toLowerCase() === 'readme.md') metrics.documentation.hasReadme = true;
+          if (file.includes('docs/')) metrics.documentation.hasDocs = true;
+          
+          // Count test files
+          if (file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__')) {
+            metrics.testing.hasTests = true;
+            metrics.testing.testFileCount++;
+          }
+        });
+
+        // Find large files
+        const largeFiles = execGitCommand("git ls-files -z | xargs -0 ls -la | sort -k5 -rn | head -10", { 
+          silent: true,
+          shell: true 
+        }).split("\n").filter(line => line.trim());
+        
+        metrics.largeFiles = largeFiles.slice(0, 5).map(line => {
+          const parts = line.split(/\s+/);
+          if (parts.length > 8) {
+            return {
+              file: parts.slice(8).join(' '),
+              size: parts[4]
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      } catch (e) {
+        // Ignore file analysis errors
+      }
+
+      // Check dependencies if package.json exists
+      if (fs.existsSync('package.json')) {
+        try {
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          metrics.dependencies = {
+            production: Object.keys(packageJson.dependencies || {}).length,
+            development: Object.keys(packageJson.devDependencies || {}).length,
+            total: Object.keys({...packageJson.dependencies, ...packageJson.devDependencies}).length
+          };
+        } catch (e) {
+          // Ignore package.json errors
+        }
+      }
+
+      info.quality = metrics;
+    }
+
+    // Store metrics in session
+    const repoMetrics = session.repoMetrics || [];
+    repoMetrics.push({
+      date: new Date().toISOString(),
+      files: repoState.fileCount,
+      branches: info.branches?.total || 0,
+      commits: info.statistics?.totalCommits || 0
+    });
+    if (repoMetrics.length > 50) {
+      repoMetrics.shift();
+    }
+    sessionManager.update({ repoMetrics });
+
+    // Generate context and suggestions
+    const context = {
+      repoSize: categorizeRepoSize(repoState.fileCount),
+      branchHealth: analyzeBranchHealth(info.branches),
+      codebaseInsights: generateCodebaseInsights(info),
+      suggestions: []
+    };
+
+    // Add suggestions based on analysis
+    if (info.branches?.stale > 5) {
+      context.suggestions.push({
+        type: 'cleanup',
+        priority: 'medium',
+        message: `${info.branches.stale} stale branches detected. Consider running cleanup.`,
+        tool: 'cleanup_merged_branches'
+      });
+    }
+
+    if (info.quality?.dependencies?.total > 100) {
+      context.suggestions.push({
+        type: 'maintenance',
+        priority: 'medium',
+        message: 'Large number of dependencies. Consider auditing for unused packages.',
+        tool: 'check_dependencies'
+      });
+    }
+
+    if (!info.quality?.documentation?.hasReadme) {
+      context.suggestions.push({
+        type: 'documentation',
+        priority: 'high',
+        message: 'No README.md found. Consider adding project documentation.'
+      });
+    }
+
+    if (!info.quality?.testing?.hasTests) {
+      context.suggestions.push({
+        type: 'testing',
+        priority: 'high',
+        message: 'No test files detected. Consider adding tests.',
+        tool: 'run_tests'
+      });
+    }
+
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      toolVersion: '2.0.0'
+    };
+
+    return createSuccessResponse("Repository information retrieved", {
+      ...info,
+      context,
+      metadata
+    });
   } catch (error) {
     return createErrorResponse(
       `Failed to get repository info: ${error.message}`,
@@ -1528,6 +1804,604 @@ async function branchProtection({
   }
 }
 
+/**
+ * Get enhanced repository status with contextual information
+ */
+async function getEnhancedStatus({
+  include_history = true,
+  include_suggestions = true,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const session = sessionManager.get();
+    const statusHistory = session.statusHistory || [];
+    
+    // Get current status
+    const currentBranch = getCurrentBranch();
+    const mainBranch = getMainBranch();
+    const changedFiles = getChangedFiles();
+    
+    // Get branch divergence
+    const [ahead, behind] = await Promise.all([
+      execGitCommand(`git rev-list --count ${mainBranch}..HEAD`, { silent: true }).trim(),
+      execGitCommand(`git rev-list --count HEAD..${mainBranch}`, { silent: true }).trim()
+    ]);
+    
+    // Categorize changed files
+    const fileChanges = {
+      modified: [],
+      added: [],
+      deleted: [],
+      untracked: []
+    };
+    
+    changedFiles.forEach(({ status, file }) => {
+      switch(status) {
+        case 'M': fileChanges.modified.push(file); break;
+        case 'A': fileChanges.added.push(file); break;
+        case 'D': fileChanges.deleted.push(file); break;
+        case '??': fileChanges.untracked.push(file); break;
+      }
+    });
+    
+    // Check for stash
+    let stashCount = 0;
+    try {
+      const stashList = execGitCommand("git stash list", { silent: true });
+      stashCount = stashList.split('\n').filter(line => line.trim()).length;
+    } catch (e) {
+      // Ignore stash errors
+    }
+    
+    // Store current status in history
+    const currentStatus = {
+      date: new Date().toISOString(),
+      branch: currentBranch,
+      changedFiles: changedFiles.length,
+      ahead: parseInt(ahead),
+      behind: parseInt(behind)
+    };
+    
+    statusHistory.push(currentStatus);
+    if (statusHistory.length > 100) {
+      statusHistory.shift();
+    }
+    
+    sessionManager.update({ statusHistory });
+    
+    // Generate context
+    const context = {
+      branchStatus: {
+        diverged: parseInt(ahead) > 0 && parseInt(behind) > 0,
+        ahead: parseInt(ahead),
+        behind: parseInt(behind),
+        syncNeeded: parseInt(ahead) > 0 || parseInt(behind) > 0
+      },
+      fileChanges: {
+        total: changedFiles.length,
+        byType: {
+          modified: fileChanges.modified.length,
+          added: fileChanges.added.length,
+          deleted: fileChanges.deleted.length,
+          untracked: fileChanges.untracked.length
+        }
+      },
+      stash: {
+        count: stashCount,
+        hasStash: stashCount > 0
+      },
+      suggestions: []
+    };
+    
+    // Add history analysis if requested
+    if (include_history && statusHistory.length > 1) {
+      const recentHistory = statusHistory.slice(-10);
+      const avgChangedFiles = recentHistory.reduce((sum, s) => sum + s.changedFiles, 0) / recentHistory.length;
+      
+      context.trends = {
+        avgChangedFiles: avgChangedFiles.toFixed(1),
+        branchSwitches: new Set(recentHistory.map(s => s.branch)).size,
+        recentActivity: recentHistory.length
+      };
+    }
+    
+    // Generate suggestions
+    if (include_suggestions) {
+      if (context.branchStatus.diverged) {
+        context.suggestions.push({
+          type: 'sync',
+          priority: 'high',
+          message: `Branch has diverged from ${mainBranch}. Consider rebasing or merging.`,
+          commands: [`git rebase ${mainBranch}`, `git merge ${mainBranch}`]
+        });
+      } else if (context.branchStatus.behind > 0) {
+        context.suggestions.push({
+          type: 'update',
+          priority: 'medium',
+          message: `Branch is ${context.branchStatus.behind} commits behind ${mainBranch}.`,
+          tool: 'sync_branch'
+        });
+      }
+      
+      if (changedFiles.length > 0) {
+        context.suggestions.push({
+          type: 'commit',
+          priority: 'medium',
+          message: `You have ${changedFiles.length} uncommitted changes.`,
+          tool: 'smart_commit'
+        });
+      }
+      
+      if (stashCount > 3) {
+        context.suggestions.push({
+          type: 'cleanup',
+          priority: 'low',
+          message: `You have ${stashCount} stashed changes. Consider reviewing them.`,
+          tool: 'stash_operations'
+        });
+      }
+      
+      // Check recent operations for workflow suggestions
+      const recentOps = session.recentOperations || [];
+      const lastOp = recentOps[recentOps.length - 1];
+      
+      if (lastOp?.tool === 'github_flow_start') {
+        const timeSince = Date.now() - new Date(lastOp.timestamp).getTime();
+        if (timeSince > 3600000 && changedFiles.length > 0) { // 1 hour
+          context.suggestions.push({
+            type: 'workflow',
+            priority: 'medium',
+            message: 'You started a branch a while ago. Ready to create a PR?',
+            tool: 'github_flow_finish'
+          });
+        }
+      }
+    }
+    
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      sessionId: session.sessionId
+    };
+    
+    return createSuccessResponse("Repository status retrieved", {
+      currentBranch,
+      mainBranch,
+      hasUncommittedChanges: changedFiles.length > 0,
+      fileChanges,
+      stashCount,
+      context,
+      metadata
+    });
+  } catch (error) {
+    return createErrorResponse(`Failed to get status: ${error.message}`);
+  }
+}
+
+/**
+ * Generate repository structure map
+ */
+async function generateRepoMap({
+  max_depth = 3,
+  show_hidden = false,
+  sort_by = "name"
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const rootPath = process.cwd();
+    const tree = await buildDirectoryTree(rootPath, 0, max_depth, show_hidden);
+    
+    // Sort tree based on criteria
+    sortTree(tree, sort_by);
+    
+    // Generate visual representation
+    const visualization = generateTreeVisualization(tree);
+    
+    // Calculate summary statistics
+    const stats = calculateTreeStats(tree);
+    
+    const context = {
+      insights: [],
+      suggestions: []
+    };
+    
+    // Add insights
+    if (stats.maxDepth > 5) {
+      context.insights.push('Deep directory nesting detected. Consider flattening structure.');
+    }
+    
+    if (stats.largestDir.fileCount > 50) {
+      context.insights.push(`${stats.largestDir.name} contains ${stats.largestDir.fileCount} files. Consider splitting.`);
+    }
+    
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      rootPath,
+      maxDepth: max_depth
+    };
+    
+    return createSuccessResponse("Repository map generated", {
+      visualization,
+      stats,
+      context,
+      metadata
+    });
+  } catch (error) {
+    return createErrorResponse(`Failed to generate repo map: ${error.message}`);
+  }
+}
+
+/**
+ * Search for TODO comments
+ */
+async function searchTodos({
+  patterns = ["TODO", "FIXME", "HACK", "XXX", "OPTIMIZE", "REFACTOR"],
+  include_context = true,
+  group_by_type = true
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const results = [];
+    
+    // Build grep pattern
+    const pattern = patterns.join('\\|');
+    const grepCommand = `git grep -n -i "${pattern}" || true`;
+    
+    const output = execGitCommand(grepCommand, { silent: true });
+    if (!output.trim()) {
+      return createSuccessResponse("No TODOs found", { results: [] });
+    }
+    
+    // Parse results
+    output.split('\n').filter(line => line.trim()).forEach(line => {
+      const match = line.match(/^([^:]+):(\d+):(.*)$/);
+      if (match) {
+        const [, file, lineNum, content] = match;
+        
+        // Identify which pattern matched
+        let matchedPattern = null;
+        for (const p of patterns) {
+          if (content.toUpperCase().includes(p)) {
+            matchedPattern = p;
+            break;
+          }
+        }
+        
+        results.push({
+          file,
+          line: parseInt(lineNum),
+          pattern: matchedPattern,
+          content: content.trim()
+        });
+      }
+    });
+    
+    // Group by type if requested
+    let organized = results;
+    if (group_by_type) {
+      organized = {};
+      patterns.forEach(p => { organized[p] = []; });
+      
+      results.forEach(r => {
+        if (organized[r.pattern]) {
+          organized[r.pattern].push(r);
+        }
+      });
+      
+      // Remove empty groups
+      Object.keys(organized).forEach(key => {
+        if (organized[key].length === 0) delete organized[key];
+      });
+    }
+    
+    // Generate summary
+    const summary = {
+      total: results.length,
+      byType: {}
+    };
+    
+    patterns.forEach(p => {
+      const count = results.filter(r => r.pattern === p).length;
+      if (count > 0) summary.byType[p] = count;
+    });
+    
+    const context = {
+      suggestions: []
+    };
+    
+    if (results.length > 50) {
+      context.suggestions.push({
+        type: 'maintenance',
+        priority: 'medium',
+        message: `Found ${results.length} TODO comments. Consider addressing technical debt.`
+      });
+    }
+    
+    if (summary.byType.FIXME > 10) {
+      context.suggestions.push({
+        type: 'quality',
+        priority: 'high',
+        message: `${summary.byType.FIXME} FIXME comments found. These may indicate bugs.`
+      });
+    }
+    
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      patterns: patterns
+    };
+    
+    return createSuccessResponse("TODO search completed", {
+      results: organized,
+      summary,
+      context,
+      metadata
+    });
+  } catch (error) {
+    return createErrorResponse(`Failed to search TODOs: ${error.message}`);
+  }
+}
+
+/**
+ * Check project dependencies
+ */
+async function checkDependencies({
+  check_updates = true,
+  check_security = true,
+  check_unused = true
+}) {
+  if (!fs.existsSync('package.json')) {
+    return createErrorResponse("No package.json found");
+  }
+
+  try {
+    const results = {
+      updates: null,
+      security: null,
+      unused: null
+    };
+    
+    // Check for updates
+    if (check_updates) {
+      try {
+        const outdated = execSync('npm outdated --json', { encoding: 'utf8', stdio: 'pipe' });
+        results.updates = JSON.parse(outdated || '{}');
+      } catch (e) {
+        // npm outdated exits with error if packages are outdated
+        if (e.stdout) {
+          try {
+            results.updates = JSON.parse(e.stdout);
+          } catch (parseError) {
+            results.updates = { error: 'Could not parse outdated packages' };
+          }
+        }
+      }
+    }
+    
+    // Check security
+    if (check_security) {
+      try {
+        const audit = execSync('npm audit --json', { encoding: 'utf8', stdio: 'pipe' });
+        results.security = JSON.parse(audit);
+      } catch (e) {
+        if (e.stdout) {
+          try {
+            results.security = JSON.parse(e.stdout);
+          } catch (parseError) {
+            results.security = { error: 'Could not parse security audit' };
+          }
+        }
+      }
+    }
+    
+    // Generate analysis
+    const analysis = {
+      outdated: 0,
+      vulnerable: 0,
+      suggestions: []
+    };
+    
+    if (results.updates && typeof results.updates === 'object') {
+      analysis.outdated = Object.keys(results.updates).length;
+    }
+    
+    if (results.security?.metadata) {
+      analysis.vulnerable = results.security.metadata.vulnerabilities.total || 0;
+    }
+    
+    // Generate suggestions
+    if (analysis.vulnerable > 0) {
+      analysis.suggestions.push({
+        type: 'security',
+        priority: 'critical',
+        message: `${analysis.vulnerable} vulnerabilities found. Run npm audit fix.`,
+        command: 'npm audit fix'
+      });
+    }
+    
+    if (analysis.outdated > 10) {
+      analysis.suggestions.push({
+        type: 'maintenance',
+        priority: 'medium',
+        message: `${analysis.outdated} outdated packages. Consider updating.`,
+        command: 'npm update'
+      });
+    }
+    
+    const metadata = {
+      timestamp: new Date().toISOString()
+    };
+    
+    return createSuccessResponse("Dependency check completed", {
+      results,
+      analysis,
+      metadata
+    });
+  } catch (error) {
+    return createErrorResponse(`Failed to check dependencies: ${error.message}`);
+  }
+}
+
+// Helper functions
+function categorizeRepoSize(fileCount) {
+  if (fileCount < 100) return 'small';
+  if (fileCount < 1000) return 'medium';
+  if (fileCount < 5000) return 'large';
+  return 'very-large';
+}
+
+function analyzeBranchHealth(branches) {
+  if (!branches || branches.error) return 'unknown';
+  
+  const staleRatio = branches.stale / branches.total;
+  if (staleRatio > 0.5) return 'poor';
+  if (staleRatio > 0.3) return 'fair';
+  return 'good';
+}
+
+function generateCodebaseInsights(info) {
+  const insights = [];
+  
+  if (info.quality?.testing?.testFileCount > 0) {
+    const testRatio = info.quality.testing.testFileCount / info.statistics?.fileCount || 0;
+    insights.push(`Test coverage ratio: ${(testRatio * 100).toFixed(1)}%`);
+  }
+  
+  if (info.quality?.documentation?.hasReadme) {
+    insights.push('Project has README documentation');
+  }
+  
+  if (info.statistics?.contributors?.length > 5) {
+    insights.push(`Active collaborative project with ${info.statistics.contributors.length} contributors`);
+  }
+  
+  return insights;
+}
+
+async function buildDirectoryTree(dirPath, currentDepth, maxDepth, showHidden) {
+  if (currentDepth >= maxDepth) return null;
+  
+  const stats = {
+    name: path.basename(dirPath),
+    path: dirPath,
+    type: 'directory',
+    children: [],
+    fileCount: 0,
+    totalSize: 0
+  };
+  
+  try {
+    const items = fs.readdirSync(dirPath);
+    
+    for (const item of items) {
+      if (!showHidden && item.startsWith('.')) continue;
+      if (item === 'node_modules' || item === '.git') continue;
+      
+      const itemPath = path.join(dirPath, item);
+      const itemStats = fs.statSync(itemPath);
+      
+      if (itemStats.isDirectory()) {
+        const subTree = await buildDirectoryTree(itemPath, currentDepth + 1, maxDepth, showHidden);
+        if (subTree) {
+          stats.children.push(subTree);
+          stats.fileCount += subTree.fileCount;
+          stats.totalSize += subTree.totalSize;
+        }
+      } else {
+        stats.fileCount++;
+        stats.totalSize += itemStats.size;
+      }
+    }
+  } catch (e) {
+    // Ignore permission errors
+  }
+  
+  return stats;
+}
+
+function sortTree(tree, sortBy) {
+  if (!tree || !tree.children) return;
+  
+  tree.children.sort((a, b) => {
+    switch(sortBy) {
+      case 'size': return b.totalSize - a.totalSize;
+      case 'files': return b.fileCount - a.fileCount;
+      default: return a.name.localeCompare(b.name);
+    }
+  });
+  
+  tree.children.forEach(child => sortTree(child, sortBy));
+}
+
+function generateTreeVisualization(tree, prefix = '', isLast = true) {
+  if (!tree) return '';
+  
+  let result = prefix;
+  result += isLast ? '└── ' : '├── ';
+  result += `${tree.name}`;
+  
+  if (tree.type === 'directory') {
+    result += ` (${tree.fileCount} files, ${formatSize(tree.totalSize)})`;
+  }
+  
+  result += '\n';
+  
+  if (tree.children) {
+    const childPrefix = prefix + (isLast ? '    ' : '│   ');
+    tree.children.forEach((child, index) => {
+      const isLastChild = index === tree.children.length - 1;
+      result += generateTreeVisualization(child, childPrefix, isLastChild);
+    });
+  }
+  
+  return result;
+}
+
+function calculateTreeStats(tree) {
+  let maxDepth = 0;
+  let totalFiles = 0;
+  let totalSize = 0;
+  let largestDir = { name: '', fileCount: 0 };
+  
+  function traverse(node, depth = 0) {
+    maxDepth = Math.max(maxDepth, depth);
+    totalFiles += node.fileCount || 0;
+    totalSize += node.totalSize || 0;
+    
+    if (node.fileCount > largestDir.fileCount) {
+      largestDir = { name: node.path, fileCount: node.fileCount };
+    }
+    
+    if (node.children) {
+      node.children.forEach(child => traverse(child, depth + 1));
+    }
+  }
+  
+  traverse(tree);
+  
+  return { maxDepth, totalFiles, totalSize, largestDir };
+}
+
+function formatSize(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  
+  return `${size.toFixed(1)}${units[unitIndex]}`;
+}
+
 // Export individual functions for CLI usage
 export {
   getRepoInfo,
@@ -1543,4 +2417,8 @@ export {
   createNpmPackage,
   cleanupMergedBranches,
   branchProtection,
+  getEnhancedStatus,
+  generateRepoMap,
+  searchTodos,
+  checkDependencies,
 };
