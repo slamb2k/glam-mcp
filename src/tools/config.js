@@ -4,10 +4,15 @@
 
 import { configGenerator } from '../config-tools/config-generator.js';
 import '../config-tools/platforms/index.js'; // Register platforms
-import { createResponse } from '../utils/responses.js';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses.js';
 import { ToolCategories } from '../core/tool-registry.js';
 import fs from 'fs';
 import path from 'path';
+
+// Helper function for backward compatibility
+const createResponse = (success, data, message) => {
+  return success ? createSuccessResponse(message, data) : createErrorResponse(message);
+};
 
 export function registerConfigTools(server) {
   // List available platforms

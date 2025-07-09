@@ -15,10 +15,10 @@ describe('MCP Server Integration', () => {
       const serverModule = await import(serverPath);
       
       // Verify it exports expected MCP server components
-      expect(serverModule.SlamBedMCPServer).toBeDefined();
+      expect(serverModule.GlamMCPServer).toBeDefined();
       
       // Should be able to instantiate the server
-      const server = new serverModule.SlamBedMCPServer();
+      const server = new serverModule.GlamMCPServer();
       expect(server).toBeDefined();
     });
 

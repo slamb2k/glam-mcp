@@ -100,7 +100,7 @@ describe('Banner Utilities', () => {
       expect(message).toContain('Contextual AI assistance');
       expect(message).toContain('Team collaboration tools');
       expect(message).toContain('Safety checks and risk analysis');
-      expect(message).toContain('Get started with: glam --help');
+      expect(message).toContain('Connected via MCP');
     });
   });
 });

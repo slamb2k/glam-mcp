@@ -7,6 +7,21 @@ import path from 'path';
 import { SessionManager, SessionState } from '../../../src/context/session-manager.js';
 import { ContextOperations } from '../../../src/context/context-operations.js';
 
+// Helper functions to handle both legacy and enhanced response formats
+const isSuccess = (result) => {
+  if (typeof result.isSuccess === 'function') {
+    return result.isSuccess();
+  }
+  return result.success === true;
+};
+
+const hasErrors = (result) => {
+  if (typeof result.hasErrors === 'function') {
+    return result.hasErrors();
+  }
+  return result.success === false;
+};
+
 describe('Session Manager', () => {
   let sessionManager;
   const testStoragePath = './tests/temp/test-sessions';
@@ -54,7 +69,7 @@ describe('Session Manager', () => {
     it('should create a new session', () => {
       const result = sessionManager.createSession();
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.sessionId).toBeDefined();
       expect(sessionManager.sessions.size).toBe(1);
     });
@@ -62,7 +77,7 @@ describe('Session Manager', () => {
     it('should create session with custom ID', () => {
       const result = sessionManager.createSession('custom-id');
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.sessionId).toBe('custom-id');
       expect(sessionManager.sessions.has('custom-id')).toBe(true);
     });
@@ -94,14 +109,14 @@ describe('Session Manager', () => {
       
       const result = await sessionManager.loadSession('test-id');
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.message).toContain('from memory');
     });
 
     it('should handle missing session file', async () => {
       const result = await sessionManager.loadSession('missing-id');
       
-      expect(result.hasErrors()).toBe(true);
+      expect(hasErrors(result)).toBe(true);
       expect(result.message).toContain('not found');
     });
   });
@@ -111,7 +126,7 @@ describe('Session Manager', () => {
       sessionManager.createSession('test-id');
       const result = await sessionManager.saveSession('test-id');
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
     });
 
     it('should save all sessions', async () => {
@@ -120,7 +135,7 @@ describe('Session Manager', () => {
       
       const result = await sessionManager.saveAllSessions();
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.count).toBe(2);
     });
   });
@@ -130,10 +145,10 @@ describe('Session Manager', () => {
       sessionManager.createSession('test-id');
       
       const setResult = sessionManager.setActiveSession('test-id');
-      expect(setResult.isSuccess()).toBe(true);
+      expect(isSuccess(setResult)).toBe(true);
       
       const getResult = sessionManager.getActiveSession();
-      expect(getResult.isSuccess()).toBe(true);
+      expect(isSuccess(getResult)).toBe(true);
       expect(getResult.data.sessionId).toBe('test-id');
     });
 
@@ -144,7 +159,7 @@ describe('Session Manager', () => {
       
       const result = sessionManager.listSessions();
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.count).toBe(2);
       expect(result.data.activeSessionId).toBe('session1');
       expect(result.data.sessions).toHaveLength(2);
@@ -154,7 +169,7 @@ describe('Session Manager', () => {
       sessionManager.createSession('test-id');
       const result = await sessionManager.destroySession('test-id');
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(sessionManager.sessions.has('test-id')).toBe(false);
     });
   });
@@ -180,7 +195,7 @@ describe('Context Operations', () => {
     it('should update context value', () => {
       const result = contextOps.updateContext(sessionId, 'gitContext.branch', 'feature-1');
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.value).toBe('feature-1');
       
       const session = sessionManager.sessions.get(sessionId);
@@ -190,7 +205,7 @@ describe('Context Operations', () => {
     it('should create nested context paths', () => {
       const result = contextOps.updateContext(sessionId, 'deeply.nested.value', 42);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       
       const session = sessionManager.sessions.get(sessionId);
       expect(session.data.deeply.nested.value).toBe(42);
@@ -200,7 +215,7 @@ describe('Context Operations', () => {
       contextOps.updateContext(sessionId, 'config', { a: 1, b: 2 });
       const result = contextOps.updateContext(sessionId, 'config', { b: 3, c: 4 }, { merge: true });
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       
       const session = sessionManager.sessions.get(sessionId);
       expect(session.data.config).toEqual({ a: 1, b: 3, c: 4 });
@@ -215,7 +230,7 @@ describe('Context Operations', () => {
       
       const result = contextOps.batchUpdateContext(sessionId, updates);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.updated).toBe(3);
       
       const session = sessionManager.sessions.get(sessionId);
@@ -235,14 +250,14 @@ describe('Context Operations', () => {
     it('should query by path', () => {
       const result = contextOps.queryContext(sessionId, { path: 'gitContext.branch' });
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.result).toBe('main');
     });
 
     it('should search context', () => {
       const result = contextOps.queryContext(sessionId, { search: 'theme' });
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.result).toHaveLength(1);
       expect(result.data.result[0]).toMatchObject({
         path: 'userPreferences.theme',
@@ -254,7 +269,7 @@ describe('Context Operations', () => {
     it('should return all context when no query specified', () => {
       const result = contextOps.queryContext(sessionId);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.result).toHaveProperty('gitContext');
       expect(result.data.result).toHaveProperty('userPreferences');
     });
@@ -270,7 +285,7 @@ describe('Context Operations', () => {
       
       const result = contextOps.updateGitContext(sessionId, gitData);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       
       const session = sessionManager.sessions.get(sessionId);
       expect(session.data.gitContext).toMatchObject(gitData);
@@ -286,7 +301,7 @@ describe('Context Operations', () => {
       
       const result = contextOps.updateUserPreferences(sessionId, preferences);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.preferences).toMatchObject(preferences);
       expect(result.data.preferences.lastUpdated).toBeDefined();
     });
@@ -298,14 +313,14 @@ describe('Context Operations', () => {
       
       const result = contextOps.updateUserPreferences(sessionId, invalidPreferences);
       
-      expect(result.hasErrors()).toBe(true);
+      expect(hasErrors(result)).toBe(true);
       expect(result.data?.errors || result.message).toBeDefined();
     });
 
     it('should get preferences with defaults', () => {
       const result = contextOps.getUserPreferences(sessionId);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.defaults).toHaveProperty('theme', 'auto');
       expect(result.data.defaults).toHaveProperty('autoSave', true);
     });
@@ -318,7 +333,7 @@ describe('Context Operations', () => {
       
       const result = contextOps.getRecentOperations(sessionId);
       
-      expect(result.isSuccess()).toBe(true);
+      expect(isSuccess(result)).toBe(true);
       expect(result.data.operations).toHaveLength(2);
       expect(result.data.operations[0].type).toBe('contextUpdate');
       expect(result.data.operations[0].newValue).toBe(2);

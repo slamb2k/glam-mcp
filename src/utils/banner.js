@@ -47,6 +47,6 @@ Welcome to glam-mcp - Your intelligent development companion!
   • Team collaboration tools
   • Safety checks and risk analysis
 
-Get started with: glam --help
+Connected via MCP - Ask your AI assistant to list available tools!
 `;
 }

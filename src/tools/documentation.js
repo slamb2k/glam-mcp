@@ -5,14 +5,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { createSuccessResponse, createErrorResponse } from '../utils/response-utils.js';
+import { createSuccessResponse, createErrorResponse } from '../utils/responses.js';
 import { toolRegistry } from '../core/tool-registry.js';
 import { toolDocumentation } from '../services/tool-documentation.js';
-import { SessionManager } from '../core/session-manager.js';
+import { SessionManager } from '../context/session-manager.js';
 import { GitClient } from '../clients/git-client.js';
 
 const sessionManager = SessionManager.getInstance();
-const gitClient = GitClient.getInstance();
+const gitClient = new GitClient();
 
 /**
  * Generate comprehensive project documentation

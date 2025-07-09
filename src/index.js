@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * glam-mcp Server
  * Comprehensive GitHub Flow Automation with MCP Support

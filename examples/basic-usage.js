@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Basic usage examples for glam-mcp
  */
@@ -33,49 +31,55 @@ async function configurationExample() {
   console.log("\n🔧 Configuration Example");
   console.log("=========================");
 
-  // Get current configuration
-  const currentConfig = config.getAll();
-  console.log("Current default branch:", config.get("gitFlow.defaultBranch"));
-  console.log("Auto-merge enabled:", config.get("automation.autoMerge"));
-  console.log("Format script enabled:", config.get("automation.runFormat"));
-
-  // Get tool-specific configuration
-  const autoCommitConfig = config.getToolConfig("auto-commit");
-  console.log("\nAuto-commit configuration:", autoCommitConfig);
-
-  // Validate configuration
-  const validation = config.validate();
-  console.log("\nConfiguration valid:", validation.valid);
-  if (!validation.valid) {
-    console.log("Errors:", validation.errors);
+  // Configuration is stored in .glam.json
+  console.log("Configuration file: .glam.json");
+  console.log("Example configuration:");
+  console.log(`{
+  "gitFlow": {
+    "defaultBranch": "main",
+    "branchPrefixes": {
+      "feature": "feat/",
+      "bugfix": "bug/"
+    }
+  },
+  "automation": {
+    "autoMerge": false,
+    "runFormat": true
   }
+}`);
+
+  console.log("\nConfiguration is loaded automatically by the MCP server.");
 }
 
 async function workflowExamples() {
   console.log("\n🌊 Workflow Examples");
   console.log("====================");
 
-  console.log("1. Auto-commit workflow:");
-  console.log('   glam auto commit -m "Add user authentication"');
+  console.log("1. Auto-commit workflow (via MCP):");
+  console.log('   Tool: auto_commit');
+  console.log('   Parameters: { message: "Add user authentication" }');
   console.log(
     "   → Creates branch, formats, commits, pushes, creates PR, merges, cleans up",
   );
 
-  console.log("\n2. GitHub Flow:");
-  console.log("   glam-flow start user-auth");
-  console.log("   glam-flow finish --auto-merge");
+  console.log("\n2. GitHub Flow (via MCP):");
+  console.log("   Tool: github_flow_start");
+  console.log('   Parameters: { name: "user-auth" }');
+  console.log("   Tool: github_flow_merge");
+  console.log('   Parameters: { autoMerge: true }');
 
-  console.log("\n3. Quick development:");
-  console.log("   glam-commit quick");
+  console.log("\n3. Quick development (via MCP):");
+  console.log("   Tool: quick_commit");
   console.log("   → Auto-generates message and commits with smart defaults");
 
-  console.log("\n4. Smart analysis:");
-  console.log("   glam-commit smart --execute");
+  console.log("\n4. Smart analysis (via MCP):");
+  console.log("   Tool: smart_commit");
+  console.log('   Parameters: { execute: true }');
   console.log("   → Analyzes changes and suggests optimal commit strategy");
 
-  console.log("\n5. GitHub Actions workflows:");
-  console.log("   glam auto create-pr-workflow");
-  console.log("   glam-commit create-release-workflow");
+  console.log("\n5. GitHub Actions workflows (via MCP):");
+  console.log("   Tool: create_pr_workflow");
+  console.log("   Tool: create_release_workflow");
   console.log(
     "   → Creates CI/CD workflows for automated testing and releases",
   );
@@ -96,11 +100,10 @@ async function integrationExample() {
   }
 }`);
 
-  console.log("\nCLI Integration:");
-  console.log("Available commands:");
-  console.log("- glam (main CLI)");
-  console.log("- glam-commit (automation focus)");
-  console.log("- glam-flow (GitHub Flow focus)");
+  console.log("\nConfiguration CLI Tool:");
+  console.log("Available command:");
+  console.log("- glam-config (configuration generator)");
+  console.log("  Commands: generate, validate, test, list, setup");
 }
 
 async function customizationExample() {
@@ -146,18 +149,16 @@ async function runExamples() {
     console.log("\n🎉 Examples completed!");
     console.log("\nNext steps:");
     console.log("1. Install: npm install -g glam-mcp");
-    console.log("2. Configure: Create .glam.json");
-    console.log('3. Use CLI: glam auto commit -m "Your message"');
-    console.log("4. Or MCP: Add to Claude Desktop config");
+    console.log("2. Configure: Create .glam.json (or use glam-config generate)");
+    console.log("3. Add to Claude Desktop config for MCP usage");
+    console.log("4. Use tools through Claude or other MCP clients");
   } catch (error) {
     console.error("Example failed:", error.message);
   }
 }
 
-// Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runExamples();
-}
+// Run examples
+runExamples();
 
 export {
   basicMCPExample,
