@@ -133,6 +133,8 @@ Each enhancer adds its specific context without modifying others' contributions.
 
 5. **Git Operations**: All Git operations should use the helpers in `src/utils/git-helpers.js`.
 
+6. **Development Documents**: The `/.dev_docs/` directory contains internal development documents (ARCHITECTURE.md, VISION.md, etc.). These documents should NOT be referenced or used unless the user explicitly asks for them by name or path. They are kept for historical reference but are not part of the active codebase documentation.
+
 ## Debugging Tips
 
 1. **MCP Communication**: Use MCP client debug mode to see raw responses

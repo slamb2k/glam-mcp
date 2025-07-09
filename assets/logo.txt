@@ -14,6 +14,6 @@
     ║               ██║ ╚═╝ ██║╚██████╗██║                         ║
     ║               ╚═╝     ╚═╝ ╚═════╝╚═╝                         ║
     ║                                                               ║
-    ║          Git-Like Automation Manager for MCP                  ║
+    ║        Git Learning & Automation Module for MCP               ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝

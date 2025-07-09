@@ -15,7 +15,7 @@ export class ConfigGenerator {
     this.commonConfig = {
       name: 'glam-mcp',
       version: '2.0.0',
-      description: 'Git-Like Automation Manager for MCP'
+      description: 'Git Learning & Automation Module for MCP'
     };
   }
 

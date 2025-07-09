@@ -17,13 +17,13 @@ export function getCompactBanner() {
   return `
   ╔═══════════════════════════════════════╗
   ║            glam-mcp v2.0              ║
-  ║    Git-Like Automation Manager        ║
+  ║    Git Learning & Automation Module   ║
   ╚═══════════════════════════════════════╝
 `;
 }
 
 export function getMinimalBanner() {
-  return `glam-mcp | Git-Like Automation Manager`;
+  return `glam-mcp | Git Learning & Automation Module`;
 }
 
 export function showBanner(style = 'full') {

@@ -38,7 +38,7 @@ describe('Banner Utilities', () => {
       const banner = getCompactBanner();
       
       expect(banner).toContain('glam-mcp v2.0');
-      expect(banner).toContain('Git-Like Automation Manager');
+      expect(banner).toContain('Git Learning & Automation Module');
       expect(banner).toContain('╔═══════════════════════════════════════╗');
       expect(banner).toContain('╚═══════════════════════════════════════╝');
     });
@@ -48,7 +48,7 @@ describe('Banner Utilities', () => {
     it('should return minimal one-line banner', () => {
       const banner = getMinimalBanner();
       
-      expect(banner).toBe('glam-mcp | Git-Like Automation Manager');
+      expect(banner).toBe('glam-mcp | Git Learning & Automation Module');
     });
   });
 
@@ -76,7 +76,7 @@ describe('Banner Utilities', () => {
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
         '\x1b[36m%s\x1b[0m',
-        'glam-mcp | Git-Like Automation Manager'
+        'glam-mcp | Git Learning & Automation Module'
       );
     });
 

@@ -43,7 +43,7 @@ describe('ConfigGenerator', () => {
       expect(mockGenerator.generate).toHaveBeenCalledWith({
         name: 'glam-mcp',
         version: '2.0.0',
-        description: 'Git-Like Automation Manager for MCP',
+        description: 'Git Learning & Automation Module for MCP',
         custom: 'option'
       });
       expect(result).toEqual(mockConfig);
