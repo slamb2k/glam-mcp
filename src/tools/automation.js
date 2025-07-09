@@ -451,6 +451,81 @@ export function registerAutomationTools(server) {
     },
     handler: async (params) => createReleaseWorkflow(params),
   });
+
+  // Enhanced test runner with analysis
+  server.addTool({
+    name: "run_tests",
+    description:
+      "Run tests with enhanced analysis, metrics tracking, and intelligent suggestions. Use this when you need to execute tests and get detailed insights about test performance, flaky tests, and improvement areas.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        coverage: {
+          type: "boolean",
+          description: "Run with coverage analysis",
+          default: true,
+        },
+        watch: {
+          type: "boolean",
+          description: "Run in watch mode",
+          default: false,
+        },
+        pattern: {
+          type: "string",
+          description: "Test file pattern to match",
+        },
+        bail: {
+          type: "boolean",
+          description: "Stop after first test failure",
+          default: false,
+        },
+        verbose: {
+          type: "boolean",
+          description: "Show detailed output",
+          default: false,
+        },
+      },
+    },
+    handler: async (params) => runTests(params),
+  });
+
+  // Enhanced code analyzer
+  server.addTool({
+    name: "analyze_code",
+    description:
+      "Analyze code quality, complexity, and provide improvement suggestions. Use this when you need insights about code quality metrics, technical debt, and prioritized improvement recommendations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description: "Path to analyze (file or directory)",
+          default: "./src",
+        },
+        include_deps: {
+          type: "boolean",
+          description: "Include dependency analysis",
+          default: true,
+        },
+        include_complexity: {
+          type: "boolean",
+          description: "Include complexity metrics",
+          default: true,
+        },
+        include_duplication: {
+          type: "boolean",
+          description: "Include code duplication analysis",
+          default: true,
+        },
+        threshold: {
+          type: "number",
+          description: "Complexity threshold for flagging files",
+          default: 10,
+        },
+      },
+    },
+    handler: async (params) => analyzeCode(params),
+  });
 }
 
 
@@ -2850,6 +2925,555 @@ Releases will automatically trigger when code is pushed to the main branch.
   }
 }
 
+/**
+ * Enhanced test runner with analysis and metrics
+ */
+async function runTests({
+  coverage = true,
+  watch = false,
+  pattern,
+  bail = false,
+  verbose = false,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const hasPackageJson = fs.existsSync("package.json");
+    if (!hasPackageJson) {
+      return createErrorResponse("No package.json found");
+    }
+
+    const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+    const scripts = packageJson.scripts || {};
+    
+    // Get session manager instance
+    const SessionManager = await import("../context/session-manager.js").then(m => m.SessionManager);
+    const sessionManager = SessionManager.getInstance({ autoSave: false });
+    const session = sessionManager.get();
+    
+    // Get historical test data
+    const testHistory = session.testHistory || [];
+    
+    // Determine test command
+    let testCommand = scripts.test || "";
+    if (!testCommand) {
+      return createErrorResponse("No test script found in package.json");
+    }
+
+    // Build test command with options
+    if (coverage && !testCommand.includes("coverage")) {
+      testCommand = testCommand.replace("jest", "jest --coverage");
+      testCommand = testCommand.replace("vitest", "vitest --coverage");
+    }
+    if (watch) {
+      testCommand += " --watch";
+    }
+    if (pattern) {
+      testCommand += ` --testNamePattern="${pattern}"`;
+    }
+    if (bail) {
+      testCommand += " --bail";
+    }
+    if (verbose) {
+      testCommand += " --verbose";
+    }
+
+    const startTime = Date.now();
+    let testOutput = "";
+    let testResult = { success: false, exitCode: 1 };
+
+    try {
+      testOutput = execSync(testCommand, { 
+        encoding: "utf8",
+        stdio: "pipe"
+      });
+      testResult = { success: true, exitCode: 0 };
+    } catch (error) {
+      testOutput = error.stdout?.toString() || error.message;
+      testResult = { 
+        success: false, 
+        exitCode: error.status || 1 
+      };
+    }
+
+    const duration = Date.now() - startTime;
+
+    // Parse test results
+    const testMetrics = parseTestOutput(testOutput);
+    
+    // Update test history
+    const currentRun = {
+      date: new Date().toISOString(),
+      passed: testMetrics.passed,
+      failed: testMetrics.failed,
+      skipped: testMetrics.skipped,
+      duration: duration / 1000,
+      coverage: testMetrics.coverage
+    };
+    
+    testHistory.push(currentRun);
+    if (testHistory.length > 100) {
+      testHistory.shift(); // Keep last 100 runs
+    }
+    
+    // Calculate metrics
+    const avgPassRate = testHistory.length > 0
+      ? testHistory.reduce((sum, t) => 
+          sum + (t.passed / (t.passed + t.failed) * 100), 0
+        ) / testHistory.length
+      : 0;
+    
+    const avgDuration = testHistory.length > 0
+      ? testHistory.reduce((sum, t) => sum + t.duration, 0) / testHistory.length
+      : 0;
+    
+    // Identify flaky tests (simplified - in real implementation would track individual tests)
+    const recentRuns = testHistory.slice(-10);
+    const flakyIndicator = recentRuns.some(r => r.failed > 0) && 
+                          recentRuns.some(r => r.failed === 0);
+    
+    // Generate suggestions
+    const suggestions = [];
+    
+    if (testMetrics.coverage < 80) {
+      suggestions.push({
+        type: 'coverage',
+        priority: 'high',
+        message: `Test coverage is ${testMetrics.coverage}%. Consider adding more tests to reach 80%.`
+      });
+    }
+    
+    if (avgDuration > 30) {
+      suggestions.push({
+        type: 'performance',
+        priority: 'medium',
+        message: `Tests are taking ${avgDuration.toFixed(1)}s on average. Consider optimizing slow tests.`
+      });
+    }
+    
+    if (flakyIndicator) {
+      suggestions.push({
+        type: 'reliability',
+        priority: 'high',
+        message: 'Potential flaky tests detected. Review recent failures for intermittent issues.'
+      });
+    }
+    
+    if (testMetrics.skipped > 0) {
+      suggestions.push({
+        type: 'maintenance',
+        priority: 'low',
+        message: `${testMetrics.skipped} tests are skipped. Consider enabling or removing them.`
+      });
+    }
+    
+    // Save updated history
+    sessionManager.update({
+      testHistory,
+      lastTestRun: currentRun
+    });
+    
+    const context = {
+      testMetrics,
+      historicalMetrics: {
+        avgPassRate: avgPassRate.toFixed(2),
+        avgDuration: avgDuration.toFixed(1),
+        totalRuns: testHistory.length,
+        trend: calculateTrend(testHistory)
+      },
+      suggestions,
+      relatedTools: [
+        {
+          name: 'analyze_code',
+          reason: 'Analyze code quality to identify areas needing tests'
+        },
+        {
+          name: 'auto_commit',
+          reason: 'Commit test changes with proper messages'
+        }
+      ]
+    };
+    
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      duration: duration / 1000,
+      command: testCommand,
+      coverage: coverage
+    };
+
+    return createSuccessResponse(
+      testResult.success ? "Tests completed successfully" : "Tests failed",
+      {
+        ...testResult,
+        output: testOutput.slice(-1000), // Last 1000 chars
+        context,
+        metadata
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Failed to run tests: ${error.message}`);
+  }
+}
+
+/**
+ * Enhanced code analyzer with quality metrics
+ */
+async function analyzeCode({
+  path: analyzePath = "./src",
+  include_deps = true,
+  include_complexity = true,
+  include_duplication = true,
+  threshold = 10,
+}) {
+  if (!isGitRepository()) {
+    return createErrorResponse("Not a git repository");
+  }
+
+  try {
+    const results = {
+      files: [],
+      summary: {
+        totalFiles: 0,
+        totalLines: 0,
+        avgComplexity: 0,
+        highComplexityFiles: 0,
+        duplicateLines: 0,
+        technicalDebt: 0
+      }
+    };
+
+    // Check if path exists
+    if (!fs.existsSync(analyzePath)) {
+      return createErrorResponse(`Path ${analyzePath} does not exist`);
+    }
+
+    // Get list of JavaScript/TypeScript files
+    const files = getJSFiles(analyzePath);
+    results.summary.totalFiles = files.length;
+
+    // Analyze each file
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      const lines = content.split('\n');
+      const fileAnalysis = {
+        name: file,
+        lines: lines.length,
+        complexity: 0,
+        issues: [],
+        duplicates: []
+      };
+
+      // Simple complexity analysis (count functions, conditionals, loops)
+      if (include_complexity) {
+        const complexity = calculateComplexity(content);
+        fileAnalysis.complexity = complexity;
+        
+        if (complexity > threshold) {
+          fileAnalysis.issues.push('high-complexity');
+          results.summary.highComplexityFiles++;
+        }
+        
+        // Check for specific issues
+        if (lines.some(l => l.length > 120)) {
+          fileAnalysis.issues.push('long-lines');
+        }
+        
+        const functionCount = (content.match(/function\s+\w+|=>\s*{|async\s+function/g) || []).length;
+        if (functionCount > 20) {
+          fileAnalysis.issues.push('too-many-functions');
+        }
+        
+        // Check for missing tests
+        if (!file.includes('.test.') && !file.includes('.spec.')) {
+          const baseName = file.replace(/\.(js|ts)$/, '');
+          const testExists = files.some(f => 
+            f.includes(`${baseName}.test.`) || f.includes(`${baseName}.spec.`)
+          );
+          if (!testExists) {
+            fileAnalysis.issues.push('no-tests');
+          }
+        }
+      }
+
+      results.files.push(fileAnalysis);
+      results.summary.totalLines += lines.length;
+    }
+
+    // Calculate averages
+    if (results.files.length > 0) {
+      results.summary.avgComplexity = 
+        results.files.reduce((sum, f) => sum + f.complexity, 0) / results.files.length;
+    }
+
+    // Simple duplication check (in real implementation would use more sophisticated algorithm)
+    if (include_duplication) {
+      const allLines = [];
+      results.files.forEach(f => {
+        const content = fs.readFileSync(f.name, 'utf8');
+        content.split('\n').forEach((line, idx) => {
+          if (line.trim().length > 50) { // Only check substantial lines
+            allLines.push({ file: f.name, line: line.trim(), lineNum: idx + 1 });
+          }
+        });
+      });
+      
+      // Find duplicates
+      const lineMap = new Map();
+      allLines.forEach(({ file, line, lineNum }) => {
+        const existing = lineMap.get(line);
+        if (existing) {
+          existing.push({ file, lineNum });
+        } else {
+          lineMap.set(line, [{ file, lineNum }]);
+        }
+      });
+      
+      let duplicateCount = 0;
+      lineMap.forEach((locations, line) => {
+        if (locations.length > 1) {
+          duplicateCount++;
+          // Add to file issues
+          locations.forEach(({ file }) => {
+            const fileResult = results.files.find(f => f.name === file);
+            if (fileResult && !fileResult.issues.includes('duplicate-code')) {
+              fileResult.issues.push('duplicate-code');
+            }
+          });
+        }
+      });
+      
+      results.summary.duplicateLines = duplicateCount;
+    }
+
+    // Estimate technical debt (hours)
+    results.summary.technicalDebt = estimateTechnicalDebt(results);
+
+    // Get session manager for storing metrics
+    const SessionManager = await import("../context/session-manager.js").then(m => m.SessionManager);
+    const sessionManager = SessionManager.getInstance({ autoSave: false });
+    const session = sessionManager.get();
+    
+    const codeMetricsHistory = session.codeMetricsHistory || [];
+    codeMetricsHistory.push({
+      date: new Date().toISOString(),
+      ...results.summary
+    });
+    
+    if (codeMetricsHistory.length > 50) {
+      codeMetricsHistory.shift();
+    }
+    
+    sessionManager.update({
+      codeMetricsHistory,
+      lastCodeAnalysis: results.summary
+    });
+
+    // Generate prioritized improvements
+    const prioritizedImprovements = results.files
+      .filter(f => f.complexity > threshold || f.issues.length > 0)
+      .sort((a, b) => b.complexity - a.complexity)
+      .slice(0, 10)
+      .map(f => ({
+        file: f.name,
+        priority: f.complexity > threshold * 2 ? 'high' : 'medium',
+        complexity: f.complexity,
+        suggestions: f.issues,
+        estimatedEffort: Math.ceil(f.complexity / 10) + ' hours'
+      }));
+
+    // Include dependency analysis
+    let dependencyAnalysis = null;
+    if (include_deps && fs.existsSync('package.json')) {
+      const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+      const deps = Object.keys(packageJson.dependencies || {});
+      const devDeps = Object.keys(packageJson.devDependencies || {});
+      
+      dependencyAnalysis = {
+        total: deps.length + devDeps.length,
+        production: deps.length,
+        development: devDeps.length,
+        // In real implementation would check for outdated/vulnerable deps
+        suggestions: []
+      };
+      
+      if (deps.length > 50) {
+        dependencyAnalysis.suggestions.push({
+          type: 'dependencies',
+          message: 'Consider reviewing dependencies - project has many production dependencies'
+        });
+      }
+    }
+
+    const context = {
+      summary: results.summary,
+      prioritizedImprovements,
+      dependencyAnalysis,
+      suggestions: generateCodeSuggestions(results),
+      relatedTools: [
+        {
+          name: 'run_tests',
+          reason: 'Run tests to ensure code quality'
+        },
+        {
+          name: 'smart_commit',
+          reason: 'Commit improvements with proper messages'
+        }
+      ]
+    };
+
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      analyzedPath: analyzePath,
+      fileCount: results.summary.totalFiles
+    };
+
+    return createSuccessResponse("Code analysis completed", {
+      results,
+      context,
+      metadata
+    });
+  } catch (error) {
+    return createErrorResponse(`Failed to analyze code: ${error.message}`);
+  }
+}
+
+// Helper functions
+function parseTestOutput(output) {
+  const metrics = {
+    passed: 0,
+    failed: 0,
+    skipped: 0,
+    coverage: 0
+  };
+
+  // Parse Jest/Vitest style output
+  const passMatch = output.match(/(\d+) passed/);
+  const failMatch = output.match(/(\d+) failed/);
+  const skipMatch = output.match(/(\d+) skipped/);
+  const coverageMatch = output.match(/All files.*?(\d+\.?\d*)/);
+
+  if (passMatch) metrics.passed = parseInt(passMatch[1]);
+  if (failMatch) metrics.failed = parseInt(failMatch[1]);
+  if (skipMatch) metrics.skipped = parseInt(skipMatch[1]);
+  if (coverageMatch) metrics.coverage = parseFloat(coverageMatch[1]);
+
+  return metrics;
+}
+
+function calculateTrend(history) {
+  if (history.length < 2) return 'stable';
+  
+  const recent = history.slice(-5);
+  const older = history.slice(-10, -5);
+  
+  if (recent.length === 0 || older.length === 0) return 'stable';
+  
+  const recentAvg = recent.reduce((sum, r) => 
+    sum + (r.passed / (r.passed + r.failed)), 0) / recent.length;
+  const olderAvg = older.reduce((sum, r) => 
+    sum + (r.passed / (r.passed + r.failed)), 0) / older.length;
+  
+  if (recentAvg > olderAvg + 0.05) return 'improving';
+  if (recentAvg < olderAvg - 0.05) return 'degrading';
+  return 'stable';
+}
+
+function getJSFiles(dir, files = []) {
+  const items = fs.readdirSync(dir);
+  
+  for (const item of items) {
+    const fullPath = path.join(dir, item);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+      getJSFiles(fullPath, files);
+    } else if (item.match(/\.(js|jsx|ts|tsx)$/) && !item.includes('.test.') && !item.includes('.spec.')) {
+      files.push(fullPath);
+    }
+  }
+  
+  return files;
+}
+
+function calculateComplexity(content) {
+  let complexity = 1; // Base complexity
+  
+  // Count control flow statements
+  const patterns = [
+    /if\s*\(/g,
+    /else\s+if\s*\(/g,
+    /for\s*\(/g,
+    /while\s*\(/g,
+    /switch\s*\(/g,
+    /case\s+/g,
+    /catch\s*\(/g,
+    /\?\s*.*\s*:/g, // ternary
+  ];
+  
+  patterns.forEach(pattern => {
+    const matches = content.match(pattern);
+    if (matches) complexity += matches.length;
+  });
+  
+  return complexity;
+}
+
+function estimateTechnicalDebt(results) {
+  let hours = 0;
+  
+  results.files.forEach(file => {
+    if (file.complexity > 20) hours += 2;
+    else if (file.complexity > 10) hours += 1;
+    
+    if (file.issues.includes('no-tests')) hours += 3;
+    if (file.issues.includes('duplicate-code')) hours += 1;
+    if (file.issues.includes('long-lines')) hours += 0.5;
+  });
+  
+  return Math.round(hours * 10) / 10;
+}
+
+function generateCodeSuggestions(results) {
+  const suggestions = [];
+  
+  if (results.summary.highComplexityFiles > 0) {
+    suggestions.push({
+      type: 'refactoring',
+      priority: 'high',
+      message: `${results.summary.highComplexityFiles} files have high complexity. Consider breaking them into smaller modules.`
+    });
+  }
+  
+  if (results.summary.duplicateLines > 10) {
+    suggestions.push({
+      type: 'duplication',
+      priority: 'medium',
+      message: 'Significant code duplication detected. Consider extracting common functionality.'
+    });
+  }
+  
+  const noTestFiles = results.files.filter(f => f.issues.includes('no-tests')).length;
+  if (noTestFiles > 0) {
+    suggestions.push({
+      type: 'testing',
+      priority: 'high',
+      message: `${noTestFiles} files lack tests. Prioritize testing for high-complexity files.`
+    });
+  }
+  
+  if (results.summary.technicalDebt > 40) {
+    suggestions.push({
+      type: 'planning',
+      priority: 'medium',
+      message: `Estimated ${results.summary.technicalDebt} hours of technical debt. Consider scheduling refactoring sprints.`
+    });
+  }
+  
+  return suggestions;
+}
+
 // Export individual functions for CLI usage
 export {
   autoCommit,
@@ -2863,4 +3487,6 @@ export {
   npmPublish,
   createPRWorkflow,
   createReleaseWorkflow,
+  runTests,
+  analyzeCode,
 };
