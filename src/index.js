@@ -20,6 +20,7 @@ import { registerAutomationTools } from "./tools/automation.js";
 import { registerUtilityTools } from "./tools/utilities.js";
 import { registerContextTools } from "./tools/context.js";
 import { registerTeamTools } from "./tools/team.js";
+import { registerSafetyTools } from "./tools/safety.js";
 
 class SlamBedMCPServer {
   constructor() {
@@ -102,6 +103,7 @@ class SlamBedMCPServer {
     registerUtilityTools(this);
     registerContextTools(this);
     registerTeamTools(this);
+    registerSafetyTools(this);
 
     console.log(`[Slambed MCP] Registered ${this.tools.length} tools`);
   }
