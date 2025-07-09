@@ -34,6 +34,8 @@ export class SessionState {
  * SessionManager class for managing stateful context
  */
 export class SessionManager extends EventEmitter {
+  static instance = null;
+
   constructor(options = {}) {
     super();
     
@@ -58,6 +60,16 @@ export class SessionManager extends EventEmitter {
     if (this.options.autoSave) {
       this._startAutoSave();
     }
+  }
+
+  /**
+   * Get singleton instance
+   */
+  static getInstance(options = {}) {
+    if (!SessionManager.instance) {
+      SessionManager.instance = new SessionManager(options);
+    }
+    return SessionManager.instance;
   }
 
   /**

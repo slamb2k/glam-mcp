@@ -25,6 +25,12 @@ import {
   createErrorResponse,
 } from "../utils/responses.js";
 import { getConfig } from "../core/config.js";
+import { GitClient } from "../clients/git-client.js";
+import { SessionManager } from "../context/session-manager.js";
+
+// Create singleton instances
+const gitClient = new GitClient();
+const sessionManager = SessionManager.getInstance({ autoSave: false });
 
 /**
  * Register GitHub Flow tools
@@ -50,7 +56,7 @@ export function registerGitHubFlowTools(server) {
       },
       required: ["name"],
     },
-    handler: async ({ name, type = "feature" }) => startBranch(name, type),
+    handler: async ({ name, type = "feature" }) => startBranch(name, type, undefined),
   });
 
   // Finish a branch (create PR)
@@ -255,7 +261,7 @@ export function registerGitHubFlowTools(server) {
 }
 
 /**
- * Start a new branch from main
+ * Start a new branch from main with enhanced context
  */
 async function startBranch(name, type, allow_outdated_base) {
   if (!name) {
@@ -267,9 +273,26 @@ async function startBranch(name, type, allow_outdated_base) {
   }
 
   const mainBranch = getMainBranch();
-  const branchName = `${type}/${name}`;
+  
+  // Get user preferences for branch naming
+  const session = sessionManager.get();
+  const conventions = session.preferences?.branchingConventions || {
+    feature: 'feature/',
+    fix: 'fix/',
+    docs: 'docs/',
+    chore: 'chore/'
+  };
+  
+  const branchPrefix = conventions[type] || `${type}/`;
+  const branchName = `${branchPrefix}${name}`;
 
   try {
+    // Gather contextual information
+    const [activeBranches, recentCommits, repoState] = await Promise.all([
+      gitClient.getActiveBranches(),
+      gitClient.getRecentCommits({ since: '7 days ago', limit: 20 }),
+      gitClient.getRepoState()
+    ]);
     // Check if branch already exists
     if (branchExists(branchName)) {
       return createErrorResponse(`Branch '${branchName}' already exists`);
@@ -346,12 +369,90 @@ async function startBranch(name, type, allow_outdated_base) {
     // Create and checkout new branch
     execGitCommand(`git checkout -b ${branchName}`, { silent: true });
 
+    // Prepare contextual information
+    const context = {
+      activeBranches: activeBranches.length,
+      recentActivity: {
+        commits: recentCommits.length,
+        authors: [...new Set(recentCommits.map(c => c.author))].length
+      },
+      suggestions: [],
+      riskAssessment: {
+        level: 'low',
+        factors: []
+      }
+    };
+
+    // Add suggestions
+    if (name.includes('_') || name.includes(' ')) {
+      context.suggestions.push({
+        type: 'naming',
+        value: 'Consider using kebab-case (dash-separated) for branch names'
+      });
+    }
+
+    if (!name.match(/^[a-z0-9-]+$/)) {
+      context.suggestions.push({
+        type: 'naming',
+        value: 'Consider using conventional commit style naming (lowercase, no special chars)'
+      });
+    }
+
+    if (activeBranches.length > 10) {
+      context.suggestions.push({
+        type: 'cleanup',
+        value: `You have ${activeBranches.length} active branches. Consider cleaning up merged branches.`
+      });
+    }
+
+    // Risk assessment
+    if (updateResult.divergence.behind > 0) {
+      context.riskAssessment.factors.push({
+        type: 'divergence',
+        description: `Base branch is ${updateResult.divergence.behind} commits behind`,
+        severity: 'medium'
+      });
+      context.riskAssessment.level = 'medium';
+    }
+
+    if (repoState.branchCount > 50) {
+      context.riskAssessment.factors.push({
+        type: 'branch-count',
+        description: 'Repository has many branches',
+        severity: 'low'
+      });
+    }
+
+    // Add next steps suggestions
+    context.suggestions.push({
+      type: 'next-steps',
+      value: 'Next: Make your changes, commit them, then use github_flow_finish to create a PR'
+    });
+
+    // Track operation in session
+    sessionManager.addOperation({
+      tool: 'github_flow_start',
+      params: { name, type },
+      result: { branch: branchName },
+      timestamp: new Date().toISOString()
+    });
+
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      repository: {
+        fileCount: repoState.fileCount,
+        branchCount: repoState.branchCount
+      }
+    };
+
     return createSuccessResponse(`Started ${type} branch: ${branchName}`, {
       branch: branchName,
       type,
       baseBranch: mainBranch,
       operation: "github-flow-start",
       warnings,
+      context,
+      metadata
     });
   } catch (error) {
     return createErrorResponse(`Failed to start branch: ${error.message}`);
@@ -359,7 +460,7 @@ async function startBranch(name, type, allow_outdated_base) {
 }
 
 /**
- * Finish a branch by creating a pull request
+ * Finish a branch by creating a pull request with enhanced context
  */
 async function finishBranch(
   title,
@@ -380,6 +481,16 @@ async function finishBranch(
   }
 
   try {
+    // Gather contextual information
+    const [modifiedFiles, recentCommits] = await Promise.all([
+      gitClient.getModifiedFiles(),
+      execGitCommand('git log --oneline -20', { silent: true })
+        .split('\n')
+        .filter(line => line.trim())
+    ]);
+
+    // Analyze commit patterns
+    const commitAnalysis = analyzeCommitPatterns(recentCommits);
     // Check for uncommitted changes
     if (hasUncommittedChanges()) {
       return createErrorResponse(
@@ -402,22 +513,13 @@ async function finishBranch(
         .replace(/-/g, " ")
         .replace(/\b\w/g, (l) => l.toUpperCase());
 
+    // Generate enhanced PR templates
+    const prTemplates = generatePRTemplates(prTitle, modifiedFiles, commitAnalysis);
+    
     // Generate description
     const prDescription =
       description ||
-      `## Changes
-- Implement ${prTitle.toLowerCase()}
-
-## Testing
-- [ ] Manual testing completed
-- [ ] All tests pass
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated if needed
-
-🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+      prTemplates[0].content;
 
     // Create PR
     let createCommand = `gh pr create --title "${prTitle}" --body "${prDescription}" --base ${mainBranch}`;
@@ -461,13 +563,147 @@ async function finishBranch(
       }
     }
 
+    // Prepare context
+    const context = {
+      modifiedFiles: modifiedFiles.length,
+      commitAnalysis,
+      prTemplates: prTemplates.slice(0, 3), // Top 3 templates
+      suggestions: []
+    };
+
+    // Add suggestions
+    if (modifiedFiles.length > 20) {
+      context.suggestions.push({
+        type: 'review',
+        value: 'Large PR with many files. Consider breaking into smaller PRs for easier review.'
+      });
+    }
+
+    if (!commitAnalysis.hasTests && modifiedFiles.some(f => f.includes('src/'))) {
+      context.suggestions.push({
+        type: 'testing',
+        value: 'No test files detected. Consider adding tests for your changes.'
+      });
+    }
+
+    // Track operation
+    sessionManager.addOperation({
+      tool: 'github_flow_finish',
+      params: { title: prTitle, draft },
+      result: { prUrl: result.prUrl },
+      timestamp: new Date().toISOString()
+    });
+
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      filesChanged: modifiedFiles.length,
+      commitCount: commitAnalysis.totalCommits
+    };
+
     return createSuccessResponse(
       `Created PR for ${currentBranch}: ${prTitle}`,
-      result,
+      { ...result, context, metadata },
     );
   } catch (error) {
     return createErrorResponse(`Failed to finish branch: ${error.message}`);
   }
+}
+
+/**
+ * Analyze commit patterns from recent commits
+ */
+function analyzeCommitPatterns(commits) {
+  const types = [];
+  const hasTests = commits.some(c => c.toLowerCase().includes('test'));
+  const hasDocs = commits.some(c => c.toLowerCase().includes('doc'));
+  
+  // Extract conventional commit types
+  commits.forEach(commit => {
+    const match = commit.match(/^[a-f0-9]+ (feat|fix|docs|test|refactor|style|chore|perf):/);
+    if (match) {
+      types.push(match[1]);
+    }
+  });
+
+  return {
+    types: [...new Set(types)],
+    totalCommits: commits.length,
+    hasTests,
+    hasDocs,
+    conventional: types.length > commits.length * 0.5
+  };
+}
+
+/**
+ * Generate PR templates based on context
+ */
+function generatePRTemplates(title, modifiedFiles, commitAnalysis) {
+  const templates = [];
+  
+  // Standard template
+  const standardTemplate = `## Changes
+- ${title}
+
+## Type of Change
+${commitAnalysis.types.map(t => `- [x] ${t}`).join('\n') || '- [ ] feature\n- [ ] bug fix\n- [ ] documentation'}
+
+## Testing
+- [ ] Manual testing completed
+- [ ] All tests pass
+${commitAnalysis.hasTests ? '- [x] Tests added/updated' : '- [ ] Tests added/updated'}
+
+## Files Changed (${modifiedFiles.length})
+${modifiedFiles.slice(0, 10).map(f => `- ${f}`).join('\n')}
+${modifiedFiles.length > 10 ? `\n... and ${modifiedFiles.length - 10} more files` : ''}
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+${commitAnalysis.hasDocs ? '- [x] Documentation updated' : '- [ ] Documentation updated if needed'}
+
+🤖 Generated with [Slambed MCP](https://github.com/your-username/slambed-mcp)`;
+
+  templates.push({
+    name: 'standard',
+    content: standardTemplate
+  });
+
+  // Minimal template
+  templates.push({
+    name: 'minimal',
+    content: `${title}\n\nChanges:\n${modifiedFiles.slice(0, 5).map(f => `- ${f}`).join('\n')}`
+  });
+
+  // Detailed template
+  if (commitAnalysis.conventional) {
+    const detailedTemplate = `## Summary
+${title}
+
+## Motivation and Context
+<!--- Why is this change required? What problem does it solve? -->
+
+## Detailed Changes
+${commitAnalysis.types.includes('feat') ? '### New Features\n- \n' : ''}
+${commitAnalysis.types.includes('fix') ? '### Bug Fixes\n- \n' : ''}
+${commitAnalysis.types.includes('refactor') ? '### Refactoring\n- \n' : ''}
+
+## Testing Instructions
+<!--- How can reviewers test these changes? -->
+
+## Breaking Changes
+<!--- List any breaking changes -->
+- None
+
+## Additional Notes
+<!--- Any additional information -->`;
+
+    templates.push({
+      name: 'detailed',
+      content: detailedTemplate
+    });
+  }
+
+  return templates;
 }
 
 /**
@@ -757,7 +993,7 @@ async function cleanupBranches(_force) {
 }
 
 /**
- * Get GitHub Flow status
+ * Get GitHub Flow status with enhanced insights
  */
 async function getGitHubFlowStatus() {
   if (!isGitRepository()) {
@@ -768,6 +1004,12 @@ async function getGitHubFlowStatus() {
     const currentBranch = getCurrentBranch();
     const mainBranch = getMainBranch();
     const hasChanges = hasUncommittedChanges();
+    
+    // Get enhanced repository information
+    const [repoState, activeBranches] = await Promise.all([
+      gitClient.getRepoState(),
+      gitClient.getActiveBranches()
+    ]);
 
     // Get list of feature branches
     const branches = execGitCommand("git branch", { silent: true })
@@ -822,6 +1064,56 @@ async function getGitHubFlowStatus() {
       // Ignore PR list errors
     }
 
+    // Identify stale branches
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const staleBranches = activeBranches.filter(
+      b => new Date(b.lastActivity) < thirtyDaysAgo
+    );
+
+    // Generate insights
+    const insights = {
+      branchActivity: {
+        active: activeBranches.length,
+        stale: staleBranches.length,
+        total: branches.length
+      },
+      staleBranches: staleBranches.map(b => ({
+        name: b.name,
+        lastActivity: b.lastActivity,
+        author: b.author
+      })),
+      recommendations: []
+    };
+
+    // Add recommendations
+    if (staleBranches.length > 0) {
+      insights.recommendations.push({
+        type: 'cleanup',
+        priority: 'medium',
+        action: `Clean up ${staleBranches.length} stale branches`,
+        command: 'github_flow_cleanup'
+      });
+    }
+
+    if (hasChanges && currentBranch !== mainBranch) {
+      insights.recommendations.push({
+        type: 'commit',
+        priority: 'high',
+        action: 'Commit your changes before switching branches',
+        command: 'auto_commit'
+      });
+    }
+
+    if (openPRs.length > 3) {
+      insights.recommendations.push({
+        type: 'review',
+        priority: 'medium',
+        action: `Review and merge ${openPRs.length} open pull requests`,
+        command: 'github_flow_merge_pr'
+      });
+    }
+
     const statusData = {
       currentBranch,
       mainBranch,
@@ -833,6 +1125,14 @@ async function getGitHubFlowStatus() {
       },
       openPRs,
       recentCommits: recentCommits.slice(0, 5),
+      insights,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        repository: {
+          fileCount: repoState.fileCount,
+          branchCount: repoState.branchCount
+        }
+      },
       operation: "status",
     };
 

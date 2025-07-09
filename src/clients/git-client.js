@@ -256,6 +256,17 @@ export class GitClient {
   }
 
   /**
+   * Get current branch name
+   */
+  async getCurrentBranch() {
+    try {
+      return await getCurrentBranch();
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Get repository state information
    */
   async getRepoState() {
