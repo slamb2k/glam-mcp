@@ -19,6 +19,7 @@ import { registerGitHubFlowTools } from "./tools/github-flow.js";
 import { registerAutomationTools } from "./tools/automation.js";
 import { registerUtilityTools } from "./tools/utilities.js";
 import { registerContextTools } from "./tools/context.js";
+import { registerTeamTools } from "./tools/team.js";
 
 class SlamBedMCPServer {
   constructor() {
@@ -100,6 +101,7 @@ class SlamBedMCPServer {
     registerAutomationTools(this);
     registerUtilityTools(this);
     registerContextTools(this);
+    registerTeamTools(this);
 
     console.log(`[Slambed MCP] Registered ${this.tools.length} tools`);
   }
