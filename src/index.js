@@ -21,6 +21,7 @@ import { registerUtilityTools } from "./tools/utilities.js";
 import { registerContextTools } from "./tools/context.js";
 import { registerTeamTools } from "./tools/team.js";
 import { registerSafetyTools } from "./tools/safety.js";
+import { registerDocumentationTools } from "./tools/documentation.js";
 
 // Import tool registry
 import { toolRegistry, ToolCategories } from "./core/tool-registry.js";
@@ -109,6 +110,7 @@ class SlamBedMCPServer {
     registerContextTools(this);
     registerTeamTools(this);
     registerSafetyTools(this);
+    registerDocumentationTools(this);
     
     // Register registry management tools
     this.registerRegistryTools();
