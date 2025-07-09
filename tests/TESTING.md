@@ -1,21 +1,19 @@
 # Testing Strategy and Guidelines
 
-## Overview
+This directory contains all tests for the glam-mcp project. We follow Test-Driven Development (TDD) practices and maintain a minimum of 90% code coverage across all metrics.
 
-This document outlines the Test-Driven Development (TDD) approach and testing infrastructure for the glam-mcp project. We maintain a minimum of 90% code coverage across all metrics.
+## Directory Organization
 
-## Table of Contents
+```
+tests/
+├── unit/           # Unit tests for individual functions/classes
+├── integration/    # Integration tests for component interactions
+├── e2e/           # End-to-end tests for complete workflows
+├── fixtures/      # Test data and mock files
+└── utils/         # Shared test utilities and helpers
+```
 
-1. [Test-First Development](#test-first-development)
-2. [Testing Infrastructure](#testing-infrastructure)
-3. [Test Types and Examples](#test-types-and-examples)
-4. [Mocking Strategies](#mocking-strategies)
-5. [Running Tests](#running-tests)
-6. [Continuous Integration](#continuous-integration)
-7. [Troubleshooting](#troubleshooting)
-8. [Extending the Test Suite](#extending-the-test-suite)
-
-## Test-First Development
+## Test-First Development (TDD)
 
 ### TDD Workflow
 
@@ -23,13 +21,6 @@ This document outlines the Test-Driven Development (TDD) approach and testing in
 2. **Write minimal code** - Just enough to make the test pass
 3. **Refactor** - Improve code quality while keeping tests green
 4. **Repeat** - Continue for next feature/requirement
-
-### TDD Benefits
-
-- Better code design through upfront thinking
-- Built-in regression protection
-- Living documentation of expected behavior
-- Confidence in refactoring
 
 ### Example TDD Cycle
 
@@ -67,22 +58,17 @@ export async function createBranch(name) {
 - **lint-staged** - Run tests only on changed files
 - **Coverage reporting** - Track and enforce 90% coverage
 
-### Directory Structure
-
-```
-tests/
-├── unit/              # Isolated function tests
-├── integration/       # Component interaction tests
-├── e2e/              # End-to-end workflow tests
-├── fixtures/         # Test data and mocks
-└── utils/            # Testing utilities
-```
-
 ### Configuration Files
 
 - `jest.config.js` - Jest configuration
 - `.husky/pre-commit` - Git hook configuration
 - `package.json` - Test scripts and lint-staged config
+
+## Test File Naming Conventions
+
+- **Unit tests**: `[module-name].test.js` (e.g., `git-helpers.test.js`)
+- **Integration tests**: `[feature-name].integration.test.js` (e.g., `github-flow.integration.test.js`)
+- **E2E tests**: `[workflow-name].e2e.test.js` (e.g., `complete-pr-flow.e2e.test.js`)
 
 ## Test Types and Examples
 
@@ -125,7 +111,7 @@ describe('validateBranchName', () => {
 
 ### Integration Tests
 
-Test interactions between components:
+Test interactions between multiple components:
 
 ```javascript
 // tests/integration/github-flow.integration.test.js
@@ -157,7 +143,7 @@ describe('GitHub Flow Integration', () => {
 });
 ```
 
-### End-to-End Tests
+### E2E Tests
 
 Test complete user workflows:
 
@@ -201,7 +187,7 @@ describe('Complete PR Workflow E2E', () => {
 - User input
 - Random values
 
-### Mocking Examples
+### Mock Examples
 
 #### Mock Git Operations
 
@@ -239,13 +225,6 @@ fetch.mockResolvedValue({
 });
 ```
 
-### Best Practices
-
-1. **Mock at boundaries** - Mock external dependencies, not internal code
-2. **Use factory functions** - Create reusable mock generators
-3. **Verify mock calls** - Test that mocks were called correctly
-4. **Reset between tests** - Clean state prevents test pollution
-
 ## Running Tests
 
 ### Basic Commands
@@ -254,11 +233,16 @@ fetch.mockResolvedValue({
 # Run all tests
 npm test
 
-# Watch mode for development
+# Run tests in watch mode
 npm run test:watch
 
-# Generate coverage report
+# Run tests with coverage
 npm run test:coverage
+
+# Run specific test type
+npm test -- tests/unit
+npm test -- tests/integration
+npm test -- tests/e2e
 
 # Run specific test file
 npm test -- tests/unit/responses.test.js
@@ -279,48 +263,39 @@ To skip (emergency only): `git commit --no-verify`
 ### Coverage Requirements
 
 Minimum 90% coverage required for:
-- Statements
-- Branches
-- Functions
-- Lines
+- Statements: 90%
+- Branches: 90%
+- Functions: 90%
+- Lines: 90%
 
 View detailed coverage: `open coverage/lcov-report/index.html`
 
-## Continuous Integration
+## Shared Test Utilities
 
-### GitHub Actions Workflow
+Common test utilities are available in `tests/utils/`:
+- `mockGit.js` - Git operation mocks
+- `testHelpers.js` - Common test helper functions
+- `fixtures.js` - Test data generators
 
-Tests run automatically on:
-- Pull request creation/update
-- Merge to main branch
-- Scheduled daily runs
+### Creating Test Utilities
 
-### CI Configuration
+Add to `tests/utils/` for reusable test helpers:
 
-```yaml
-# .github/workflows/test.yml
-name: Tests
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v3
+```javascript
+// tests/utils/customHelpers.js
+export function createMockUser(overrides = {}) {
+  return {
+    id: 'test-user-id',
+    name: 'Test User',
+    email: 'test@example.com',
+    ...overrides
+  };
+}
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
-#### Tests Timing Out
+### Tests Timing Out
 
 ```javascript
 // Increase timeout for slow operations
@@ -329,21 +304,21 @@ test('slow operation', async () => {
 }, 30000); // 30 second timeout
 ```
 
-#### Module Not Found
+### Module Not Found
 
 ```javascript
 // Ensure correct import paths for ES modules
 import { myFunction } from '../src/utils/helpers.js'; // Note the .js extension
 ```
 
-#### Coverage Not Meeting Threshold
+### Coverage Not Meeting Threshold
 
 1. Run coverage report: `npm run test:coverage`
 2. Check "Uncovered Line #s" column
 3. Write tests for uncovered code
 4. Focus on untested branches and error cases
 
-#### Mocks Not Working
+### Mocks Not Working
 
 ```javascript
 // Clear and restore mocks
@@ -374,82 +349,45 @@ test('debugger example', () => {
 });
 ```
 
-## Extending the Test Suite
-
-### Adding New Test Files
-
-1. Create test file with `.test.js` suffix
-2. Follow naming convention: `[module-name].test.js`
-3. Import test utilities as needed
-4. Group related tests with `describe`
-
-### Creating Test Utilities
-
-Add to `tests/utils/` for reusable test helpers:
-
-```javascript
-// tests/utils/customHelpers.js
-export function createMockUser(overrides = {}) {
-  return {
-    id: 'test-user-id',
-    name: 'Test User',
-    email: 'test@example.com',
-    ...overrides
-  };
-}
-```
-
-### Test Data Management
-
-Use fixtures for complex test data:
-
-```javascript
-// tests/fixtures/repositories.js
-export const sampleRepositories = {
-  small: {
-    name: 'small-repo',
-    files: 10,
-    branches: 2
-  },
-  large: {
-    name: 'large-repo',
-    files: 1000,
-    branches: 50
-  }
-};
-```
-
-### Performance Testing
-
-For performance-critical code:
-
-```javascript
-test('performs within acceptable time', () => {
-  const start = performance.now();
-  const result = performanceСriticalFunction();
-  const duration = performance.now() - start;
-  
-  expect(duration).toBeLessThan(100); // Should complete in under 100ms
-  expect(result).toBeDefined();
-});
-```
-
-## Best Practices Summary
+## Best Practices
 
 1. **Write tests first** - TDD leads to better design
-2. **Keep tests simple** - One assertion per test when possible
-3. **Use descriptive names** - Test names should explain what and why
-4. **Isolate tests** - No dependencies between tests
-5. **Mock external dependencies** - Keep tests fast and deterministic
-6. **Test edge cases** - Empty inputs, errors, boundaries
-7. **Maintain test quality** - Refactor tests like production code
-8. **Run tests frequently** - Catch issues early
-9. **Review test coverage** - But don't chase 100%
+2. **Test Isolation** - Each test should be independent
+3. **Clear Descriptions** - Test names should explain what and why
+4. **AAA Pattern** - Follow Arrange-Act-Assert pattern
+5. **Mock at boundaries** - Mock external dependencies, not internal code
+6. **One assertion per test** - Keep tests focused and clear
+7. **Test edge cases** - Empty inputs, errors, boundaries
+8. **Performance** - Keep unit tests fast (< 100ms per test)
+9. **Maintain test quality** - Refactor tests like production code
 10. **Document complex tests** - Add comments for non-obvious logic
 
----
+## Continuous Integration
 
-For more specific guidance, see:
-- [Test Directory Structure](tests/README.md)
-- [Coverage Guide](tests/COVERAGE.md)
-- [Pre-commit Hooks](docs/PRE-COMMIT.md)
+Tests are automatically run on:
+- Pull request creation/update
+- Push to main branch
+- Pre-commit hooks (subset of tests)
+
+### GitHub Actions Configuration
+
+```yaml
+# .github/workflows/test.yml
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v3
+```
+
+See `.github/workflows/` for full CI configuration.

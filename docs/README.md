@@ -6,7 +6,6 @@ Welcome to the glam-mcp documentation! This comprehensive guide covers everythin
 
 - 🚀 [Quick Start Guide](./guides/quick-start.md) - Get started in 5 minutes
 - 📦 [Installation Guide](./guides/installation.md) - Detailed setup instructions
-- 🔄 [Migration Guide](./guides/migration-guide.md) - Migrate from glam
 - 🛠️ [API Reference](./api/tools-reference.md) - Complete tool documentation
 
 ## Documentation Structure
@@ -20,9 +19,6 @@ User-focused documentation for getting started and using glam-mcp effectively.
   
 - **[Quick Start Guide](./guides/quick-start.md)**  
   Learn basic usage and common workflows
-
-- **[Migration Guide](./guides/migration-guide.md)**  
-  Migrate from glam CLI to glam-mcp
 
 - **[Developer Guide](./guides/developer-guide.md)**  
   Extend glam-mcp with custom tools and enhancers
@@ -158,7 +154,6 @@ We welcome contributions! See our [Developer Guide](./guides/developer-guide.md)
 #### Guides
 - [Installation Guide](./guides/installation.md)
 - [Quick Start Guide](./guides/quick-start.md)
-- [Migration Guide](./guides/migration-guide.md)
 - [Developer Guide](./guides/developer-guide.md)
 - [Platform Configuration Guide](./guides/platform-configuration.md)
 

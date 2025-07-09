@@ -94,10 +94,38 @@ Each enhancer adds its specific context without modifying others' contributions.
 
 ## Testing Guidelines
 
-1. **Unit Tests**: Test individual components in isolation
-2. **Integration Tests**: Test full MCP server behavior
-3. **Enhancer Tests**: Verify each enhancer's contribution
-4. **Mock Git Operations**: Use `tests/utils/mockGit.js` for Git operations
+### Test-Driven Development (TDD) Approach
+
+Follow the TDD workflow for all new features:
+1. **Write a failing test** - Define expected behavior first
+2. **Write minimal code** - Just enough to make the test pass
+3. **Refactor** - Improve code quality while keeping tests green
+4. **Maintain 90% coverage** - Required across statements, branches, functions, and lines
+
+### Test Types
+
+- **Unit Tests** (`tests/unit/`) - Test individual functions in isolation
+- **Integration Tests** (`tests/integration/`) - Test component interactions
+- **E2E Tests** (`tests/e2e/`) - Test complete user workflows
+
+### Essential Commands
+
+```bash
+npm test                    # Run all tests
+npm run test:watch         # Watch mode for development
+npm run test:coverage      # Generate coverage report
+npm test -- path/to/test   # Run specific test file
+```
+
+### Key Testing Practices
+
+1. **Mock at boundaries** - Use `tests/utils/mockGit.js` for Git operations
+2. **One assertion per test** - Keep tests focused and clear
+3. **Test edge cases** - Empty inputs, errors, boundaries
+4. **Pre-commit hooks** - Tests run automatically on staged files
+5. **Descriptive test names** - Explain what and why, not how
+
+For comprehensive testing documentation, see [tests/TESTING.md](../tests/TESTING.md)
 
 ## Current Implementation Status
 
