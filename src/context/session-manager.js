@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { ResponseFactory } from '../core/enhanced-response.js';
+import { createSuccessResponse, createErrorResponse, createStatusResponse } from '../utils/responses.js';
 
 /**
  * Session state structure
@@ -79,7 +79,7 @@ export class SessionManager extends EventEmitter {
       this._scheduleSave();
     }
 
-    return ResponseFactory.success('Session created', {
+    return createSuccessResponse('Session created', {
       sessionId,
       createdAt: session.createdAt
     });
@@ -93,7 +93,7 @@ export class SessionManager extends EventEmitter {
     if (this.sessions.has(sessionId)) {
       const session = this.sessions.get(sessionId);
       session.updateLastAccessed();
-      return ResponseFactory.success('Session loaded from memory', { sessionId });
+      return createSuccessResponse('Session loaded from memory', { sessionId });
     }
 
     // Try to load from storage
@@ -101,7 +101,7 @@ export class SessionManager extends EventEmitter {
       const sessionPath = this._getSessionPath(sessionId);
       
       if (!fs.existsSync(sessionPath)) {
-        return ResponseFactory.error(`Session ${sessionId} not found`);
+        return createErrorResponse(`Session ${sessionId} not found`);
       }
 
       const data = await fs.promises.readFile(sessionPath, 'utf8');
@@ -115,9 +115,9 @@ export class SessionManager extends EventEmitter {
       
       this.emit('sessionLoaded', { sessionId, session });
       
-      return ResponseFactory.success('Session loaded from storage', { sessionId });
+      return createSuccessResponse('Session loaded from storage', { sessionId });
     } catch (error) {
-      return ResponseFactory.error('Failed to load session', error);
+      return createErrorResponse('Failed to load session', error);
     }
   }
 
@@ -128,7 +128,7 @@ export class SessionManager extends EventEmitter {
     const session = this.sessions.get(sessionId);
     
     if (!session) {
-      return ResponseFactory.error(`Session ${sessionId} not found`);
+      return createErrorResponse(`Session ${sessionId} not found`);
     }
 
     try {
@@ -139,9 +139,9 @@ export class SessionManager extends EventEmitter {
       
       this.emit('sessionSaved', { sessionId });
       
-      return ResponseFactory.success('Session saved', { sessionId });
+      return createSuccessResponse('Session saved', { sessionId });
     } catch (error) {
-      return ResponseFactory.error('Failed to save session', error);
+      return createErrorResponse('Failed to save session', error);
     }
   }
 
@@ -156,10 +156,10 @@ export class SessionManager extends EventEmitter {
       results.push({ sessionId, result });
     }
     
-    const failures = results.filter(r => r.result.hasErrors());
+    const failures = results.filter(r => !r.result.success);
     
     if (failures.length > 0) {
-      return ResponseFactory.warning('Some sessions failed to save', {
+      return createStatusResponse('warning', 'Some sessions failed to save', {
         total: results.length,
         saved: results.length - failures.length,
         failed: failures.length,
@@ -167,7 +167,7 @@ export class SessionManager extends EventEmitter {
       });
     }
     
-    return ResponseFactory.success('All sessions saved', {
+    return createSuccessResponse('All sessions saved', {
       count: results.length
     });
   }
@@ -179,7 +179,7 @@ export class SessionManager extends EventEmitter {
     const session = this.sessions.get(sessionId);
     
     if (!session) {
-      return ResponseFactory.error(`Session ${sessionId} not found`);
+      return createErrorResponse(`Session ${sessionId} not found`);
     }
 
     // Remove from memory
@@ -198,7 +198,7 @@ export class SessionManager extends EventEmitter {
 
     this.emit('sessionDestroyed', { sessionId });
     
-    return ResponseFactory.success('Session destroyed', { sessionId });
+    return createSuccessResponse('Session destroyed', { sessionId });
   }
 
   /**
@@ -206,15 +206,15 @@ export class SessionManager extends EventEmitter {
    */
   getActiveSession() {
     if (!this.activeSessionId) {
-      return ResponseFactory.error('No active session');
+      return createErrorResponse('No active session');
     }
 
     const session = this.sessions.get(this.activeSessionId);
     if (!session) {
-      return ResponseFactory.error('Active session not found');
+      return createErrorResponse('Active session not found');
     }
 
-    return ResponseFactory.success('Active session retrieved', {
+    return createSuccessResponse('Active session retrieved', {
       sessionId: this.activeSessionId,
       session: session.data
     });
@@ -225,7 +225,7 @@ export class SessionManager extends EventEmitter {
    */
   setActiveSession(sessionId) {
     if (!this.sessions.has(sessionId)) {
-      return ResponseFactory.error(`Session ${sessionId} not found`);
+      return createErrorResponse(`Session ${sessionId} not found`);
     }
 
     const previousId = this.activeSessionId;
@@ -239,7 +239,7 @@ export class SessionManager extends EventEmitter {
       currentId: sessionId
     });
     
-    return ResponseFactory.success('Active session set', {
+    return createSuccessResponse('Active session set', {
       previousId,
       currentId: sessionId
     });
@@ -256,7 +256,7 @@ export class SessionManager extends EventEmitter {
       isActive: id === this.activeSessionId
     }));
 
-    return ResponseFactory.success('Sessions listed', {
+    return createSuccessResponse('Sessions listed', {
       count: sessionList.length,
       activeSessionId: this.activeSessionId,
       sessions: sessionList
@@ -283,10 +283,52 @@ export class SessionManager extends EventEmitter {
       results.push({ sessionId, result });
     }
 
-    return ResponseFactory.success('Expired sessions cleaned up', {
+    return createSuccessResponse('Expired sessions cleaned up', {
       count: expiredSessions.length,
       sessions: expiredSessions
     });
+  }
+
+  /**
+   * Update session data
+   */
+  updateSessionData(sessionId, updates) {
+    const session = this.sessions.get(sessionId);
+    
+    if (!session) {
+      return createErrorResponse(`Session ${sessionId} not found`);
+    }
+
+    try {
+      // Merge updates with existing data
+      Object.keys(updates).forEach(key => {
+        if (typeof updates[key] === 'object' && !Array.isArray(updates[key])) {
+          // Merge objects
+          session.data[key] = {
+            ...session.data[key],
+            ...updates[key]
+          };
+        } else {
+          // Replace arrays and primitives
+          session.data[key] = updates[key];
+        }
+      });
+
+      session.updateLastAccessed();
+      
+      this.emit('sessionDataUpdated', { sessionId, updates });
+      
+      if (this.options.autoSave) {
+        this._scheduleSave();
+      }
+
+      return createSuccessResponse('Session data updated', {
+        sessionId,
+        updatedFields: Object.keys(updates)
+      });
+    } catch (error) {
+      return createErrorResponse('Failed to update session data', error);
+    }
   }
 
   /**

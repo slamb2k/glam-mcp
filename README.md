@@ -1,80 +1,52 @@
-```
-╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                                               ║
-║                                                                                                               ║
-║⠀⠀  ⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⡆⢀⣤⣤⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀                                                                        ║
-║⠀⠀⠀  ⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢀⣀⣤⣀⠀⠀⠀⠀⠀                                                                         ║
-║⠀  ⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣀⡀⠀⠀                                                                         ║
-║⠀⠀  ⠀⠀⠀⠀⠀⣼⣿⣿⣿⡟⢀⣿⣿⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣷⡄⠀           ▀██                     ▀██                  ▀██  ▄█▄       ║
-║⠀⠀  ⠀⠀⢠⠆⢰⣿⣿⣿⣿⠁⣼⣿⣿⣿⡿⠀⣼⣿⣿⣿⠿⢿⣿⣿⣿⠇⠀     ▄▄▄▄   ██   ▄▄▄▄   ▄▄ ▄▄ ▄▄    ██ ▄▄▄    ▄▄▄▄    ▄▄ ██  ███       ║
-║⠀  ⠀⠀⠀⣿⠀⣾⣿⣿⣿⡟⢰⣿⣿⣿⣿⠃⣸⣿⣿⣿⠏⢠⣿⣿⣿⡿⠀⠀     ██▄ ▀  ██  ▀▀ ▄██   ██ ██ ██   ██▀  ██ ▄█▄▄▄██ ▄▀  ▀██  ▀█▀       ║
-║⠀  ⠀⠀⢸⡇⢠⣿⣿⣿⡿⠀⣾⣿⣿⣿⠇⢠⣿⣿⣿⡏⢠⣿⣿⣿⣿⠁⠀     ▄ ▀█▄▄  ██  ▄█▀ ██   ██ ██ ██   ██    █ ██      █▄   ██   █        ║
-║⠀  ⠀⠀⣾⣧⡈⠛⢿⣿⠃⣸⣿⣿⣿⡏⢠⣿⣿⣿⡟⢀⣾⣿⣿⣿⠃⠀⠀⠀    █▀▄▄█▀ ▄██▄ ▀█▄▄▀█▀ ▄██ ██ ██▄  ▀█▄▄▄▀   ▀█▄▄▄▀ ▀█▄▄▀██▄  ▄        ║
-║⠀  ⠀⠀⠿⣿⣿⣶⣄⡉⠀⢿⣿⣿⡟⠀⣾⣿⣿⡿⢀⣾⣿⣿⡿⠁⠀⠀⠀⠀                                                              ▀█▀       ║
-║⠀⠀  ⠀⠀⠈⠉⠛⠛⠛⠒⠀⠈⠉⠁⠸⠿⠿⠿⠃⠾⠿⠟⠋⠀⠀⠀⠀⠀                                                                         ║
-║                                                                                                                ║
-║                                                                                                                ║
-║                                  🚀 GitHub Flow Automation & MCP Server 🚀                                     ║
-║                                                                                                                ║
-║                                     Git workflows that pack a punch! ✊                                        ║
-║                                                                                                                ║
-╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-```
-
 # Slambed MCP Server
 
-![Coverage](https://img.shields.io/badge/coverage-pending-yellow)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+A pure MCP (Model Context Protocol) server that provides intelligent development experiences through rich, contextual responses for AI assistants. Slambed transforms AI-assisted development into a "pair programming with a senior developer" experience.
 
-**Comprehensive GitHub Flow Automation with MCP and CLI Support**
+## Overview
 
-Transform your development workflow with powerful automation tools that handle everything from branch creation to PR merging. Slambed delivers git workflows that pack a punch! ✊
+Slambed is a Model Context Protocol server designed to enhance AI assistant capabilities with deep development context, team awareness, and intelligent workflow orchestration. By providing rich metadata, contextual suggestions, and safety analysis with every operation, Slambed enables AI assistants to deliver more intelligent and helpful development experiences.
 
-## ✨ Features
+## Key Features
 
-- **🤖 31+ Automation Tools** - Complete git workflow automation
-- **⚡ Auto-Commit Workflows** - Branch → format → lint → commit → push → PR → merge
-- **🚀 GitHub Flow** - Simple, branch-based workflow (no complex branching)
-- **⚙️ GitHub Actions** - Automated CI/CD workflow creation
-- **🧠 Smart Analysis** - AI-powered commit message suggestions
-- **📦 Project Initialization** - Complete project setup automation with branch protection
-- **🔧 Dual Interface** - Both MCP server and CLI tools
-- **⚙️ Configurable** - Hierarchical configuration system
-- **🛡️ Safe Operations** - Built-in safety checks and rollback capabilities
-- **🔒 Branch Protection** - Automated setup and management of GitHub branch protection rules
+### 🎯 Pure MCP Architecture
+- Clean MCP server implementation without CLI dependencies
+- Rich, contextual responses that guide AI assistants
+- Stateful session tracking for intelligent suggestions
 
-## 🚀 Quick Start
+### 🧠 Enhanced Response System
+Every tool response includes:
+- **Core Results**: Operation success/failure and data
+- **Context Object**: Suggestions, risks, related tools, team activity, best practices
+- **Metadata**: Operation type, timestamp, affected files, session context
 
-### Simplified Commands
+### 👥 Team Awareness
+- Detect when team members are working on related code
+- Suggest appropriate reviewers based on file ownership
+- Warn about potential conflicts before they occur
+- Track recent team activity on branches and files
 
-```bash
-# Just run slambed - it knows what you need!
-slambed                    # Smart interactive mode with context-aware suggestions
+### 🛡️ Built-in Safety
+- Risk assessment for every operation
+- Conflict detection and prevention
+- Precondition validation
+- Recovery suggestions for errors
 
-# Natural one-word commands
-slambed commit             # Commit changes with AI-generated message
-slambed pr                 # Create pull request from current branch
-slambed sync               # Sync with main branch
-slambed status             # Show repository status
-slambed feature my-feature # Start a new feature branch
+### 🔧 Comprehensive Toolset
+- **GitHub Flow Tools**: Branch creation, PR management, issue tracking
+- **Automation Tools**: Smart commits, PR creation, release workflows
+- **Context Tools**: Session tracking, preference management, operation history
+- **Team Tools**: Activity monitoring, reviewer suggestions, conflict detection
+- **Safety Tools**: Risk analysis, conflict checking, precondition validation
 
-# Quick mode - one command does it all
-slambed --quick            # Automatically perform the suggested action
-```
-
-### Classic Commands (still supported)
+## Installation
 
 ```bash
-# Detailed control when you need it
-slambed auto commit -m "Add user authentication"
-slambed flow start feature-name
-slambed util health
+npm install slambed-mcp
 ```
 
-### MCP Integration
+## Configuration
 
-Add to your Claude Desktop config:
+Add to your Claude Desktop configuration (`~/.claude/claude_desktop_config.json`):
 
 ```json
 {
@@ -87,228 +59,134 @@ Add to your Claude Desktop config:
 }
 ```
 
-## 📋 Available Commands
+For other MCP clients, refer to their specific configuration documentation.
 
-### 🎯 Smart Mode (NEW!)
+## Usage
 
-- `slambed` - Interactive mode with context-aware suggestions
-- `slambed --quick` - Automatically perform the most likely action
+Once configured, Slambed tools are available to your AI assistant. The AI will intelligently orchestrate these tools based on your natural language requests.
 
-### ⚡ Simplified Commands (NEW!)
+### Example Workflows
 
-- `slambed commit` - Smart commit workflow with AI message generation
-- `slambed pr` - Create pull request from current branch
-- `slambed sync` - Sync current branch with main
-- `slambed status` - Show repository status
-- `slambed publish` - Publish package to npm
-- `slambed feature <name>` - Start a new feature branch
+**Starting a new feature:**
+```
+"I need to create a new feature for user authentication"
+```
+The AI assistant will use Slambed to:
+- Check for existing related work
+- Create an appropriate branch
+- Set up the initial structure
+- Suggest next steps
 
-### 🤖 Automation Workflows
+**Creating a pull request:**
+```
+"Let's create a PR for this feature"
+```
+Slambed provides:
+- Automatic commit grouping
+- PR description generation
+- Reviewer suggestions based on touched files
+- Conflict warnings
 
-- `slambed auto commit` - Complete workflow: branch → format → lint → commit → push → PR → merge
-- `slambed auto quick` - Quick commit with smart defaults
-- `slambed auto smart` - Analyze changes and suggest commit message
-- `slambed auto sync` - Sync current branch with target
-- `slambed auto publish` - Automated npm publishing
+## Tool Categories
 
-### 🚀 GitHub Actions
+### GitHub Flow Tools
+- `github_flow_start`: Start feature development with branch creation
+- `github_flow_pr`: Create PRs with intelligent defaults
+- `github_check_pr_status`: Monitor PR checks and reviews
 
-- `slambed auto create-pr-workflow` - Create PR check workflow (lint, test, build)
-- `slambed auto create-release-workflow` - Create automated release workflow
+### Automation Tools
+- `auto_commit`: Smart commit with conventional messages
+- `auto_pr`: Automated PR creation with context
+- `pr_review_checklist`: Generate review checklists
 
-### 🌿 GitHub Flow
+### Context Tools
+- `get_session_context`: Retrieve current session state
+- `set_user_preference`: Store user preferences
+- `get_recent_operations`: View operation history
 
-- `slambed flow start <name>` - Start a new branch from main
-- `slambed flow finish` - Create PR for current branch
-- `slambed flow quick <name>` - Quick: branch + commit + PR
-- `slambed flow sync` - Sync current branch with main
-- `slambed flow cleanup` - Clean up merged branches
+### Team Tools
+- `check_team_activity`: Monitor team work on related code
+- `find_related_work`: Discover relevant branches/PRs
+- `suggest_reviewers`: Get reviewer recommendations
 
-### 🔧 Utilities
+### Safety Tools
+- `analyze_operation_risk`: Assess operation risks
+- `check_for_conflicts`: Detect potential conflicts
+- `validate_preconditions`: Ensure safe operations
 
-- `slambed util info` - Repository information
-- `slambed util analyze` - Change analysis
-- `slambed util health` - Repository health check
-- `slambed util branches` - List and categorize branches
+## Architecture
 
-### 🛡️ Branch Protection
-
-- `slambed protection enable` - Enable branch protection with required status checks
-- `slambed protection disable` - Remove branch protection
-- `slambed protection status` - Check protection status
-- Options:
-  - `-b, --branch <branch>` - Branch to protect (default: main)
-  - `--no-pr-reviews` - Don't require PR reviews
-  - `--no-status-checks` - Don't require status checks
-  - `-c, --contexts <contexts...>` - Required status checks (default: lint, test, build)
-  - `-a, --approvals <count>` - Required approving reviews (default: 0)
-
-## 🎯 Examples
-
-### Simplest Workflow Ever
-
-```bash
-# Start your work
-slambed feature user-auth
-
-# Make your changes...
-# Then just run:
-slambed
-
-# Slambed detects you have changes and suggests committing
-# Select "🚀 Commit changes" and you're done!
+```
+src/
+├── index.js              # MCP server entry point
+├── tools/                # Tool implementations
+│   ├── github-flow.js    # GitHub workflow tools
+│   ├── automation.js     # Automation tools
+│   ├── context.js        # Context management tools
+│   ├── team.js          # Team collaboration tools
+│   └── safety.js        # Safety and validation tools
+├── enhancers/           # Response enrichment
+│   ├── metadata.js      # Operation metadata
+│   ├── suggestions.js   # Next step suggestions
+│   ├── risk.js          # Risk assessment
+│   └── team.js          # Team activity
+├── context/             # Session management
+│   └── session.js       # Session state tracking
+└── utils/               # Utilities
+    ├── git-helpers.js   # Git operations
+    └── responses.js     # Response formatting
 ```
 
-### One-Command Workflow
+## Response Structure
 
-```bash
-# Made some changes? Just run:
-slambed --quick
+Every tool returns a rich response:
 
-# Slambed automatically:
-# - Detects your changes
-# - Creates a feature branch if needed
-# - Generates an AI commit message
-# - Pushes and creates a PR
-# - Auto-merges when checks pass
-```
-
-### Natural Commands
-
-```bash
-# Commit your work
-slambed commit
-
-# Ready to ship?
-slambed pr
-
-# Stay in sync
-slambed sync
-
-# Check status
-slambed status
-```
-
-### Custom Aliases
-
-Create a `.slambed-aliases` file in your project or home directory:
-
-```bash
-# ~/.slambed-aliases
-c=commit
-p=pr
-s=sync
-ship=commit --no-merge
-done=auto commit
-```
-
-Then use your shortcuts:
-
-```bash
-slambed c     # Same as: slambed commit
-slambed ship  # Same as: slambed commit --no-merge
-```
-
-### Complete Feature Development (Classic)
-
-```bash
-# Start feature, make changes, then auto-commit
-slamb-flow start user-auth
-# ... make your changes ...
-slambed auto commit -m "Implement user authentication"
-```
-
-### Project Initialization
-
-```bash
-# Initialize complete project with GitHub repo
-slambed init-project --project-name "my-app" --description "My awesome app"
-```
-
-### GitHub Actions Setup
-
-```bash
-# Create PR check workflow (lint, test, build)
-slambed auto create-pr-workflow --name "CI Pipeline"
-
-# Create automated release workflow
-slamb-commit create-release-workflow --type "both"
-```
-
-### Smart Development
-
-```bash
-# Let AI analyze your changes and suggest commits
-slamb-commit smart --execute
-```
-
-## 🔧 Configuration
-
-Create `.slambed.json` in your project:
-
-```json
+```javascript
 {
-  "gitFlow": {
-    "defaultBranch": "main",
-    "autoMerge": true,
-    "allowOutdatedBase": false
+  success: true,
+  data: { /* operation-specific data */ },
+  context: {
+    suggestions: ["next steps..."],
+    risks: ["potential issues..."],
+    relatedTools: ["tool_name"],
+    teamActivity: { /* current team work */ },
+    bestPractices: ["recommendations..."]
   },
-  "automation": {
-    "runFormat": true,
-    "runLint": true,
-    "runTests": false
+  metadata: {
+    operation: "tool_name",
+    timestamp: "2024-01-09T10:00:00Z",
+    affectedFiles: ["file1.js", "file2.js"],
+    sessionContext: { /* session state */ }
   }
 }
 ```
 
-### Configuration Options
-
-#### gitFlow.allowOutdatedBase (default: false)
-
-Controls whether operations can proceed when the base branch (main/master) is outdated:
-
-- `false` (default): Operations will fail if base branch is outdated and cannot be updated
-- `true`: Operations will continue with warnings even if base branch is outdated
-
-This is useful for:
-
-- **Offline work**: Set to `true` when working without network access
-- **CI environments**: May need `true` if CI has limited git access
-- **Strict workflows**: Keep as `false` to ensure all work starts from latest base
-
-Example scenarios:
+## Development
 
 ```bash
-# With allowOutdatedBase: false (default)
-$ slambed auto commit
-⚠️  Base branch (main) is 3 commits behind origin/main
-  Fetched latest main from origin
-  Attempting to update base branch...
-  ✅ Successfully updated base branch
-✓ Created branch: feature/add-authentication-2025-01-05
-
-# With allowOutdatedBase: true
-$ slambed auto commit
-⚠️  Base branch (main) is 3 commits behind origin/main
-⚠️  Could not update base branch due to network issue. Continuing anyway due to config...
-✓ Created branch: feature/add-authentication-2025-01-05
-```
-
-## 🛠️ Installation
-
-```bash
-npm install -g slambed-mcp
-```
-
-Or clone and install locally:
-
-```bash
-git clone https://github.com/your-username/slambed-mcp.git
-cd slambed-mcp
+# Install dependencies
 npm install
-npm link
+
+# Run tests
+npm test
+
+# Start in development mode
+npm run dev
 ```
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines and submit PRs for any enhancements.
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details
+
+## Support
+
+- Issues: [GitHub Issues](https://github.com/slambrouskii/slambed-mcp/issues)
+- Documentation: [Full Documentation](https://github.com/slambrouskii/slambed-mcp/wiki)
+
+---
+
+Built with ❤️ to make AI-assisted development more intelligent and collaborative.
