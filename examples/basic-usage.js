@@ -5,7 +5,6 @@
  */
 
 import { GlamMCPServer } from "../src/index.js";
-import { config } from "../src/config.js";
 import { showBanner } from "../src/utils/banner.js";
 
 async function basicMCPExample() {

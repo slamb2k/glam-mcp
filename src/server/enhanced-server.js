@@ -30,6 +30,9 @@ import { toolDocumentation } from "../services/tool-documentation.js";
 // Import session manager
 import { SessionManager } from "../core/session-manager.js";
 
+// Import utilities
+import { showBanner, getWelcomeMessage } from "../utils/banner.js";
+
 export class EnhancedMCPServer extends EventEmitter {
   constructor() {
     super();
@@ -185,6 +188,12 @@ export class EnhancedMCPServer extends EventEmitter {
       this.status = 'running';
       this.startTime = new Date();
       this.emit('server:started');
+      
+      // Show welcome message
+      if (options.showBanner !== false) {
+        showBanner('compact');
+        console.log(getWelcomeMessage());
+      }
       
       this.logger.info('Server started successfully', {
         port: this.config.server.port,

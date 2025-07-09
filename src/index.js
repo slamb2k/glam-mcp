@@ -28,6 +28,9 @@ import { toolRegistry, ToolCategories } from "./core/tool-registry.js";
 import { toolDiscovery } from "./services/tool-discovery.js";
 import { toolDocumentation } from "./services/tool-documentation.js";
 
+// Import utilities
+import { showBanner } from "./utils/banner.js";
+
 class GlamMCPServer {
   constructor() {
     this.server = new Server(
@@ -354,6 +357,9 @@ export { GlamMCPServer };
 
 // Start server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
+  // Show banner when starting directly
+  showBanner('compact');
+  
   const server = new GlamMCPServer();
   server.start().catch((error) => {
     console.error("[glam-mcp] Failed to start server:", error);
