@@ -1,32 +1,81 @@
 import { jest } from "@jest/globals";
 
-// Mock dependencies before imports
-jest.mock("child_process");
-jest.mock("fs");
-jest.mock("../../../src/utils/git-helpers.js");
-jest.mock("../../../src/context/session-manager.js");
-jest.mock("../../../src/core/config.js");
-jest.mock("../../../src/tools/utilities.js");
+// Mock child_process
+const mockExecSync = jest.fn();
+jest.unstable_mockModule("child_process", () => ({
+  execSync: mockExecSync,
+}));
+
+// Mock fs
+const mockExistsSync = jest.fn();
+const mockReadFileSync = jest.fn();
+jest.unstable_mockModule("fs", () => ({
+  default: {
+    existsSync: mockExistsSync,
+    readFileSync: mockReadFileSync,
+  },
+}));
+
+// Mock git-helpers
+const mockIsGitRepository = jest.fn();
+const mockGetMainBranch = jest.fn();
+const mockGetCurrentBranch = jest.fn();
+const mockHasUncommittedChanges = jest.fn();
+const mockGetChangedFiles = jest.fn();
+const mockHasScript = jest.fn();
+const mockGenerateBranchName = jest.fn();
+const mockExecGitCommand = jest.fn();
+const mockGetBranchDivergence = jest.fn();
+const mockSafeRebase = jest.fn();
+const mockIsBranchMerged = jest.fn();
+const mockHasRemoteBranch = jest.fn();
+const mockForceRebaseOnMain = jest.fn();
+const mockEnsureMainUpdated = jest.fn();
+
+jest.unstable_mockModule("../../../src/utils/git-helpers.js", () => ({
+  isGitRepository: mockIsGitRepository,
+  getMainBranch: mockGetMainBranch,
+  getCurrentBranch: mockGetCurrentBranch,
+  hasUncommittedChanges: mockHasUncommittedChanges,
+  getChangedFiles: mockGetChangedFiles,
+  hasScript: mockHasScript,
+  generateBranchName: mockGenerateBranchName,
+  execGitCommand: mockExecGitCommand,
+  getBranchDivergence: mockGetBranchDivergence,
+  safeRebase: mockSafeRebase,
+  isBranchMerged: mockIsBranchMerged,
+  hasRemoteBranch: mockHasRemoteBranch,
+  forceRebaseOnMain: mockForceRebaseOnMain,
+  ensureMainUpdated: mockEnsureMainUpdated,
+}));
+
+// Mock responses
+jest.unstable_mockModule("../../../src/utils/responses.js", () => ({
+  createSuccessResponse: jest.fn((msg, data) => ({ success: true, message: msg, data })),
+  createErrorResponse: jest.fn((msg) => ({ success: false, message: msg })),
+}));
+
+// Mock utilities
+const mockCreateNpmPackage = jest.fn();
+jest.unstable_mockModule("../../../src/tools/utilities.js", () => ({
+  createNpmPackage: mockCreateNpmPackage,
+}));
+
+// Mock config
+const mockGetConfig = jest.fn();
+jest.unstable_mockModule("../../../src/core/config.js", () => ({
+  getConfig: mockGetConfig,
+}));
+
+// Import after mocking
+const { registerAutomationTools } = await import("../../../src/tools/automation.js");
 
 describe("Automation Tools", () => {
-  let registerAutomationTools;
-  let execSync;
-  let gitHelpers;
   let server;
   let registeredTools;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Import mocked modules
-    const childProcess = await import("child_process");
-    execSync = childProcess.execSync;
-    
-    gitHelpers = await import("../../../src/utils/git-helpers.js");
-    
-    // Import the function to test
-    const automationModule = await import("../../../src/tools/automation.js");
-    registerAutomationTools = automationModule.registerAutomationTools;
     
     // Mock server
     server = {
@@ -37,282 +86,305 @@ describe("Automation Tools", () => {
     registeredTools = [];
 
     // Default mocks
-    gitHelpers.isGitRepository.mockReturnValue(true);
-    gitHelpers.getCurrentBranch.mockReturnValue("feature/test");
-    gitHelpers.hasUncommittedChanges.mockReturnValue(false);
-    gitHelpers.getMainBranch.mockReturnValue("main");
-    gitHelpers.isBranchBehind.mockReturnValue({ behind: false, count: 0 });
-    execSync.mockReturnValue("");
+    mockIsGitRepository.mockReturnValue(true);
+    mockGetMainBranch.mockReturnValue("main");
+    mockGetCurrentBranch.mockReturnValue("main");
+    mockHasUncommittedChanges.mockReturnValue(false);
+    mockGetChangedFiles.mockReturnValue([]);
+    mockHasScript.mockReturnValue(true);
+    mockGenerateBranchName.mockReturnValue("feature/generated");
+    mockExecSync.mockReturnValue("");
+    mockExecGitCommand.mockReturnValue("");
+    mockGetBranchDivergence.mockReturnValue({ ahead: 0, behind: 0 });
+    mockSafeRebase.mockReturnValue({ success: true });
+    mockIsBranchMerged.mockReturnValue(false);
+    mockHasRemoteBranch.mockReturnValue(false);
+    mockForceRebaseOnMain.mockReturnValue({ success: true });
+    mockEnsureMainUpdated.mockReturnValue({ success: true });
+    mockGetConfig.mockReturnValue({ defaultToolOptions: {} });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(JSON.stringify({ scripts: { test: "jest", lint: "eslint" } }));
 
     // Register tools
     registerAutomationTools(server);
   });
 
   describe("auto_commit", () => {
-    let autoCommitTool;
+    let autoCommit;
 
     beforeEach(() => {
-      autoCommitTool = registeredTools.find(t => t.name === "auto_commit");
+      autoCommit = registeredTools.find(t => t.name === "auto_commit");
     });
 
     it("should be registered with correct metadata", () => {
-      expect(autoCommitTool).toBeDefined();
-      expect(autoCommitTool.description).toContain("Complete automation");
-      expect(autoCommitTool.inputSchema.properties).toHaveProperty("message");
-      expect(autoCommitTool.inputSchema.properties).toHaveProperty("branch_name");
+      expect(autoCommit).toBeDefined();
+      expect(autoCommit.description).toContain("Complete automation");
+      expect(autoCommit.inputSchema.properties).toHaveProperty("message");
+      expect(autoCommit.inputSchema.properties).toHaveProperty("branch_name");
     });
 
-    it("should handle complete workflow with new branch", async () => {
-      gitHelpers.hasUncommittedChanges.mockReturnValue(true);
-      gitHelpers.branchExists.mockReturnValue(false);
-      gitHelpers.getChangedFiles.mockReturnValue([
-        { status: "M", file: "src/file.js" },
-      ]);
-      gitHelpers.generateBranchName.mockReturnValue("feature/auto-123");
-      gitHelpers.execGitCommand.mockResolvedValue({ success: true });
-      gitHelpers.hasRemoteBranch.mockReturnValue(false);
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr create")) {
-          return "https://github.com/user/repo/pull/123";
-        }
-        return "";
-      });
+    it("should handle full automation workflow", async () => {
+      mockGetChangedFiles.mockReturnValue(["file1.js", "file2.js"]);
+      mockExecSync.mockReturnValue("https://github.com/user/repo/pull/123");
 
-      const result = await autoCommitTool.handler({
-        message: "Add new feature",
+      const result = await autoCommit.handler({
+        message: "Add awesome feature",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.branch).toBe("feature/auto-123");
-      expect(result.data.pr_url).toBe("https://github.com/user/repo/pull/123");
+      expect(mockGenerateBranchName).toHaveBeenCalledWith("Add awesome feature", "feature/");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git checkout -b"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git add"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit"));
+      expect(result.data.pr_url).toContain("pull/123");
     });
 
-    it("should handle existing branch with uncommitted changes", async () => {
-      gitHelpers.hasUncommittedChanges.mockReturnValue(true);
-      gitHelpers.branchExists.mockReturnValue(true);
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/existing");
-      gitHelpers.getChangedFiles.mockReturnValue([
-        { status: "M", file: "src/file.js" },
-      ]);
-      gitHelpers.execGitCommand.mockResolvedValue({ success: true });
+    it("should handle uncommitted changes", async () => {
+      mockHasUncommittedChanges.mockReturnValue(true);
 
-      const result = await autoCommitTool.handler({
-        message: "Update feature",
-        branch_name: "feature/existing",
+      const result = await autoCommit.handler({
+        message: "new feature",
       });
-
-      expect(result.success).toBe(true);
-      expect(result.data.branch).toBe("feature/existing");
-    });
-
-    it("should handle push-only workflow", async () => {
-      gitHelpers.hasUncommittedChanges.mockReturnValue(false);
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/test");
-      gitHelpers.hasRemoteBranch.mockReturnValue(false);
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr create")) {
-          return "https://github.com/user/repo/pull/124";
-        }
-        return "";
-      });
-
-      const result = await autoCommitTool.handler({
-        pr_title: "Custom PR Title",
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.data.pr_url).toBe("https://github.com/user/repo/pull/124");
-    });
-  });
-
-  describe("quick_fix", () => {
-    let quickFixTool;
-
-    beforeEach(() => {
-      quickFixTool = registeredTools.find(t => t.name === "quick_fix");
-    });
-
-    it("should be registered with correct metadata", () => {
-      expect(quickFixTool).toBeDefined();
-      expect(quickFixTool.description).toContain("Quick fix workflow");
-    });
-
-    it("should handle quick fix workflow", async () => {
-      gitHelpers.hasUncommittedChanges.mockReturnValue(true);
-      gitHelpers.getChangedFiles.mockReturnValue([
-        { status: "M", file: "src/bug.js" },
-      ]);
-      gitHelpers.generateBranchName.mockReturnValue("fix/quick-fix-123");
-      gitHelpers.execGitCommand.mockResolvedValue({ success: true });
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("npm test")) {
-          return "Tests passed";
-        }
-        if (cmd.includes("gh pr create")) {
-          return "https://github.com/user/repo/pull/125";
-        }
-        return "";
-      });
-
-      const result = await quickFixTool.handler({
-        message: "Fix critical bug",
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.data.branch).toContain("fix/");
-      expect(result.data.tests_passed).toBe(true);
-    });
-  });
-
-  describe("format_and_lint", () => {
-    let formatLintTool;
-
-    beforeEach(() => {
-      formatLintTool = registeredTools.find(t => t.name === "format_and_lint");
-    });
-
-    it("should format and lint code", async () => {
-      gitHelpers.hasScript.mockImplementation((script) => {
-        return script === "format" || script === "lint";
-      });
-      
-      const result = await formatLintTool.handler({});
-
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith("npm run format");
-      expect(execSync).toHaveBeenCalledWith("npm run lint");
-    });
-
-    it("should handle format/lint errors", async () => {
-      gitHelpers.hasScript.mockReturnValue(true);
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("lint")) {
-          throw new Error("Lint errors found");
-        }
-        return "";
-      });
-
-      const result = await formatLintTool.handler({});
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Lint errors found");
+      expect(result.message).toContain("uncommitted changes");
+    });
+
+    it("should skip optional steps", async () => {
+      const result = await autoCommit.handler({
+        message: "simple feature",
+        run_format: false,
+        run_lint: false,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).not.toHaveBeenCalledWith(expect.stringContaining("npm run format"));
+      expect(mockExecSync).not.toHaveBeenCalledWith(expect.stringContaining("npm run lint"));
     });
   });
 
-  describe("test_changed", () => {
-    let testChangedTool;
+  describe("quick_commit", () => {
+    let quickCommit;
 
     beforeEach(() => {
-      testChangedTool = registeredTools.find(t => t.name === "test_changed");
+      quickCommit = registeredTools.find(t => t.name === "quick_commit");
     });
 
-    it("should run tests for changed files", async () => {
-      gitHelpers.getChangedFiles.mockReturnValue([
-        { status: "M", file: "src/feature.js" },
-        { status: "M", file: "src/utils.js" },
-      ]);
-      const fsModule = await import("fs");
-      fsModule.existsSync.mockImplementation((path) => {
-        return path.includes("feature.test.js") || path.includes("utils.test.js");
+    it("should commit all changes quickly", async () => {
+      mockGetChangedFiles.mockReturnValue(["file1.js", "file2.js"]);
+
+      const result = await quickCommit.handler({
+        message: "Quick fix",
       });
 
-      const result = await testChangedTool.handler({});
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git add ."));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit"));
+      expect(result.data.files_committed).toBe(2);
+    });
+
+    it("should generate commit message if not provided", async () => {
+      mockGetChangedFiles.mockReturnValue(["index.js"]);
+
+      const result = await quickCommit.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.test_files).toHaveLength(2);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("feature.test.js"),
-        expect.any(Object)
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("Auto-commit:")
       );
     });
   });
 
-  describe("dependency_check", () => {
-    let depCheckTool;
+  describe("smart_commit", () => {
+    let smartCommit;
 
     beforeEach(() => {
-      depCheckTool = registeredTools.find(t => t.name === "dependency_check");
+      smartCommit = registeredTools.find(t => t.name === "smart_commit");
     });
 
-    it("should check dependencies", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("npm audit")) {
-          return JSON.stringify({
-            vulnerabilities: {
-              low: 1,
-              moderate: 2,
-              high: 0,
-              critical: 0,
-            },
-          });
-        }
-        if (cmd.includes("npm outdated")) {
-          return JSON.stringify([
-            { name: "lodash", current: "4.17.20", latest: "4.17.21" },
-          ]);
+    it("should analyze changes and create smart commit", async () => {
+      mockGetChangedFiles.mockReturnValue(["src/feature.js", "tests/feature.test.js"]);
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("git diff")) {
+          return "+function newFeature() {}\n+test('newFeature')";
         }
         return "";
       });
 
-      const result = await depCheckTool.handler({});
+      const result = await smartCommit.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.vulnerabilities.total).toBe(3);
-      expect(result.data.outdated.count).toBe(1);
+      expect(result.data.message).toContain("feat:");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit"));
+    });
+
+    it("should push if requested", async () => {
+      mockGetChangedFiles.mockReturnValue(["file.js"]);
+
+      const result = await smartCommit.handler({
+        push: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git push"));
     });
   });
 
-  describe("auto_release", () => {
-    let autoReleaseTool;
+  describe("auto_pr", () => {
+    let autoPr;
 
     beforeEach(() => {
-      autoReleaseTool = registeredTools.find(t => t.name === "auto_release");
+      autoPr = registeredTools.find(t => t.name === "auto_pr");
     });
 
-    it("should create release", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("main");
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("git describe")) {
-          return "v1.0.0";
-        }
-        if (cmd.includes("git log")) {
-          return "feat: New feature\nfix: Bug fix";
-        }
-        if (cmd.includes("gh release create")) {
-          return "https://github.com/user/repo/releases/tag/v1.1.0";
+    it("should create PR with generated content", async () => {
+      mockGetCurrentBranch.mockReturnValue("feature/awesome");
+      mockGetChangedFiles.mockReturnValue(["src/feature.js"]);
+      mockExecSync.mockReturnValue("https://github.com/user/repo/pull/456");
+
+      const result = await autoPr.handler({});
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr create"));
+      expect(result.data.pr_url).toContain("pull/456");
+    });
+
+    it("should use custom title and body", async () => {
+      mockGetCurrentBranch.mockReturnValue("feature/custom");
+
+      const result = await autoPr.handler({
+        title: "Custom PR",
+        body: "Custom description",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("Custom PR")
+      );
+    });
+  });
+
+  describe("sync_main", () => {
+    let syncMain;
+
+    beforeEach(() => {
+      syncMain = registeredTools.find(t => t.name === "sync_main");
+    });
+
+    it("should sync with main branch", async () => {
+      mockGetCurrentBranch.mockReturnValue("feature/branch");
+      mockGetBranchDivergence.mockReturnValue({ ahead: 2, behind: 3 });
+
+      const result = await syncMain.handler({});
+
+      expect(result.success).toBe(true);
+      expect(mockEnsureMainUpdated).toHaveBeenCalled();
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git merge"));
+    });
+
+    it("should use rebase strategy if requested", async () => {
+      mockGetCurrentBranch.mockReturnValue("feature/branch");
+
+      const result = await syncMain.handler({
+        strategy: "rebase",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockSafeRebase).toHaveBeenCalled();
+    });
+  });
+
+  describe("full_release", () => {
+    let fullRelease;
+
+    beforeEach(() => {
+      fullRelease = registeredTools.find(t => t.name === "full_release");
+    });
+
+    it("should handle full release workflow", async () => {
+      mockReadFileSync.mockImplementation((path) => {
+        if (path.includes("package.json")) {
+          return JSON.stringify({ version: "1.0.0", name: "test-package" });
         }
         return "";
       });
 
-      const result = await autoReleaseTool.handler({
+      const result = await fullRelease.handler({
         version: "1.1.0",
+        tag: true,
       });
 
       expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm version"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git tag"));
       expect(result.data.version).toBe("1.1.0");
-      expect(result.data.release_url).toContain("v1.1.0");
+    });
+
+    it("should handle npm publish", async () => {
+      const result = await fullRelease.handler({
+        version: "2.0.0",
+        npm_publish: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm publish"));
     });
   });
 
-  describe("branch_cleanup", () => {
-    let cleanupTool;
+  describe("create_package", () => {
+    let createPackage;
 
     beforeEach(() => {
-      cleanupTool = registeredTools.find(t => t.name === "branch_cleanup");
+      createPackage = registeredTools.find(t => t.name === "create_package");
     });
 
-    it("should cleanup merged branches", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("git branch -r --merged")) {
-          return "origin/feature/old-1\norigin/feature/old-2";
-        }
-        return "";
+    it("should create npm package", async () => {
+      mockCreateNpmPackage.mockResolvedValue({
+        success: true,
+        data: { path: "./my-package" },
       });
 
-      const result = await cleanupTool.handler({});
+      const result = await createPackage.handler({
+        name: "my-package",
+        description: "My awesome package",
+      });
 
       expect(result.success).toBe(true);
-      expect(result.data.branches_deleted).toHaveLength(2);
+      expect(mockCreateNpmPackage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "my-package",
+          description: "My awesome package",
+        })
+      );
+    });
+  });
+
+  describe("run_tests", () => {
+    let runTests;
+
+    beforeEach(() => {
+      runTests = registeredTools.find(t => t.name === "run_tests");
+    });
+
+    it("should run tests with coverage", async () => {
+      mockExecSync.mockReturnValue("All tests passed!\nCoverage: 95%");
+
+      const result = await runTests.handler({
+        coverage: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--coverage"));
+      expect(result.data.output).toContain("Coverage: 95%");
+    });
+
+    it("should run tests in watch mode", async () => {
+      const result = await runTests.handler({
+        watch: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--watch"));
     });
   });
 });
