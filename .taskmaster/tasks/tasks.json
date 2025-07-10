@@ -1407,7 +1407,7 @@
         "testStrategy": "1. Run the test suite with the new configuration to verify thresholds are applied correctly\n2. Check that coverage reports are generated with the expected granularity\n3. Verify that the module-specific thresholds are correctly applied to their respective directories\n4. Document the current coverage levels and the plan to gradually increase the global threshold to 80%",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -1415,7 +1415,7 @@
             "description": "Modify the jest.config.js file to lower the overall coverage threshold from 90% to 70% as an initial step in the coverage threshold adjustment plan.",
             "dependencies": [],
             "details": "Open jest.config.js and locate the coverageThreshold configuration. Update the global threshold settings to set statements, branches, functions, and lines to 70%. Ensure the configuration syntax is correct and follows Jest's expected format.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run Jest with the updated configuration to verify the new threshold is applied correctly. Check that tests pass with the new threshold settings."
           },
           {
@@ -1424,7 +1424,7 @@
             "description": "Configure different coverage thresholds for various parts of the codebase based on their criticality and current test coverage status.",
             "dependencies": [],
             "details": "Extend the coverageThreshold configuration in jest.config.js to include path-specific settings: Core modules (src/core/**/*): 80%, Tools (src/tools/**/*): 60%, Utilities (src/utils/**/*): 70%, and Clients/Services (src/clients/**/* and src/services/**/*): 50%. Use glob patterns to correctly target each module type.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run tests for each module type separately to confirm the specific thresholds are applied correctly to the intended code paths."
           },
           {
@@ -1433,7 +1433,7 @@
             "description": "Configure Jest to generate comprehensive coverage reports in multiple formats to provide better visibility into test coverage.",
             "dependencies": [],
             "details": "Update the coverageReporters array in jest.config.js to include 'json', 'lcov', 'text', and 'html' formats. Configure the coverageDirectory setting to specify where reports should be saved (e.g., 'coverage'). Add the collectCoverage flag and set it to true to ensure coverage is collected by default.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run a test suite and verify that all specified report formats are generated in the designated directory with the expected content and structure."
           },
           {
@@ -1442,7 +1442,7 @@
             "description": "Document the strategy for gradually increasing the coverage threshold from 70% to 80% over time, including milestones and timelines.",
             "dependencies": [],
             "details": "Create a markdown file named 'coverage-threshold-plan.md' in the project docs directory. Outline the phased approach for increasing thresholds: Phase 1 (Current): 70% global, Phase 2 (in 2 months): 73%, Phase 3 (in 4 months): 76%, Phase 4 (in 6 months): 80%. Include specific strategies for improving test coverage in each module type and criteria for evaluating when to move to the next phase.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Have the documentation reviewed by the team lead and other stakeholders to ensure the plan is realistic and aligns with project goals."
           },
           {
@@ -1451,7 +1451,7 @@
             "description": "Update the CI pipeline configuration to enforce the new coverage thresholds and generate coverage reports as part of the automated build process.",
             "dependencies": [],
             "details": "Modify the CI configuration file (e.g., .github/workflows/ci.yml or .gitlab-ci.yml) to run tests with coverage collection enabled. Configure the pipeline to fail if coverage falls below the specified thresholds. Add steps to archive the generated coverage reports as build artifacts. Include commands to display a coverage summary in the build logs.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Push a test commit to trigger the CI pipeline and verify that coverage thresholds are correctly enforced and reports are generated and archived as expected."
           }
         ]
@@ -1639,7 +1639,7 @@
     ],
     "metadata": {
       "created": "2025-07-06T12:21:12.492Z",
-      "updated": "2025-07-10T16:35:57.319Z",
+      "updated": "2025-07-10T16:40:02.272Z",
       "description": "Tasks for master context"
     }
   }

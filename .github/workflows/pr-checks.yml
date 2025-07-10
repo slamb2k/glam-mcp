@@ -47,6 +47,14 @@ jobs:
         JEST_JUNIT_OUTPUT_DIR: ./reports/junit/
         JEST_JUNIT_OUTPUT_NAME: jest-results.xml
     
+    - name: Display coverage summary
+      if: always()
+      run: |
+        echo "## Coverage Summary"
+        if [ -f coverage/coverage-summary.json ]; then
+          node -e "const coverage = require('./coverage/coverage-summary.json'); console.log('Total Coverage:', coverage.total.lines.pct + '%');"
+        fi
+    
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
