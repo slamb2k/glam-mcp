@@ -61,8 +61,8 @@ describe("Tool Registration", () => {
       
       // Check for some expected tools
       expect(toolNames).toContain("auto_commit");
-      expect(toolNames).toContain("quick_fix");
-      expect(toolNames).toContain("format_and_lint");
+      expect(toolNames).toContain("quick_commit");
+      expect(toolNames).toContain("smart_commit");
     });
   });
 
@@ -78,7 +78,7 @@ describe("Tool Registration", () => {
       
       // Check for some expected tools
       expect(toolNames).toContain("generate_project_docs");
-      expect(toolNames).toContain("generate_tool_docs");
+      expect(toolNames).toContain("generate_tool_doc");
     });
   });
 
@@ -94,8 +94,8 @@ describe("Tool Registration", () => {
       
       // Check for some expected tools
       expect(toolNames).toContain("github_flow_start");
-      expect(toolNames).toContain("github_flow_pr");
-      expect(toolNames).toContain("github_flow_merge");
+      expect(toolNames).toContain("github_flow_create_pr");
+      expect(toolNames).toContain("github_flow_merge_pr");
     });
   });
 
