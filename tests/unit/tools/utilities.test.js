@@ -1,34 +1,68 @@
 import { jest } from "@jest/globals";
 
-// Mock dependencies before imports
-jest.mock("child_process");
-jest.mock("fs");
-jest.mock("path");
-jest.mock("../../../src/utils/git-helpers.js");
+// Mock git-helpers
+const mockIsGitRepository = jest.fn();
+const mockGetCurrentBranch = jest.fn();
+const mockHasScript = jest.fn();
+const mockGetRecentCommits = jest.fn();
+const mockGetChangedFiles = jest.fn();
+const mockExecGitCommand = jest.fn();
+const mockGetMainBranch = jest.fn();
+const mockGetRemoteUrl = jest.fn();
+const mockGetMergedBranches = jest.fn();
+
+jest.unstable_mockModule("../../../src/utils/git-helpers.js", () => ({
+  isGitRepository: mockIsGitRepository,
+  getCurrentBranch: mockGetCurrentBranch,
+  hasScript: mockHasScript,
+  getRecentCommits: mockGetRecentCommits,
+  getChangedFiles: mockGetChangedFiles,
+  execGitCommand: mockExecGitCommand,
+  getMainBranch: mockGetMainBranch,
+  getRemoteUrl: mockGetRemoteUrl,
+  getMergedBranches: mockGetMergedBranches,
+}));
+
+// Mock child_process
+const mockExecSync = jest.fn();
+jest.unstable_mockModule("child_process", () => ({
+  execSync: mockExecSync,
+}));
+
+// Mock fs
+const mockExistsSync = jest.fn();
+const mockReadFileSync = jest.fn();
+const mockWriteFileSync = jest.fn();
+const mockMkdirSync = jest.fn();
+const mockReaddirSync = jest.fn();
+const mockStatSync = jest.fn();
+
+jest.unstable_mockModule("fs", () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
+  writeFileSync: mockWriteFileSync,
+  mkdirSync: mockMkdirSync,
+  readdirSync: mockReaddirSync,
+  statSync: mockStatSync,
+  default: {
+    existsSync: mockExistsSync,
+    readFileSync: mockReadFileSync,
+    writeFileSync: mockWriteFileSync,
+    mkdirSync: mockMkdirSync,
+    readdirSync: mockReaddirSync,
+    statSync: mockStatSync,
+  }
+}));
+
+// Import after mocking
+const { registerUtilitiesTools } = await import("../../../src/tools/utilities.js");
 
 describe("Utilities Tools", () => {
-  let registerUtilitiesTools;
-  let execSync;
-  let fs;
-  let path;
-  let gitHelpers;
   let server;
   let registeredTools;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Import mocked modules
-    const childProcess = await import("child_process");
-    execSync = childProcess.execSync;
-    
-    fs = await import("fs");
-    path = await import("path");
-    gitHelpers = await import("../../../src/utils/git-helpers.js");
-    
-    // Import the function to test
-    const utilitiesModule = await import("../../../src/tools/utilities.js");
-    registerUtilitiesTools = utilitiesModule.registerUtilitiesTools;
     
     // Mock server
     server = {
@@ -39,19 +73,22 @@ describe("Utilities Tools", () => {
     registeredTools = [];
 
     // Default mocks
-    gitHelpers.isGitRepository.mockReturnValue(true);
-    gitHelpers.getCurrentBranch.mockReturnValue("main");
-    gitHelpers.hasScript.mockReturnValue(true);
-    execSync.mockReturnValue("");
-    fs.existsSync.mockReturnValue(false);
-    fs.readFileSync.mockReturnValue("");
-    fs.writeFileSync.mockImplementation(() => {});
-    fs.mkdirSync.mockImplementation(() => {});
-    fs.readdirSync.mockReturnValue([]);
-    path.join.mockImplementation((...args) => args.join("/"));
-    path.dirname.mockImplementation(p => p.split("/").slice(0, -1).join("/"));
-    path.basename.mockImplementation(p => p.split("/").pop());
-    path.resolve.mockImplementation((...args) => args.join("/"));
+    mockIsGitRepository.mockReturnValue(true);
+    mockGetCurrentBranch.mockReturnValue("main");
+    mockHasScript.mockReturnValue(true);
+    mockGetRecentCommits.mockReturnValue([]);
+    mockGetChangedFiles.mockReturnValue([]);
+    mockExecGitCommand.mockReturnValue("");
+    mockGetMainBranch.mockReturnValue("main");
+    mockGetRemoteUrl.mockReturnValue("https://github.com/user/repo.git");
+    mockGetMergedBranches.mockReturnValue([]);
+    mockExecSync.mockReturnValue("");
+    mockExistsSync.mockReturnValue(false);
+    mockReadFileSync.mockReturnValue("");
+    mockWriteFileSync.mockImplementation(() => {});
+    mockMkdirSync.mockImplementation(() => {});
+    mockReaddirSync.mockReturnValue([]);
+    mockStatSync.mockReturnValue({ isDirectory: () => false });
 
     // Register tools
     registerUtilitiesTools(server);
