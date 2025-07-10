@@ -40,6 +40,26 @@ dev-debug.log
 *.sw?
 # OS specific
 
+# Test artifacts
+tests/temp/
+tests/coverage/
+*.test.tmp
+*.test.log
+
+# Build artifacts
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Session and cache files
+.cache/
+.session/
+sessions/
+*.session.json
+
 # Task files
 # tasks.json
 # tasks/ 
+.gitignore
+.mcp-sessions/
