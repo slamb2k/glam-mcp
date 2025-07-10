@@ -2,6 +2,7 @@
 export default {
   testEnvironment: 'node',
   transform: {},
+  setupFilesAfterEnv: ['<rootDir>/tests/test-utils/setup.js'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
     'src/**/*.js',
