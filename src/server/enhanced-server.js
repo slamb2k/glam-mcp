@@ -26,7 +26,7 @@ import { registerSafetyTools } from "../tools/safety.js";
 import { toolRegistry, ToolCategories } from "../core/tool-registry.js";
 
 // Import session manager
-import { SessionManager } from "../core/session-manager.js";
+import { SessionManager } from "../context/session-manager.js";
 
 // Import utilities
 import { showBanner, getWelcomeMessage } from "../utils/banner.js";
