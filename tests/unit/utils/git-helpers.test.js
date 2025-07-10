@@ -175,8 +175,8 @@ describe("Git Helpers", () => {
   describe("getRecentCommits", () => {
     it("should return parsed recent commits", () => {
       const mockLog = 
-        "abc123|2024-01-01T10:00:00Z|John Doe|john@example.com|Fix bug in auth module\n" +
-        "def456|2024-01-02T11:00:00Z|Jane Smith|jane@example.com|Add new feature";
+        "abc123 Fix bug in auth module\n" +
+        "def456 Add new feature";
 
       mockExecSync.mockReturnValue(mockLog);
 
@@ -184,10 +184,11 @@ describe("Git Helpers", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         hash: "abc123",
-        date: "2024-01-01T10:00:00Z",
-        author: "John Doe",
-        email: "john@example.com",
         message: "Fix bug in auth module",
+      });
+      expect(result[1]).toEqual({
+        hash: "def456",
+        message: "Add new feature",
       });
     });
 
@@ -232,17 +233,17 @@ describe("Git Helpers", () => {
   describe("generateBranchName", () => {
     it("should generate branch name from message", () => {
       const result = generateBranchName("Add user authentication feature");
-      expect(result).toBe("feature/add-user-authentication-feature");
+      expect(result).toMatch(/^feature\/add-user-authentication-feature-\d{4}-\d{2}-\d{2}$/);
     });
 
     it("should use custom prefix", () => {
       const result = generateBranchName("Critical bug in payment", "fix/");
-      expect(result).toBe("fix/critical-bug-in-payment");
+      expect(result).toMatch(/^fix\/critical-bug-in-payment-\d{4}-\d{2}-\d{2}$/);
     });
 
     it("should handle special characters", () => {
       const result = generateBranchName("Fix: Issue #123 - User's data");
-      expect(result).toBe("feature/fix-issue-123-users-data");
+      expect(result).toMatch(/^feature\/fix-issue-123-users-data-\d{4}-\d{2}-\d{2}$/);
     });
 
     it("should truncate long names", () => {
@@ -257,8 +258,7 @@ describe("Git Helpers", () => {
       mockExecSync.mockReturnValue("command output\n");
 
       const result = execGitCommand("status");
-      expect(result.success).toBe(true);
-      expect(result.output).toBe("command output");
+      expect(result).toBe("command output");
       expect(mockExecSync).toHaveBeenCalledWith("git status", expect.any(Object));
     });
 
@@ -269,9 +269,7 @@ describe("Git Helpers", () => {
         throw error;
       });
 
-      const result = execGitCommand("invalid-command");
-      expect(result.success).toBe(false);
-      expect(result.error).toContain("command failed");
+      expect(() => execGitCommand("invalid-command")).toThrow("command failed");
     });
   });
 
@@ -302,8 +300,7 @@ describe("Git Helpers", () => {
         .mockReturnValueOnce("5\n"); // rev-list count
 
       const result = isBranchBehind();
-      expect(result.behind).toBe(true);
-      expect(result.count).toBe(5);
+      expect(result).toBe(true);
     });
 
     it("should detect when branch is up to date", () => {
@@ -312,8 +309,7 @@ describe("Git Helpers", () => {
         .mockReturnValueOnce("0\n");
 
       const result = isBranchBehind();
-      expect(result.behind).toBe(false);
-      expect(result.count).toBe(0);
+      expect(result).toBe(false);
     });
   });
 

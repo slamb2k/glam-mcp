@@ -46,6 +46,10 @@ tests/coverage/
 *.test.tmp
 *.test.log
 
+# Debug files
+debug-*.mjs
+debug-*.js
+
 # Build artifacts
 dist/
 build/

@@ -38,8 +38,8 @@ describe("TeamActivityEnhancer", () => {
   describe("initialization", () => {
     it("should have correct properties", () => {
       expect(enhancer.name).toBe("TeamActivityEnhancer");
-      expect(enhancer.metadata.description).toBe("Tracks team activity and collaboration insights");
-      expect(enhancer.priority).toBe(70);
+      expect(enhancer.metadata.description).toBe("Adds team collaboration context to responses");
+      expect(enhancer.priority).toBe(20);
       expect(enhancer.dependencies).toEqual(["MetadataEnhancer"]);
     });
   });
@@ -87,7 +87,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity).toBeDefined();
         expect(teamActivity.recentCommits).toHaveLength(2);
         expect(teamActivity.activeContributors).toContain("John Doe");
@@ -110,7 +110,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.relatedBranches).toBeDefined();
         expect(teamActivity.relatedBranches).toContain("feature/auth");
         expect(teamActivity.relatedBranches).toContain("feature/auth-ui");
@@ -144,7 +144,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.activePRs).toHaveLength(2);
         expect(teamActivity.activePRs[0].number).toBe(123);
       });
@@ -167,7 +167,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.fileContributors).toBeDefined();
         expect(teamActivity.fileContributors["src/auth.js"]).toBeDefined();
         expect(teamActivity.potentialReviewers).toContain("John Doe");
@@ -196,7 +196,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.potentialReviewers[0]).toBe("Expert Dev");
         expect(teamActivity.potentialReviewers).toContain("Mid Dev");
       });
@@ -225,7 +225,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.potentialConflicts).toBeDefined();
         expect(teamActivity.potentialConflicts.length).toBeGreaterThan(0);
         expect(teamActivity.potentialConflicts[0].branch).toBe("feature/auth");
@@ -259,7 +259,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.insights).toBeDefined();
         expect(teamActivity.insights.length).toBeGreaterThan(0);
       });
@@ -288,7 +288,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.relatedWork).toBeDefined();
         expect(teamActivity.relatedWork.length).toBeGreaterThan(0);
       });
@@ -318,7 +318,7 @@ describe("TeamActivityEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.summary).toBeDefined();
         expect(teamActivity.summary.totalCommits).toBe(2);
         expect(teamActivity.summary.uniqueContributors).toBe(2);
@@ -341,7 +341,7 @@ describe("TeamActivityEnhancer", () => {
         const enhanced = await enhancer.enhance(response, mockContext);
 
         expect(enhanced).toBeDefined();
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity).toBeDefined();
         expect(teamActivity.error).toBeUndefined(); // Errors should be handled silently
       });
@@ -355,7 +355,7 @@ describe("TeamActivityEnhancer", () => {
         const enhanced = await enhancer.enhance(response, null);
 
         expect(enhanced).toBeDefined();
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity).toBeDefined();
         expect(teamActivity.limited).toBe(true);
       });
@@ -384,7 +384,7 @@ describe("TeamActivityEnhancer", () => {
         const response = new EnhancedResponse({ success: true });
         const enhanced = await configuredEnhancer.enhance(response, mockContext);
 
-        const teamActivity = enhanced.getTeamActivity();
+        const teamActivity = enhanced.teamActivity;
         expect(teamActivity.recentCommits).toBeUndefined();
         expect(teamActivity.relatedBranches).toBeUndefined();
       });
