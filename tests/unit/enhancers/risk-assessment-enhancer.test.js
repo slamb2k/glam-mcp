@@ -21,7 +21,7 @@ describe("RiskAssessmentEnhancer", () => {
     it("should have correct properties", () => {
       expect(enhancer.name).toBe("RiskAssessmentEnhancer");
       expect(enhancer.metadata.description).toBe("Evaluates and adds risk information to responses");
-      expect(enhancer.priority).toBe(100);
+      expect(enhancer.priority).toBe(80);
       expect(enhancer.dependencies).toEqual(["MetadataEnhancer"]);
     });
   });

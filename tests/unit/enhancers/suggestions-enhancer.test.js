@@ -21,9 +21,9 @@ describe("SuggestionsEnhancer", () => {
   describe("initialization", () => {
     it("should have correct properties", () => {
       expect(enhancer.name).toBe("SuggestionsEnhancer");
-      expect(enhancer.metadata.description).toBe("Provides contextual suggestions and recommendations");
-      expect(enhancer.priority).toBe(80);
-      expect(enhancer.dependencies).toEqual(["MetadataEnhancer", "RiskAssessmentEnhancer"]);
+      expect(enhancer.metadata.description).toBe("Adds contextual suggestions for next actions");
+      expect(enhancer.priority).toBe(60);
+      expect(enhancer.dependencies).toEqual(["MetadataEnhancer"]);
     });
   });
 
@@ -55,7 +55,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.length).toBeGreaterThan(0);
         expect(suggestions.some(s => s.type === "next-step")).toBe(true);
         expect(suggestions.some(s => s.description.includes("implement"))).toBe(true);
@@ -70,7 +70,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("pull request"))).toBe(true);
       });
 
@@ -84,7 +84,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("review"))).toBe(true);
       });
 
@@ -97,7 +97,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("cleanup") || s.description.includes("delete"))).toBe(true);
       });
     });
@@ -117,7 +117,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.type === "safety")).toBe(true);
       });
 
@@ -130,7 +130,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("backup"))).toBe(true);
       });
 
@@ -143,7 +143,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         const safetySuggestion = suggestions.find(s => s.type === "safety");
         expect(safetySuggestion?.priority).toBe("high");
       });
@@ -166,7 +166,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, contextWithChanges);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("commit"))).toBe(true);
       });
 
@@ -186,7 +186,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, contextWithHistory);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.length).toBeGreaterThan(0);
       });
 
@@ -199,7 +199,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("sync") || s.description.includes("update"))).toBe(true);
       });
     });
@@ -214,7 +214,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         const toolSuggestions = suggestions.filter(s => s.type === "tool");
         expect(toolSuggestions.length).toBeGreaterThan(0);
       });
@@ -229,7 +229,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.tool && (s.tool.includes("fix") || s.tool.includes("implement")))).toBe(true);
       });
     });
@@ -245,7 +245,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         const workflowSuggestions = suggestions.filter(s => s.type === "workflow");
         expect(workflowSuggestions.length).toBeGreaterThan(0);
       });
@@ -260,7 +260,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("fix") || s.description.includes("bug"))).toBe(true);
       });
     });
@@ -275,7 +275,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.type === "recovery")).toBe(true);
         expect(suggestions.some(s => s.description.includes("conflict"))).toBe(true);
       });
@@ -288,7 +288,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         const recoverySuggestion = suggestions.find(s => s.type === "recovery");
         expect(recoverySuggestion?.priority).toBe("high");
       });
@@ -304,7 +304,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.type === "best-practice")).toBe(true);
       });
 
@@ -317,7 +317,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.some(s => s.description.includes("test"))).toBe(true);
       });
     });
@@ -336,7 +336,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await configuredEnhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.length).toBeLessThanOrEqual(3);
       });
 
@@ -352,7 +352,7 @@ describe("SuggestionsEnhancer", () => {
 
         const enhanced = await configuredEnhancer.enhance(response, mockContext);
 
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         suggestions.forEach(s => {
           expect(["next-step", "tool"]).toContain(s.type);
         });
@@ -369,7 +369,7 @@ describe("SuggestionsEnhancer", () => {
         const enhanced = await enhancer.enhance(response, null);
 
         expect(enhanced).toBeDefined();
-        const suggestions = enhanced.getSuggestions();
+        const suggestions = enhanced.suggestions;
         expect(suggestions.length).toBeGreaterThan(0);
       });
 

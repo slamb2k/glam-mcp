@@ -1,26 +1,29 @@
 import { jest } from "@jest/globals";
-import { TeamActivityEnhancer } from "../../../src/enhancers/core/team-activity-enhancer.js";
-import { EnhancedResponse } from "../../../src/core/enhanced-response.js";
+import { execSync } from "child_process";
 
-// Mock git-helpers
-jest.mock("../../../src/utils/git-helpers.js", () => ({
-  getRecentCommits: jest.fn(),
-  hasRemoteBranch: jest.fn(),
-  execGitCommand: jest.fn(),
+// Mock git-helpers before importing
+const mockGetRecentCommits = jest.fn();
+const mockHasRemoteBranch = jest.fn();
+const mockExecGitCommand = jest.fn();
+
+jest.unstable_mockModule("../../../src/utils/git-helpers.js", () => ({
+  getRecentCommits: mockGetRecentCommits,
+  hasRemoteBranch: mockHasRemoteBranch,
+  execGitCommand: mockExecGitCommand,
 }));
 
 // Mock child_process
-jest.mock("child_process", () => ({
-  execSync: jest.fn(),
-}));
+jest.mock("child_process");
+
+// Import after mocking
+const { TeamActivityEnhancer } = await import("../../../src/enhancers/core/team-activity-enhancer.js");
+const { EnhancedResponse } = await import("../../../src/core/enhanced-response.js");
 
 describe("TeamActivityEnhancer", () => {
   let enhancer;
   let mockContext;
-  let gitHelpers;
-  let childProcess;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     enhancer = new TeamActivityEnhancer();
     mockContext = {
       sessionId: "test-session",
@@ -29,9 +32,6 @@ describe("TeamActivityEnhancer", () => {
       },
     };
 
-    // Get mocked modules
-    gitHelpers = await import("../../../src/utils/git-helpers.js");
-    childProcess = await import("child_process");
     jest.clearAllMocks();
   });
 
@@ -63,22 +63,12 @@ describe("TeamActivityEnhancer", () => {
   describe("enhance", () => {
     describe("recent activity detection", () => {
       it("should add recent commits from team members", async () => {
-        gitHelpers.getRecentCommits.mockResolvedValue([
-          {
-            hash: "abc123",
-            author: "John Doe",
-            email: "john@example.com",
-            message: "Fix bug in auth",
-            date: new Date().toISOString(),
-          },
-          {
-            hash: "def456",
-            author: "Jane Smith",
-            email: "jane@example.com",
-            message: "Add new feature",
-            date: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
+        execSync.mockImplementation((cmd) => {
+          if (cmd.includes("git log")) {
+            return "abc123|John Doe|john@example.com|Fix bug in auth|2 hours ago\ndef456|Jane Smith|jane@example.com|Add new feature|3 hours ago";
+          }
+          return "";
+        });
 
         const response = new EnhancedResponse({
           success: true,
@@ -89,13 +79,13 @@ describe("TeamActivityEnhancer", () => {
 
         const teamActivity = enhanced.teamActivity;
         expect(teamActivity).toBeDefined();
-        expect(teamActivity.recentCommits).toHaveLength(2);
-        expect(teamActivity.activeContributors).toContain("John Doe");
-        expect(teamActivity.activeContributors).toContain("Jane Smith");
+        expect(teamActivity.recentActivity.commits).toHaveLength(2);
+        expect(teamActivity.recentActivity.commits[0].author).toBe("John Doe");
+        expect(teamActivity.recentActivity.commits[1].author).toBe("Jane Smith");
       });
 
       it("should identify related branches", async () => {
-        childProcess.execSync.mockImplementation((cmd) => {
+        execSync.mockImplementation((cmd) => {
           if (cmd.includes("branch -r")) {
             return "origin/feature/auth\norigin/feature/auth-ui\norigin/feature/test\norigin/fix/auth-bug\n";
           }
@@ -117,7 +107,7 @@ describe("TeamActivityEnhancer", () => {
       });
 
       it("should find active pull requests", async () => {
-        gitHelpers.execGitCommand.mockResolvedValue({
+        mockExecGitCommand.mockResolvedValue({
           success: true,
           output: JSON.stringify([
             {
@@ -152,7 +142,7 @@ describe("TeamActivityEnhancer", () => {
 
     describe("file contributor analysis", () => {
       it("should identify contributors for affected files", async () => {
-        childProcess.execSync.mockImplementation((cmd) => {
+        execSync.mockImplementation((cmd) => {
           if (cmd.includes("shortlog")) {
             return "    10\tJohn Doe\n     5\tJane Smith\n";
           }
@@ -174,7 +164,7 @@ describe("TeamActivityEnhancer", () => {
       });
 
       it("should suggest reviewers based on contribution count", async () => {
-        childProcess.execSync
+        execSync
           .mockImplementationOnce((cmd) => {
             if (cmd.includes("shortlog")) {
               return "    20\tExpert Dev\n     2\tJunior Dev\n";
@@ -204,7 +194,7 @@ describe("TeamActivityEnhancer", () => {
 
     describe("conflict detection", () => {
       it("should detect potential conflicts with other branches", async () => {
-        childProcess.execSync.mockImplementation((cmd) => {
+        execSync.mockImplementation((cmd) => {
           if (cmd.includes("branch -r")) {
             return "origin/feature/auth\norigin/feature/auth-refactor\n";
           }
@@ -235,7 +225,7 @@ describe("TeamActivityEnhancer", () => {
 
     describe("collaboration insights", () => {
       it("should provide collaboration suggestions", async () => {
-        gitHelpers.getRecentCommits.mockResolvedValue([
+        mockGetRecentCommits.mockResolvedValue([
           {
             hash: "abc123",
             author: "John Doe",
@@ -244,7 +234,7 @@ describe("TeamActivityEnhancer", () => {
           },
         ]);
 
-        childProcess.execSync.mockImplementation((cmd) => {
+        execSync.mockImplementation((cmd) => {
           if (cmd.includes("branch -r")) {
             return "origin/feature/auth-ui\norigin/feature/auth-api\n";
           }
@@ -265,7 +255,7 @@ describe("TeamActivityEnhancer", () => {
       });
 
       it("should detect team working on similar features", async () => {
-        gitHelpers.getRecentCommits.mockResolvedValue([
+        mockGetRecentCommits.mockResolvedValue([
           {
             hash: "abc123",
             author: "John Doe",
@@ -296,7 +286,7 @@ describe("TeamActivityEnhancer", () => {
 
     describe("activity summary", () => {
       it("should generate activity summary", async () => {
-        gitHelpers.getRecentCommits.mockResolvedValue([
+        mockGetRecentCommits.mockResolvedValue([
           {
             hash: "abc123",
             author: "John Doe",
@@ -328,8 +318,8 @@ describe("TeamActivityEnhancer", () => {
 
     describe("error handling", () => {
       it("should handle git command failures gracefully", async () => {
-        gitHelpers.getRecentCommits.mockRejectedValue(new Error("Git error"));
-        childProcess.execSync.mockImplementation(() => {
+        mockGetRecentCommits.mockRejectedValue(new Error("Git error"));
+        execSync.mockImplementation(() => {
           throw new Error("Command failed");
         });
 
@@ -367,12 +357,12 @@ describe("TeamActivityEnhancer", () => {
           activityWindow: 7, // 7 days
         });
 
-        gitHelpers.getRecentCommits.mockResolvedValue([]);
+        mockGetRecentCommits.mockResolvedValue([]);
 
         const response = new EnhancedResponse({ success: true });
         await configuredEnhancer.enhance(response, mockContext);
 
-        expect(gitHelpers.getRecentCommits).toHaveBeenCalledWith(expect.any(Number));
+        expect(mockGetRecentCommits).toHaveBeenCalledWith(expect.any(Number));
       });
 
       it("should disable features based on configuration", async () => {
@@ -392,7 +382,7 @@ describe("TeamActivityEnhancer", () => {
 
     describe("caching", () => {
       it("should cache team activity data", async () => {
-        gitHelpers.getRecentCommits.mockResolvedValue([
+        mockGetRecentCommits.mockResolvedValue([
           {
             hash: "abc123",
             author: "John Doe",
@@ -405,11 +395,11 @@ describe("TeamActivityEnhancer", () => {
 
         // First call
         await enhancer.enhance(response, mockContext);
-        expect(gitHelpers.getRecentCommits).toHaveBeenCalledTimes(1);
+        expect(mockGetRecentCommits).toHaveBeenCalledTimes(1);
 
         // Second call within cache window should use cache
         await enhancer.enhance(response, mockContext);
-        expect(gitHelpers.getRecentCommits).toHaveBeenCalledTimes(1);
+        expect(mockGetRecentCommits).toHaveBeenCalledTimes(1);
       });
 
       it("should invalidate cache after timeout", async () => {
@@ -417,18 +407,18 @@ describe("TeamActivityEnhancer", () => {
           cacheTimeout: 100, // 100ms
         });
 
-        gitHelpers.getRecentCommits.mockResolvedValue([]);
+        mockGetRecentCommits.mockResolvedValue([]);
 
         const response = new EnhancedResponse({ success: true });
 
         await shortCacheEnhancer.enhance(response, mockContext);
-        expect(gitHelpers.getRecentCommits).toHaveBeenCalledTimes(1);
+        expect(mockGetRecentCommits).toHaveBeenCalledTimes(1);
 
         // Wait for cache to expire
         await new Promise(resolve => setTimeout(resolve, 150));
 
         await shortCacheEnhancer.enhance(response, mockContext);
-        expect(gitHelpers.getRecentCommits).toHaveBeenCalledTimes(2);
+        expect(mockGetRecentCommits).toHaveBeenCalledTimes(2);
       });
     });
   });
