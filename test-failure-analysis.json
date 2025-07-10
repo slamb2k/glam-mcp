@@ -1,0 +1,671 @@
+{
+  "timestamp": "2025-07-10T16:35:14.567Z",
+  "summary": {
+    "totalFailures": 93,
+    "byCategory": [
+      {
+        "category": "API_MISMATCH",
+        "count": 1,
+        "percentage": "1.1"
+      },
+      {
+        "category": "ASSERTION_MISMATCH",
+        "count": 6,
+        "percentage": "6.5"
+      },
+      {
+        "category": "TYPE_ERROR",
+        "count": 5,
+        "percentage": "5.4"
+      },
+      {
+        "category": "MODULE_NOT_FOUND",
+        "count": 2,
+        "percentage": "2.2"
+      },
+      {
+        "category": "UNDEFINED_PROPERTY",
+        "count": 4,
+        "percentage": "4.3"
+      },
+      {
+        "category": "ENHANCER_ISSUE",
+        "count": 22,
+        "percentage": "23.7"
+      },
+      {
+        "category": "TOOL_HANDLER_ISSUE",
+        "count": 19,
+        "percentage": "20.4"
+      },
+      {
+        "category": "SESSION_CONTEXT_ISSUE",
+        "count": 7,
+        "percentage": "7.5"
+      },
+      {
+        "category": "GIT_OPERATION_ISSUE",
+        "count": 18,
+        "percentage": "19.4"
+      },
+      {
+        "category": "OTHER",
+        "count": 9,
+        "percentage": "9.7"
+      }
+    ]
+  },
+  "details": {
+    "API_MISMATCH": {
+      "count": 1,
+      "tests": [
+        {
+          "name": "should run tests in watch mode",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should run tests in watch mode (1 ms)\n  ● Automation Tools › auto_commit › should be registered with correct metadata\n    expect(received).toHaveProperty(path)\n    Expected path: \"feature\"\n    Received path: []\n    Received value: {\"auto_merge\": {\"default\": true, \"description\": \"Automatically merge PR after creation\", \"type\": \"boolean\"}, \"branch_name\": {\"description\": \"Custom branch name (auto-generated if not provided)\", \"type\": \"string\"}, \"branch_prefix\": {\"default\": \"feature/\", \"description\": \"Branch prefix\", \"type\": \"string\"}, \"branch_strategy\": {\"default\": \"auto\", \"description\": \"Strategy for handling stale branches: 'auto' (prompt if interactive), 'rebase', 'new'\", \"enum\": [\"auto\", \"rebase\", \"new\"], \"type\": \"string\"}, \"delete_branch\": {\"default\": true, \"description\": \"Delete branch after successful merge\", \"type\": \"boolean\"}, \"message\": {\"description\": \"Commit message (required for new commits, optional when pushing existing branch)\", \"type\": \"string\"}, \"run_format\": {\"default\": true, \"description\": \"Run code formatting\", \"type\": \"boolean\"}, \"run_lint\": {\"default\": true, \"description\": \"Run linting\", \"type\": \"boolean\"}, \"target_branch\": {\"default\": \"main\", \"description\": \"Target branch for PR\", \"type\": \"string\"}}\n      120 |       expect(autoCommit).toBeDefined();\n      121 |       expect(autoCommit.description).toContain(\"Complete automation\");\n    > 122 |       expect(autoCommit.inputSchema.properties).toHaveProperty(\"feature\");\n          |                                                 ^\n      123 |     });\n      124 |\n      125 |     it(\"should handle full automation workflow\", async () => {\n      at Object.<anonymous> (tests/unit/tools/automation.test.js:122:49)",
+          "matchScore": 1
+        }
+      ]
+    },
+    "ASSERTION_MISMATCH": {
+      "count": 6,
+      "tests": [
+        {
+          "name": "should find file contributors",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should find file contributors (1 ms)\n      ✕ should detect potential conflicts\n      ✕ should handle errors gracefully\n      ✕ should respect configuration\n  ● Core Enhancers › MetadataEnhancer › should enhance response with all metadata\n    expect(received).toContain(expected) // indexOf\n    Matcher error: received value must not be null nor undefined\n    Received has value: undefined\n      50 |\n      51 |       expect(enhanced.metadata.enhancedAt).toBeDefined();\n    > 52 |       expect(enhanced.metadata.enhancedBy).toContain(\"MetadataEnhancer\");\n         |                                            ^\n      53 |       expect(enhanced.metadata.system).toBeDefined();\n      54 |       expect(enhanced.metadata.process).toBeDefined();\n      55 |       expect(enhanced.metadata.operation).toBe(\"test_operation\");\n      at Object.<anonymous> (tests/unit/enhancers/core-enhancers.test.js:52:44)",
+          "matchScore": 1
+        },
+        {
+          "name": "should search tools with combined criteria",
+          "file": "tests/unit/services/tool-discovery.test.js",
+          "error": "✕ should search tools with combined criteria (1 ms)\n      ✕ should handle empty search\n    getToolChain\n      ✕ should build tool chain for task\n    getSimilarTools\n      ✕ should find similar tools\n    getToolsByRiskLevel\n      ✕ should filter tools by risk level\n    cache management\n      ✕ should clear cache\n  ● ToolDiscoveryService › getPopularTools › should get popular tools\n    TypeError: service.getPopularTools is not a function\n      158 |       });\n      159 |\n    > 160 |       const results = service.getPopularTools(5);\n          |                               ^\n      161 |\n      162 |       expect(results).toHaveLength(2);\n      163 |       expect(results[0].name).toBe(\"github_flow_start\");\n      at Object.<anonymous> (tests/unit/services/tool-discovery.test.js:160:31)",
+          "matchScore": 1
+        },
+        {
+          "name": "should return undefined for non-existent pipeline",
+          "file": "tests/unit/enhancers/enhancer-registry.test.js",
+          "error": "✕ should return undefined for non-existent pipeline (1 ms)\n    removePipeline\n      ✕ should remove existing pipeline\n      ✕ should handle removing non-existent pipeline\n    clear\n      ✕ should clear all enhancers and pipelines\n    defaultRegistry\n  ● EnhancerRegistry › constructor › should accept options\n    TypeError: Cannot read properties of undefined (reading 'defaultPipelineName')\n      41 |         maxEnhancers: 10,\n      42 |       });\n    > 43 |       expect(customRegistry.options.defaultPipelineName).toBe(\"custom\");\n         |                                     ^\n      44 |       expect(customRegistry.options.maxEnhancers).toBe(10);\n      45 |     });\n      46 |   });\n      at Object.<anonymous> (tests/unit/enhancers/enhancer-registry.test.js:43:37)",
+          "matchScore": 1
+        },
+        {
+          "name": "should handle undefined data",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should handle undefined data (2 ms)\n  Git Helpers Coverage\n  Tool Registry Singleton Coverage\n  ● Response Utilities Coverage Boost › createResponse › should create success response\n    TypeError: createResponse is not a function\n      18 |   describe(\"createResponse\", () => {\n      19 |     it(\"should create success response\", () => {\n    > 20 |       const result = createResponse(true, { test: \"data\" }, \"Success!\");\n         |                      ^\n      21 |       \n      22 |       expect(result.success).toBe(true);\n      23 |       expect(result.data.test).toBe(\"data\");\n      at Object.<anonymous> (tests/unit/core/simple-response.test.js:20:22)",
+          "matchScore": 1
+        },
+        {
+          "name": "should test discovery patterns",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test discovery patterns (1 ms)\n  ● Coverage Boost Tests › Context Operations › should test context operations\n    Cannot find module '../../../src/context/context-operations.js' from 'tests/unit/boost-coverage.test.js'\n      36 |   describe(\"Context Operations\", () => {\n      37 |     it(\"should test context operations\", async () => {\n    > 38 |       const { getContext, setContext } = await import(\"../../../src/context/context-operations.js\");\n         |                                          ^\n      39 |       \n      40 |       expect(typeof getContext).toBe(\"function\");\n      41 |       expect(typeof setContext).toBe(\"function\");\n      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)\n      at Object.<anonymous> (tests/unit/boost-coverage.test.js:38:42)",
+          "matchScore": 1
+        },
+        {
+          "name": "should respect configuration options",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should respect configuration options (1 ms)\n      error handling\n        ✕ should handle missing context gracefully\n  ● RiskAssessmentEnhancer › enhance › git risk assessment › should identify force push as high risk\n    TypeError: enhanced.getRiskLevel is not a function\n      54 |         const enhanced = await enhancer.enhance(response, mockContext);\n      55 |\n    > 56 |         expect(enhanced.getRiskLevel()).toBe(RiskLevel.HIGH);\n         |                         ^\n      57 |         const risks = enhanced.getRisks();\n      58 |         expect(risks.some(r => r.type === \"git\" && r.description.includes(\"force\"))).toBe(true);\n      59 |       });\n      at Object.<anonymous> (tests/unit/enhancers/risk-assessment-enhancer.test.js:56:25)",
+          "matchScore": 1
+        }
+      ]
+    },
+    "MOCK_ISSUE": {
+      "count": 0,
+      "tests": []
+    },
+    "TYPE_ERROR": {
+      "count": 5,
+      "tests": [
+        {
+          "name": "should handle tool execution errors",
+          "file": "tests/unit/index.test.js",
+          "error": "✕ should handle tool execution errors (1 ms)\n        ✕ should handle results without message property\n        ✕ should stringify non-text results\n    registry tools\n      tool_search\n        ✕ should search tools in registry\n      tool_info\n        ✕ should get tool documentation\n        ✕ should handle unknown tool\n      tool_list_categories\n        ✕ should list tool categories\n    inferCategory\n      ✕ should infer category from tool name\n    inferTags\n      ✕ should infer tags from tool name and description\n    start\n      ✕ should register tools and start server\n    error handling\n      ✕ should handle server errors\n      ✕ should handle SIGINT signal\n  ● GlamMCPServer › constructor › should create a server with correct configuration\n    TypeError: Server.mockImplementation is not a function\n      89 |       onerror: null,\n      90 |     };\n    > 91 |     Server.mockImplementation(() => mockServerInstance);\n         |            ^\n      92 |\n      93 |     // Mock StdioServerTransport\n      94 |     mockTransport = {};\n      at Object.<anonymous> (tests/unit/index.test.js:91:12)",
+          "matchScore": 1
+        },
+        {
+          "name": "should generate documentation",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should generate documentation (1 ms)\n    code_metrics\n      ✕ should calculate code metrics\n    security_check\n      ✕ should run security checks\n      ✕ should check for secrets\n    optimize_imports\n      ✕ should optimize imports\n  ● Utilities Tools › repo_map › should be registered with correct metadata\n    TypeError: registerUtilitiesTools is not a function\n      92 |\n      93 |     // Register tools\n    > 94 |     registerUtilitiesTools(server);\n         |     ^\n      95 |   });\n      96 |\n      97 |   describe(\"repo_map\", () => {\n      at Object.<anonymous> (tests/unit/tools/utilities.test.js:94:5)",
+          "matchScore": 1
+        },
+        {
+          "name": "should generate catalog in different formats",
+          "file": "tests/unit/tools/documentation.test.js",
+          "error": "✕ should generate catalog in different formats (1 ms)\n    generate_api_reference\n      ✕ should generate API reference\n    check_docs_completeness\n      ✕ should check documentation completeness\n      ✕ should identify missing standard files\n    create_quick_reference\n      ✕ should create quick reference guide\n    generate_migration_guide\n      ✕ should generate migration guide\n  ● Documentation Tools › generate_project_docs › should be registered with correct metadata\n    TypeError: Cannot assign to read only property 'promises' of object '[object Module]'\n      43 |\n      44 |     // Default mocks\n    > 45 |     fs.promises = {\n         |                 ^\n      46 |       mkdir: jest.fn(),\n      47 |       writeFile: jest.fn(),\n      48 |       readFile: jest.fn(),\n      at Object.<anonymous> (tests/unit/tools/documentation.test.js:45:17)",
+          "matchScore": 1
+        },
+        {
+          "name": "should invalidate cache after timeout",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should invalidate cache after timeout (1 ms)\n  ● TeamActivityEnhancer › enhance › recent activity detection › should add recent commits from team members\n    TypeError: execSync.mockImplementation is not a function\n      64 |     describe(\"recent activity detection\", () => {\n      65 |       it(\"should add recent commits from team members\", async () => {\n    > 66 |         execSync.mockImplementation((cmd) => {\n         |                  ^\n      67 |           if (cmd.includes(\"git log\")) {\n      68 |             return \"abc123|John Doe|john@example.com|Fix bug in auth|2 hours ago\\ndef456|Jane Smith|jane@example.com|Add new feature|3 hours ago\";\n      69 |           }\n      at Object.<anonymous> (tests/unit/enhancers/team-activity-enhancer.test.js:66:18)",
+          "matchScore": 1
+        },
+        {
+          "name": "should generate documentation for a category",
+          "file": "tests/unit/services/tool-documentation.test.js",
+          "error": "✕ should generate documentation for a category (1 ms)\n      ✕ should handle category not found\n    generateQuickReference\n      ✕ should generate quick reference guide\n    generateExampleWorkflows\n      ✕ should generate example workflows\n    generateApiReference\n      ✕ should generate API reference\n    exportDocumentation\n      ✕ should export documentation to file\n      ✕ should handle JSON format\n      ✕ should throw error for invalid format\n    searchDocumentation\n      ✕ should search documentation content\n      ✕ should handle no matches\n    generateToolCard\n      ✕ should generate tool card\n    formatToolUsage\n      ✕ should format tool usage\n  ● ToolDocumentationService › constructor › should initialize with registry\n    TypeError: ToolDocumentationService is not a constructor\n      46 |   beforeEach(() => {\n      47 |     jest.clearAllMocks();\n    > 48 |     service = new ToolDocumentationService(mockToolRegistry);\n         |               ^\n      49 |   });\n      50 |\n      51 |   describe(\"constructor\", () => {\n      at Object.<anonymous> (tests/unit/services/tool-documentation.test.js:48:15)",
+          "matchScore": 1
+        }
+      ]
+    },
+    "MODULE_NOT_FOUND": {
+      "count": 2,
+      "tests": [
+        {
+          "name": "should have required properties for each tool",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should have required properties for each tool (1 ms)\n      ✕ should have valid input schemas\n  ● Tool Registry › registerAllTools › should register all tool categories\n    Cannot find module '../../../src/tools/tool-registry.js' from 'tests/unit/tools/tool-registry.test.js'\n      10 |     \n      11 |     // Import the module\n    > 12 |     const module = await import(\"../../../src/tools/tool-registry.js\");\n         |                    ^\n      13 |     toolRegistry = module.toolRegistry;\n      14 |     \n      15 |     // Mock server\n      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)\n      at Object.<anonymous> (tests/unit/tools/tool-registry.test.js:12:20)",
+          "matchScore": 1
+        },
+        {
+          "name": "should test git helper functions",
+          "file": "tests/unit/final-coverage-boost.test.js",
+          "error": "✕ should test git helper functions (1 ms)\n    Enhancer Pipeline\n      ✕ should test pipeline operations\n  ● Final Coverage Boost › Tool Documentation Service › should test documentation generation\n    Cannot find module '../../../src/core/tool-registry.js' from 'tests/unit/final-coverage-boost.test.js'\n      82 |       };\n      83 |\n    > 84 |       jest.unstable_mockModule(\"../../../src/core/tool-registry.js\", () => ({\n         |            ^\n      85 |         toolRegistry: mockRegistry,\n      86 |         ToolCategories: { UTILITY: \"utility\" },\n      87 |       }));\n      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)\n      at Object.<anonymous> (tests/unit/final-coverage-boost.test.js:84:12)",
+          "matchScore": 1
+        }
+      ]
+    },
+    "ASYNC_ISSUE": {
+      "count": 0,
+      "tests": []
+    },
+    "UNDEFINED_PROPERTY": {
+      "count": 4,
+      "tests": [
+        {
+          "name": "should register with custom options",
+          "file": "tests/unit/enhancers/enhancer-registry.test.js",
+          "error": "✕ should register with custom options (5 ms)\n      ✕ should support method chaining\n    unregister\n    getEnhancer\n      ✕ should return registered enhancer\n      ✕ should return undefined for non-existent enhancer\n    getAllEnhancers\n      ✕ should return empty array when no enhancers\n      ✕ should return all registered enhancers\n      ✕ should filter by enabled status\n    createPipeline",
+          "matchScore": 1
+        },
+        {
+          "name": "should handle null data",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should handle null data (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should throw error if default pipeline not initialized",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should throw error if default pipeline not initialized (2 ms)\n    integration\n      ✕ should support full initialization and enhancement flow\n      ✕ should support custom pipeline creation and usage\n  ● Enhancer Index › initializeDefaultEnhancers › should register all default enhancers\n    ReferenceError: defaultRegistry is not defined\n      22 |  */\n      23 | /* eslint-disable no-undef */\n    > 24 | export async function initializeDefaultEnhancers(registry = defaultRegistry) {\n         |                                                             ^\n      25 |   // Register core enhancers\n      26 |   registry\n      27 |     .register(MetadataEnhancer, { \n      at initializeDefaultEnhancers (src/enhancers/index.js:24:61)\n      at Object.<anonymous> (tests/unit/enhancers/index.test.js:94:13)",
+          "matchScore": 1
+        },
+        {
+          "name": "should return specific tool by name",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should return specific tool by name (2 ms)\n      ✕ should return undefined for non-existent tool\n    getToolsByCategory",
+          "matchScore": 1
+        }
+      ]
+    },
+    "ENHANCER_ISSUE": {
+      "count": 22,
+      "tests": [
+        {
+          "name": "should enhance response with all metadata",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should enhance response with all metadata (2 ms)\n    RiskAssessmentEnhancer",
+          "matchScore": 1
+        },
+        {
+          "name": "should identify system files as critical risk",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should identify system files as critical risk (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should identify security risks",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should identify security risks (1 ms)\n    SuggestionsEnhancer",
+          "matchScore": 1
+        },
+        {
+          "name": "should have correct initialization",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should have correct initialization (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should suggest commit when uncommitted changes exist",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should suggest commit when uncommitted changes exist (1 ms)\n      ✕ should provide workflow suggestions\n      ✕ should handle custom suggestion generators\n    TeamActivityEnhancer",
+          "matchScore": 1
+        },
+        {
+          "name": "should have correct initialization",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should have correct initialization (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should provide collaboration suggestions",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should provide collaboration suggestions (1 ms)\n        ✕ should detect team working on similar features\n      activity summary\n        ✕ should generate activity summary\n      error handling",
+          "matchScore": 0
+        },
+        {
+          "name": "should respect activity window configuration",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should respect activity window configuration (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should disable features based on configuration",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should disable features based on configuration (1 ms)\n      caching",
+          "matchScore": 0
+        },
+        {
+          "name": "should cache team activity data",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should cache team activity data (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should create a new pipeline",
+          "file": "tests/unit/enhancers/enhancer-registry.test.js",
+          "error": "✕ should create a new pipeline (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should create pipeline with options",
+          "file": "tests/unit/enhancers/enhancer-registry.test.js",
+          "error": "✕ should create pipeline with options (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should use all enhancers if none specified",
+          "file": "tests/unit/enhancers/enhancer-registry.test.js",
+          "error": "✕ should use all enhancers if none specified (1 ms)\n      ✕ should create pipeline with specific enhancers\n      ✕ should throw error for duplicate pipeline name\n    getPipeline\n      ✕ should return existing pipeline",
+          "matchScore": 1
+        },
+        {
+          "name": "should test response creation patterns",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test response creation patterns (1 ms)\n    Enhancer Patterns",
+          "matchScore": 1
+        },
+        {
+          "name": "should test enhancer registration patterns",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test enhancer registration patterns (1 ms)\n    Session Patterns",
+          "matchScore": 1
+        },
+        {
+          "name": "should create default pipeline",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should create default pipeline (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should return the registry",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should return the registry (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should accept custom registry",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should accept custom registry (1 ms)\n    createCustomPipeline",
+          "matchScore": 0
+        },
+        {
+          "name": "should create pipeline with specified enhancers",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should create pipeline with specified enhancers (1 ms)\n      ✕ should use custom name if provided\n      ✕ should pass through all options\n    enhance",
+          "matchScore": 1
+        },
+        {
+          "name": "should identify system files as critical risk",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should identify system files as critical risk (1 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should identify executables as medium risk",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should identify executables as medium risk (1 ms)\n        ✕ should identify hidden files as low risk\n      security risk assessment",
+          "matchScore": 0
+        },
+        {
+          "name": "should identify credentials as critical risk",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should identify credentials as critical risk (1 ms)\n        ✕ should identify personal data as high risk\n        ✕ should identify API endpoints as medium risk\n      risk mitigation",
+          "matchScore": 0
+        }
+      ]
+    },
+    "TOOL_HANDLER_ISSUE": {
+      "count": 19,
+      "tests": [
+        {
+          "name": "should be registered with correct metadata",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should be registered with correct metadata (10 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should handle full automation workflow",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should handle full automation workflow (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should handle full release workflow",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should handle full release workflow (1 ms)\n      ✕ should handle npm publish\n    create_package",
+          "matchScore": 0
+        },
+        {
+          "name": "should create npm package",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should create npm package (1 ms)\n    run_tests",
+          "matchScore": 0
+        },
+        {
+          "name": "should run tests with coverage",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should run tests with coverage (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should create a server with correct configuration",
+          "file": "tests/unit/index.test.js",
+          "error": "✕ should create a server with correct configuration (4 ms)\n      ✕ should setup tool handlers",
+          "matchScore": 1
+        },
+        {
+          "name": "should handle registry registration errors gracefully",
+          "file": "tests/unit/index.test.js",
+          "error": "✕ should handle registry registration errors gracefully (1 ms)\n    tool request handlers\n      ListToolsRequestSchema handler\n        ✕ should return all registered tools\n      CallToolRequestSchema handler\n        ✕ should execute the requested tool\n        ✕ should throw error for unknown tool",
+          "matchScore": 1
+        },
+        {
+          "name": "should get popular tools",
+          "file": "tests/unit/services/tool-discovery.test.js",
+          "error": "✕ should get popular tools (2 ms)\n    searchTools",
+          "matchScore": 0
+        },
+        {
+          "name": "should be registered with correct metadata",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should be registered with correct metadata (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should generate repository map",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should generate repository map (1 ms)\n      ✕ should respect max depth\n    search_todos\n      ✕ should find TODO comments\n      ✕ should filter by type\n    check_dependencies\n      ✕ should check npm dependencies",
+          "matchScore": 0
+        },
+        {
+          "name": "should check for unused dependencies",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should check for unused dependencies (1 ms)\n    create_npm_package\n      ✕ should create npm package structure\n    run_script\n      ✕ should run npm script\n      ✕ should handle script not found\n    find_files\n      ✕ should find files by pattern",
+          "matchScore": 0
+        },
+        {
+          "name": "should filter by modified time",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should filter by modified time (1 ms)\n    count_lines\n      ✕ should count lines of code\n    analyze_bundle",
+          "matchScore": 0
+        },
+        {
+          "name": "should be registered with correct metadata",
+          "file": "tests/unit/tools/documentation.test.js",
+          "error": "✕ should be registered with correct metadata (5 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should generate all documentation sections",
+          "file": "tests/unit/tools/documentation.test.js",
+          "error": "✕ should generate all documentation sections (1 ms)\n      ✕ should respect section inclusion options\n    generate_tool_docs\n      ✕ should generate documentation for all tools",
+          "matchScore": 0
+        },
+        {
+          "name": "should generate docs for specific category",
+          "file": "tests/unit/tools/documentation.test.js",
+          "error": "✕ should generate docs for specific category (1 ms)\n      ✕ should generate docs for specific tools\n    update_tool_catalog\n      ✕ should generate tool catalog",
+          "matchScore": 0
+        },
+        {
+          "name": "should initialize with registry",
+          "file": "tests/unit/services/tool-documentation.test.js",
+          "error": "✕ should initialize with registry (1 ms)\n    generateToolDocs\n      ✕ should generate documentation for a tool\n      ✕ should handle tool not found\n      ✕ should format parameters correctly\n    generateCategoryDocs",
+          "matchScore": 0
+        },
+        {
+          "name": "should register all tool categories",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should register all tool categories (2 ms)",
+          "matchScore": 0
+        },
+        {
+          "name": "should register utility tools",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should register utility tools (1 ms)\n    getRegisteredTools\n      ✕ should return list of registered tools\n    getTool",
+          "matchScore": 0
+        },
+        {
+          "name": "should return tools by category",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should return tools by category (1 ms)\n    tool structure",
+          "matchScore": 0
+        }
+      ]
+    },
+    "SESSION_CONTEXT_ISSUE": {
+      "count": 7,
+      "tests": [
+        {
+          "name": "should handle missing context",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should handle missing context (1 ms)\n      configuration",
+          "matchScore": 1
+        },
+        {
+          "name": "should add context",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should add context (2 ms)\n    Response validation",
+          "matchScore": 1
+        },
+        {
+          "name": "should test context operations",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test context operations (2 ms)\n    Git Operations",
+          "matchScore": 1
+        },
+        {
+          "name": "should test session operations",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test session operations (2 ms)\n    Config Patterns",
+          "matchScore": 1
+        },
+        {
+          "name": "should enhance response using default pipeline",
+          "file": "tests/unit/enhancers/index.test.js",
+          "error": "✕ should enhance response using default pipeline (1 ms)\n      ✕ should use empty context if not provided",
+          "matchScore": 1
+        },
+        {
+          "name": "should add mitigation suggestions for high risks",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should add mitigation suggestions for high risks (1 ms)\n        ✕ should provide context-aware mitigations\n      custom risk evaluators\n        ✕ should apply custom risk evaluators\n      configuration",
+          "matchScore": 1
+        },
+        {
+          "name": "should test documentation generation",
+          "file": "tests/unit/final-coverage-boost.test.js",
+          "error": "✕ should test documentation generation (1 ms)\n    Tool Discovery Service\n      ✕ should test discovery methods\n    Context Operations\n      ✕ should test all context operations\n    Enhanced Response Utils\n      ✕ should test response conversion\n    Git Helpers",
+          "matchScore": 1
+        }
+      ]
+    },
+    "GIT_OPERATION_ISSUE": {
+      "count": 18,
+      "tests": [
+        {
+          "name": "should handle uncommitted changes",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should handle uncommitted changes (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should skip optional steps",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should skip optional steps (1 ms)\n    quick_commit",
+          "matchScore": 1
+        },
+        {
+          "name": "should commit all changes quickly",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should commit all changes quickly (1 ms)\n      ✕ should generate commit message if not provided\n    smart_commit",
+          "matchScore": 1
+        },
+        {
+          "name": "should analyze changes and create smart commit",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should analyze changes and create smart commit (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should push if requested",
+          "file": "tests/unit/tools/automation.test.js",
+          "error": "✕ should push if requested (1 ms)\n    auto_pr\n      ✕ should create PR with generated content\n      ✕ should use custom title and body\n    sync_main\n      ✕ should sync with main branch\n      ✕ should use rebase strategy if requested\n    full_release",
+          "matchScore": 1
+        },
+        {
+          "name": "should suggest next steps after branch creation",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should suggest next steps after branch creation (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should suggest PR creation after commits",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should suggest PR creation after commits (1 ms)\n      ✕ should add safety suggestions for high-risk operations",
+          "matchScore": 1
+        },
+        {
+          "name": "should track recent commits",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should track recent commits (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should identify related branches",
+          "file": "tests/unit/enhancers/core-enhancers.test.js",
+          "error": "✕ should identify related branches (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should analyze webpack bundle",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should analyze webpack bundle (1 ms)\n    create_github_action\n      ✕ should create CI workflow\n      ✕ should create deploy workflow\n    env_info",
+          "matchScore": 1
+        },
+        {
+          "name": "should gather environment information",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should gather environment information (1 ms)\n    git_cleanup\n      ✕ should clean up merged branches\n      ✕ should handle dry run mode\n    git_history",
+          "matchScore": 1
+        },
+        {
+          "name": "should get commit history",
+          "file": "tests/unit/tools/utilities.test.js",
+          "error": "✕ should get commit history (1 ms)\n      ✕ should filter by author\n    git_stats\n      ✕ should get repository statistics\n    generate_docs",
+          "matchScore": 1
+        },
+        {
+          "name": "should identify related branches",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should identify related branches (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should find active pull requests",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should find active pull requests (1 ms)\n      file contributor analysis\n        ✕ should identify contributors for affected files\n        ✕ should suggest reviewers based on contribution count\n      conflict detection\n        ✕ should detect potential conflicts with other branches\n      collaboration insights",
+          "matchScore": 1
+        },
+        {
+          "name": "should handle git command failures gracefully",
+          "file": "tests/unit/enhancers/team-activity-enhancer.test.js",
+          "error": "✕ should handle git command failures gracefully (1 ms)",
+          "matchScore": 1
+        },
+        {
+          "name": "should test git helper patterns",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test git helper patterns (1 ms)\n    Enhanced Server",
+          "matchScore": 1
+        },
+        {
+          "name": "should identify force push as high risk",
+          "file": "tests/unit/enhancers/risk-assessment-enhancer.test.js",
+          "error": "✕ should identify force push as high risk (1 ms)\n        ✕ should identify main branch operations as high risk\n        ✕ should identify hard reset as high risk\n        ✕ should identify rebase as medium risk\n      file risk assessment",
+          "matchScore": 1
+        },
+        {
+          "name": "should register github flow tools",
+          "file": "tests/unit/tools/tool-registry.test.js",
+          "error": "✕ should register github flow tools (1 ms)\n      ✕ should register automation tools",
+          "matchScore": 1
+        }
+      ]
+    },
+    "FILE_SYSTEM_ISSUE": {
+      "count": 0,
+      "tests": []
+    },
+    "OTHER": {
+      "count": 9,
+      "tests": [
+        {
+          "name": "should setup error handling",
+          "file": "tests/unit/index.test.js",
+          "error": "✕ should setup error handling (1 ms)\n    registerTools\n      ✕ should register all tool categories\n      ✕ should register registry tools\n      ✕ should log registration statistics\n    addTool\n      ✕ should add tool to the tools array"
+        },
+        {
+          "name": "should register tool in the centralized registry",
+          "file": "tests/unit/index.test.js",
+          "error": "✕ should register tool in the centralized registry (1 ms)"
+        },
+        {
+          "name": "should create success response",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should create success response (3 ms)"
+        },
+        {
+          "name": "should create error response",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should create error response (1 ms)"
+        },
+        {
+          "name": "should handle empty data",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should handle empty data (1 ms)\n    ResponseFactory"
+        },
+        {
+          "name": "should add metadata",
+          "file": "tests/unit/core/simple-response.test.js",
+          "error": "✕ should add metadata (9 ms)"
+        },
+        {
+          "name": "should test server patterns",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test server patterns (1 ms)\n    Tool Categories"
+        },
+        {
+          "name": "should test all tool categories",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test all tool categories (1 ms)\n    Response Patterns"
+        },
+        {
+          "name": "should test config edge cases",
+          "file": "tests/unit/boost-coverage.test.js",
+          "error": "✕ should test config edge cases (1 ms)\n    Tool Discovery"
+        }
+      ]
+    }
+  }
+}
