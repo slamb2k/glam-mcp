@@ -1,0 +1,16 @@
+# Task ID: 2
+# Title: Fix API Contract Mismatch Tests
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Update tests with incorrect API expectations to align with the current implementation.
+# Details:
+For each test identified with API contract mismatches:
+1. Compare test expectations with actual API implementation
+2. Update test mocks and assertions to match current API contracts
+3. Document any API changes that weren't properly communicated
+
+Focus on high-impact areas first, particularly in core modules and frequently used tools.
+
+# Test Strategy:
+Run fixed tests to verify they pass. Create a regression test suite to ensure these tests remain aligned with API contracts in the future.

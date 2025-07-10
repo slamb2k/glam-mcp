@@ -1,0 +1,95 @@
+# Task ID: 5
+# Title: Configure Adjusted Coverage Thresholds
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update Jest configuration to set realistic coverage thresholds based on the proposed solution.
+# Details:
+Modify the Jest configuration file (jest.config.js) to:
+1. Lower overall coverage threshold from 90% to 70% initially, with plans to gradually increase to 80% as test coverage improves
+2. Set up different thresholds for different parts of the codebase:
+   - Core modules: 80%
+   - Tools: 60%
+   - Utilities: 70%
+   - Clients/Services: 50%
+3. Configure Jest to generate detailed coverage reports
+
+Example implementation in jest.config.js:
+```javascript
+module.exports = {
+  // Other Jest configuration options...
+  collectCoverage: true,
+  coverageReporters: ['json', 'lcov', 'text', 'clover', 'html'],
+  coverageDirectory: 'coverage',
+  coverageThreshold: {
+    global: {
+      statements: 70, // Initially set to 70%, plan to increase to 80%
+      branches: 70,
+      functions: 70,
+      lines: 70
+    },
+    './src/core/': {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80
+    },
+    './src/tools/': {
+      statements: 60,
+      branches: 60,
+      functions: 60,
+      lines: 60
+    },
+    './src/utils/': {
+      statements: 70,
+      branches: 70,
+      functions: 70,
+      lines: 70
+    },
+    './src/clients/': {
+      statements: 50,
+      branches: 50,
+      functions: 50,
+      lines: 50
+    },
+    './src/services/': {
+      statements: 50,
+      branches: 50,
+      functions: 50,
+      lines: 50
+    }
+  }
+};
+```
+
+# Test Strategy:
+1. Run the test suite with the new configuration to verify thresholds are applied correctly
+2. Check that coverage reports are generated with the expected granularity
+3. Verify that the module-specific thresholds are correctly applied to their respective directories
+4. Document the current coverage levels and the plan to gradually increase the global threshold to 80%
+
+# Subtasks:
+## 1. Update jest.config.js with new global threshold [pending]
+### Dependencies: None
+### Description: Modify the global coverage threshold from 90% to 70% in jest.config.js
+### Details:
+
+
+## 2. Implement module-specific thresholds [pending]
+### Dependencies: None
+### Description: Add configuration for different thresholds based on module types (core, tools, utils, clients, services)
+### Details:
+
+
+## 3. Configure detailed coverage reporting [pending]
+### Dependencies: None
+### Description: Set up Jest to generate comprehensive coverage reports in multiple formats (json, lcov, text, html)
+### Details:
+
+
+## 4. Document threshold increase plan [pending]
+### Dependencies: None
+### Description: Create documentation outlining the plan to gradually increase the global threshold from 70% to 80%
+### Details:
+
+

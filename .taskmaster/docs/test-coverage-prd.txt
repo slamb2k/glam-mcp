@@ -1,0 +1,82 @@
+# Test Coverage Improvement Plan for glam-mcp
+
+## Overview
+The glam-mcp project currently has ~21% test coverage with a configured threshold of 90%. This plan outlines a pragmatic approach to improve test coverage while balancing effort versus benefit.
+
+## Current State Analysis
+- Current coverage: 21.18% (statements), 18.48% (branches), 27.8% (functions), 21.47% (lines)
+- Target threshold: 90% across all metrics
+- Total failing tests: 229 out of 515
+- Major gaps: Tool handlers, services, clients, enhanced-server
+
+## Objectives
+1. Achieve a realistic and maintainable test coverage target
+2. Fix failing tests to ensure CI/CD pipeline stability
+3. Focus testing efforts on critical paths and high-risk areas
+4. Establish sustainable testing practices
+
+## Proposed Solution
+
+### Phase 1: Stabilization (Priority: Critical)
+- Fix all failing tests by aligning with actual API implementations
+- Update test assertions to match current codebase behavior
+- Remove or update obsolete tests
+
+### Phase 2: Realistic Target Setting (Priority: High)
+- Lower coverage threshold from 90% to 70% for initial milestone
+- Set long-term goal of 80% coverage
+- Configure different thresholds for different parts of codebase:
+  - Core modules: 80%
+  - Tools: 60%
+  - Utilities: 70%
+  - Clients/Services: 50%
+
+### Phase 3: Strategic Test Implementation (Priority: High)
+- Focus on testing critical paths first:
+  - Core enhanced response system
+  - Main server functionality
+  - Most-used tools (github-flow, automation)
+- Use integration tests over unit tests for tools
+- Mock external dependencies consistently
+
+### Phase 4: Tool Handler Testing (Priority: Medium)
+- Create test helpers for tool testing
+- Test happy paths for each tool
+- Add tests for common error scenarios
+- Skip edge cases unless they represent real risks
+
+### Phase 5: Documentation and Maintenance (Priority: Medium)
+- Document testing approach and patterns
+- Create test templates for new tools
+- Set up coverage reporting in CI
+- Establish code review guidelines for test coverage
+
+## Success Criteria
+- All tests passing (0 failing tests)
+- 70% overall test coverage achieved
+- Critical paths have 80%+ coverage
+- New code requires tests in PR reviews
+- Coverage trends upward over time
+
+## Technical Approach
+- Use Jest with proper ESM support
+- Create shared test utilities for mocking
+- Focus on behavior testing over implementation
+- Prioritize integration tests for tools
+- Use snapshot testing where appropriate
+
+## Risks and Mitigation
+- Risk: Time investment too high
+  - Mitigation: Focus on high-value tests only
+- Risk: Tests become brittle
+  - Mitigation: Test behavior, not implementation
+- Risk: Mock complexity
+  - Mitigation: Create reusable mock utilities
+
+## Timeline Estimate
+- Phase 1: 1-2 days
+- Phase 2: 0.5 days
+- Phase 3: 3-4 days
+- Phase 4: 2-3 days
+- Phase 5: 1-2 days
+Total: 7.5-11.5 days of effort

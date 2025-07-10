@@ -1,0 +1,17 @@
+# Task ID: 12
+# Title: Implement Tests for Remaining Tool Handlers
+# Status: pending
+# Dependencies: 11
+# Priority: medium
+# Description: Create tests for the remaining tool handlers, focusing on happy paths and common error scenarios.
+# Details:
+For each remaining tool handler:
+1. Identify the core functionality and expected outputs
+2. Create tests for the happy path (successful execution)
+3. Add tests for common error scenarios
+4. Skip edge cases unless they represent significant risks
+
+Use the test helpers created earlier to maintain consistency across tool tests.
+
+# Test Strategy:
+Use integration tests to verify tool behavior. Focus on testing from the perspective of the tool's consumers rather than implementation details.
