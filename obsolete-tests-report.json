@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-07-10T17:00:56.413Z",
+  "summary": {
+    "total": 49,
+    "valid": 46,
+    "obsolete": 3,
+    "errors": 0
+  },
+  "obsoleteTests": [
+    {
+      "testFile": "tests/unit/final-coverage-boost.test.js",
+      "missingModules": [
+        {
+          "import": "../../../src/services/tool-documentation.js",
+          "resolved": "../src/services/tool-documentation.js"
+        },
+        {
+          "import": "../../../src/services/tool-discovery.js",
+          "resolved": "../src/services/tool-discovery.js"
+        },
+        {
+          "import": "../../../src/context/context-operations.js",
+          "resolved": "../src/context/context-operations.js"
+        },
+        {
+          "import": "../../../src/utils/enhanced-response-utils.js",
+          "resolved": "../src/utils/enhanced-response-utils.js"
+        },
+        {
+          "import": "../../../src/utils/git-helpers.js",
+          "resolved": "../src/utils/git-helpers.js"
+        },
+        {
+          "import": "../../../src/enhancers/enhancer-pipeline.js",
+          "resolved": "../src/enhancers/enhancer-pipeline.js"
+        },
+        {
+          "import": "../../../src/enhancers/base-enhancer.js",
+          "resolved": "../src/enhancers/base-enhancer.js"
+        },
+        {
+          "import": "../../../src/core/tool-registry.js",
+          "resolved": "../src/core/tool-registry.js"
+        },
+        {
+          "import": "../../../src/core/tool-registry.js",
+          "resolved": "../src/core/tool-registry.js"
+        }
+      ],
+      "isObsolete": true
+    },
+    {
+      "testFile": "tests/unit/boost-coverage.test.js",
+      "missingModules": [
+        {
+          "import": "../../../src/context/context-operations.js",
+          "resolved": "../src/context/context-operations.js"
+        },
+        {
+          "import": "../../../src/utils/git-helpers.js",
+          "resolved": "../src/utils/git-helpers.js"
+        },
+        {
+          "import": "../../../src/server/enhanced-server.js",
+          "resolved": "../src/server/enhanced-server.js"
+        },
+        {
+          "import": "../../../src/core/tool-registry.js",
+          "resolved": "../src/core/tool-registry.js"
+        },
+        {
+          "import": "../../../src/core/enhanced-response.js",
+          "resolved": "../src/core/enhanced-response.js"
+        },
+        {
+          "import": "../../../src/enhancers/base-enhancer.js",
+          "resolved": "../src/enhancers/base-enhancer.js"
+        },
+        {
+          "import": "../../../src/context/session-manager.js",
+          "resolved": "../src/context/session-manager.js"
+        },
+        {
+          "import": "../../../src/core/config.js",
+          "resolved": "../src/core/config.js"
+        },
+        {
+          "import": "../../../src/services/tool-discovery.js",
+          "resolved": "../src/services/tool-discovery.js"
+        },
+        {
+          "import": "../../../src/core/tool-registry.js",
+          "resolved": "../src/core/tool-registry.js"
+        }
+      ],
+      "isObsolete": true
+    },
+    {
+      "testFile": "tests/unit/server/enhanced-server.test.js",
+      "missingModules": [
+        {
+          "import": "../../../src/core/session-manager.js",
+          "resolved": "src/core/session-manager.js"
+        }
+      ],
+      "isObsolete": true
+    }
+  ],
+  "errors": []
+}

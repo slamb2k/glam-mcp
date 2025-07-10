@@ -88,7 +88,7 @@ const mockSessionManager = {
   getInstance: jest.fn(() => mockSessionManagerInstance),
 };
 
-jest.unstable_mockModule("../../../src/core/session-manager.js", () => ({
+jest.unstable_mockModule("../../../src/context/session-manager.js", () => ({
   SessionManager: mockSessionManager,
 }));
 

@@ -9,7 +9,7 @@ describe("Tool Registry", () => {
     jest.resetModules();
     
     // Import the module
-    const module = await import("../../../src/tools/tool-registry.js");
+    const module = await import("../../../src/core/tool-registry.js");
     toolRegistry = module.toolRegistry;
     
     // Mock server
