@@ -53,7 +53,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.HIGH);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.HIGH);
         const risks = enhanced.getRisks();
         expect(risks.some(r => r.type === "git" && r.description.includes("force"))).toBe(true);
       });
@@ -67,7 +67,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.HIGH);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.HIGH);
       });
 
       it("should identify hard reset as high risk", async () => {
@@ -79,7 +79,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.HIGH);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.HIGH);
       });
 
       it("should identify rebase as medium risk", async () => {
@@ -91,7 +91,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.MEDIUM);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.MEDIUM);
       });
     });
 
@@ -106,7 +106,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.CRITICAL);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.CRITICAL);
         const risks = enhanced.getRisks();
         expect(risks.some(r => r.type === "file" && r.description.includes("system"))).toBe(true);
       });
@@ -121,7 +121,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.MEDIUM);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.MEDIUM);
       });
 
       it("should identify hidden files as low risk", async () => {
@@ -148,7 +148,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.CRITICAL);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.CRITICAL);
         const risks = enhanced.getRisks();
         expect(risks.some(r => r.type === "security" && r.description.includes("credential"))).toBe(true);
       });
@@ -163,7 +163,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await enhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.HIGH);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.HIGH);
       });
 
       it("should identify API endpoints as medium risk", async () => {
@@ -246,7 +246,7 @@ describe("RiskAssessmentEnhancer", () => {
 
         const enhanced = await customEnhancer.enhance(response, mockContext);
 
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.CRITICAL);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.CRITICAL);
         const risks = enhanced.getRisks();
         expect(risks.some(r => r.type === "custom")).toBe(true);
       });
@@ -283,7 +283,7 @@ describe("RiskAssessmentEnhancer", () => {
         const enhanced = await enhancer.enhance(response, null);
 
         expect(enhanced).toBeDefined();
-        expect(enhanced.getRiskLevel()).toBe(RiskLevel.NONE);
+        expect(enhanced.getHighestRiskLevel()).toBe(RiskLevel.NONE);
       });
 
       it("should handle evaluation errors", async () => {

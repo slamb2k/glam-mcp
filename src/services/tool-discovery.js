@@ -173,6 +173,30 @@ export class ToolDiscoveryService {
   }
 
   /**
+   * Get popular tools based on usage metrics
+   */
+  getPopularTools(maxResults = 10) {
+    const cacheKey = `popular:${maxResults}`;
+    const cached = this.getFromCache(cacheKey);
+    if (cached) return cached;
+    
+    // Get all tools and sort by usage count
+    const allTools = Array.from(this.registry.tools.values());
+    
+    // Sort by usage count (if available in metadata) or fall back to a default score
+    const sortedTools = allTools
+      .map(tool => ({
+        ...tool,
+        usageCount: tool.metadata?.usageCount || 0
+      }))
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, maxResults);
+    
+    this.setCache(cacheKey, sortedTools);
+    return sortedTools;
+  }
+
+  /**
    * Search with natural language
    */
   searchNatural(query) {

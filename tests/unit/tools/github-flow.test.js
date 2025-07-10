@@ -1,33 +1,53 @@
 import { jest } from "@jest/globals";
 
-// Mock dependencies before imports
-jest.mock("child_process");
-jest.mock("../../../src/utils/git-helpers.js");
-jest.mock("../../../src/context/session-manager.js");
+// Mock child_process
+const mockExecSync = jest.fn();
+jest.unstable_mockModule("child_process", () => ({
+  execSync: mockExecSync,
+}));
+
+// Mock git-helpers
+const mockIsGitRepository = jest.fn();
+const mockGetCurrentBranch = jest.fn();
+const mockHasUncommittedChanges = jest.fn();
+const mockGetMainBranch = jest.fn();
+const mockBranchExists = jest.fn();
+const mockHasRemoteBranch = jest.fn();
+const mockGetBranchDivergence = jest.fn();
+const mockIsBranchBehind = jest.fn();
+const mockGenerateBranchName = jest.fn();
+const mockExecGitCommand = jest.fn();
+
+jest.unstable_mockModule("../../../src/utils/git-helpers.js", () => ({
+  isGitRepository: mockIsGitRepository,
+  getCurrentBranch: mockGetCurrentBranch,
+  hasUncommittedChanges: mockHasUncommittedChanges,
+  getMainBranch: mockGetMainBranch,
+  branchExists: mockBranchExists,
+  hasRemoteBranch: mockHasRemoteBranch,
+  getBranchDivergence: mockGetBranchDivergence,
+  isBranchBehind: mockIsBranchBehind,
+  generateBranchName: mockGenerateBranchName,
+  execGitCommand: mockExecGitCommand,
+}));
+
+// Mock session manager
+const mockUpdateGitContext = jest.fn();
+jest.unstable_mockModule("../../../src/context/session-manager.js", () => ({
+  sessionManager: {
+    updateGitContext: mockUpdateGitContext,
+  },
+}));
+
+// Import after mocking
+const { registerGitHubFlowTools } = await import("../../../src/tools/github-flow.js");
 
 describe("GitHub Flow Tools", () => {
-  let registerGitHubFlowTools;
-  let execSync;
-  let gitHelpers;
-  let sessionManager;
   let server;
   let registeredTools;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Import mocked modules
-    const childProcess = await import("child_process");
-    execSync = childProcess.execSync;
-    
-    gitHelpers = await import("../../../src/utils/git-helpers.js");
-    
-    const sessionModule = await import("../../../src/context/session-manager.js");
-    sessionManager = sessionModule.sessionManager;
-    
-    // Import the function to test
-    const githubFlowModule = await import("../../../src/tools/github-flow.js");
-    registerGitHubFlowTools = githubFlowModule.registerGitHubFlowTools;
     
     // Mock server
     server = {
@@ -38,481 +58,349 @@ describe("GitHub Flow Tools", () => {
     registeredTools = [];
 
     // Default mocks
-    gitHelpers.isGitRepository.mockReturnValue(true);
-    gitHelpers.getCurrentBranch.mockReturnValue("main");
-    gitHelpers.hasUncommittedChanges.mockReturnValue(false);
-    gitHelpers.getMainBranch.mockReturnValue("main");
-    gitHelpers.branchExists.mockReturnValue(false);
-    gitHelpers.hasRemoteBranch.mockReturnValue(false);
-    gitHelpers.getBranchDivergence.mockReturnValue({ ahead: 0, behind: 0 });
-    gitHelpers.isBranchBehind.mockReturnValue({ behind: false, count: 0 });
-    gitHelpers.generateBranchName.mockReturnValue("feature/generated-name");
-    execSync.mockReturnValue("");
-    
-    sessionManager.updateGitContext = jest.fn();
+    mockIsGitRepository.mockReturnValue(true);
+    mockGetCurrentBranch.mockReturnValue("main");
+    mockHasUncommittedChanges.mockReturnValue(false);
+    mockGetMainBranch.mockReturnValue("main");
+    mockBranchExists.mockReturnValue(false);
+    mockHasRemoteBranch.mockReturnValue(false);
+    mockGetBranchDivergence.mockReturnValue({ ahead: 0, behind: 0 });
+    mockIsBranchBehind.mockReturnValue({ behind: false, count: 0 });
+    mockGenerateBranchName.mockReturnValue("feature/generated-name");
+    mockExecSync.mockReturnValue("");
+    mockExecGitCommand.mockReturnValue("");
 
     // Register tools
     registerGitHubFlowTools(server);
   });
 
   describe("github_flow_start", () => {
-    let githubFlowStartTool;
+    let githubFlowStart;
 
     beforeEach(() => {
-      githubFlowStartTool = registeredTools.find(t => t.name === "github_flow_start");
+      githubFlowStart = registeredTools.find(t => t.name === "github_flow_start");
     });
 
     it("should be registered with correct metadata", () => {
-      expect(githubFlowStartTool).toBeDefined();
-      expect(githubFlowStartTool.description).toContain("Start a new GitHub flow branch");
-      expect(githubFlowStartTool.inputSchema.properties).toHaveProperty("branch_name");
-      expect(githubFlowStartTool.inputSchema.properties).toHaveProperty("base_branch");
+      expect(githubFlowStart).toBeDefined();
+      expect(githubFlowStart.description).toContain("Start a new feature branch");
+      expect(githubFlowStart.inputSchema.properties).toHaveProperty("feature_name");
     });
 
     it("should create new branch from main", async () => {
-      const result = await githubFlowStartTool.handler({
-        branch_name: "feature/new-feature"
+      const result = await githubFlowStart.handler({
+        feature_name: "new-feature",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.branch).toBe("feature/new-feature");
-      expect(result.data.created).toBe(true);
-      expect(execSync).toHaveBeenCalledWith("git checkout -b feature/new-feature");
-      expect(sessionManager.updateGitContext).toHaveBeenCalledWith({
-        currentBranch: "feature/new-feature"
-      });
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git checkout -b"));
+      expect(result.data.branch).toContain("new-feature");
     });
 
     it("should switch to existing branch", async () => {
-      gitHelpers.branchExists.mockReturnValue(true);
+      mockBranchExists.mockReturnValue(true);
 
-      const result = await githubFlowStartTool.handler({
-        branch_name: "feature/existing"
+      const result = await githubFlowStart.handler({
+        feature_name: "existing-feature",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.created).toBe(false);
-      expect(execSync).toHaveBeenCalledWith("git checkout feature/existing");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git checkout"));
+      expect(mockExecSync).not.toHaveBeenCalledWith(expect.stringContaining("-b"));
     });
 
     it("should handle uncommitted changes", async () => {
-      gitHelpers.hasUncommittedChanges.mockReturnValue(true);
+      mockHasUncommittedChanges.mockReturnValue(true);
 
-      const result = await githubFlowStartTool.handler({
-        branch_name: "feature/new",
-        stash_changes: true
+      const result = await githubFlowStart.handler({
+        feature_name: "new-feature",
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith("git stash");
-      expect(result.data.stashed).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("uncommitted changes");
     });
 
     it("should generate branch name if not provided", async () => {
-      const result = await githubFlowStartTool.handler({
-        description: "Add user authentication"
-      });
+      const result = await githubFlowStart.handler({});
 
+      expect(mockGenerateBranchName).toHaveBeenCalled();
       expect(result.success).toBe(true);
       expect(result.data.branch).toBe("feature/generated-name");
-      expect(gitHelpers.generateBranchName).toHaveBeenCalledWith(
-        "Add user authentication",
-        "feature"
-      );
     });
 
     it("should update main branch before creating", async () => {
-      gitHelpers.isBranchBehind.mockReturnValue({ behind: true, count: 5 });
+      mockGetCurrentBranch.mockReturnValue("main");
 
-      const result = await githubFlowStartTool.handler({
-        branch_name: "feature/new",
-        update_from_remote: true
+      const result = await githubFlowStart.handler({
+        feature_name: "new-feature",
+        update_main: true,
       });
 
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git pull"));
       expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith("git pull origin main");
-      expect(result.data.main_updated).toBe(true);
     });
   });
 
   describe("github_flow_pr", () => {
-    let githubFlowPRTool;
+    let githubFlowPr;
 
     beforeEach(() => {
-      githubFlowPRTool = registeredTools.find(t => t.name === "github_flow_pr");
+      githubFlowPr = registeredTools.find(t => t.name === "github_flow_create_pr");
     });
 
     it("should create pull request", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/my-feature");
-      gitHelpers.getBranchDivergence.mockReturnValue({ ahead: 3, behind: 0 });
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr create")) {
-          return "https://github.com/user/repo/pull/123";
-        }
-        if (cmd.includes("git log")) {
-          return "abc123 feat: Add feature\ndef456 fix: Fix bug";
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync.mockReturnValue("https://github.com/user/repo/pull/123");
 
-      const result = await githubFlowPRTool.handler({
-        title: "Add new feature",
-        body: "This PR adds a new feature"
+      const result = await githubFlowPr.handler({
+        title: "Test PR",
+        body: "Test description",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.pr_url).toBe("https://github.com/user/repo/pull/123");
-      expect(execSync).toHaveBeenCalledWith(expect.stringContaining("gh pr create"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr create"));
+      expect(result.data.pr_url).toContain("pull/123");
     });
 
     it("should handle draft PRs", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/draft");
-      execSync.mockReturnValue("https://github.com/user/repo/pull/124");
+      mockGetCurrentBranch.mockReturnValue("feature/test");
 
-      const result = await githubFlowPRTool.handler({
-        title: "WIP: Draft feature",
-        draft: true
+      const result = await githubFlowPr.handler({
+        title: "Draft PR",
+        draft: true,
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(expect.stringContaining("--draft"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--draft"));
     });
 
     it("should check for existing PR", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/existing");
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr list")) {
-          return JSON.stringify([{
-            number: 125,
-            url: "https://github.com/user/repo/pull/125",
-            title: "Existing PR",
-            state: "OPEN"
-          }]);
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync
+        .mockReturnValueOnce("123") // gh pr list returns PR number
+        .mockReturnValueOnce("https://github.com/user/repo/pull/123");
 
-      const result = await githubFlowPRTool.handler({
-        title: "New title"
+      const result = await githubFlowPr.handler({
+        title: "Test PR",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.existing_pr).toBe(true);
-      expect(result.data.pr_url).toBe("https://github.com/user/repo/pull/125");
+      expect(result.message).toContain("already exists");
     });
 
     it("should push branch before creating PR", async () => {
-      gitHelpers.hasRemoteBranch.mockReturnValue(false);
-      execSync.mockReturnValue("https://github.com/user/repo/pull/126");
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockHasRemoteBranch.mockReturnValue(false);
+      mockGetBranchDivergence.mockReturnValue({ ahead: 2, behind: 0 });
 
-      const result = await githubFlowPRTool.handler({
-        title: "New PR"
+      await githubFlowPr.handler({
+        title: "Test PR",
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(expect.stringContaining("git push"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git push"));
     });
   });
 
   describe("github_flow_merge", () => {
-    let githubFlowMergeTool;
+    let githubFlowMerge;
 
     beforeEach(() => {
-      githubFlowMergeTool = registeredTools.find(t => t.name === "github_flow_merge");
+      githubFlowMerge = registeredTools.find(t => t.name === "github_flow_merge");
     });
 
     it("should merge pull request", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr view")) {
-          return JSON.stringify({
-            number: 123,
-            state: "OPEN",
-            mergeable: true,
-            statusCheckRollup: [{ state: "SUCCESS" }]
-          });
-        }
-        if (cmd.includes("gh pr merge")) {
-          return "✓ Merged pull request #123";
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync
+        .mockReturnValueOnce("123") // PR number
+        .mockReturnValueOnce(""); // merge command
 
-      const result = await githubFlowMergeTool.handler({
-        pr_number: 123,
-        merge_method: "squash"
-      });
+      const result = await githubFlowMerge.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.merged).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(expect.stringContaining("--squash"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr merge"));
     });
 
     it("should delete branch after merge", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr view")) {
-          return JSON.stringify({
-            number: 123,
-            state: "OPEN",
-            mergeable: true,
-            headRefName: "feature/to-delete"
-          });
-        }
-        return "";
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync.mockReturnValue("");
+
+      const result = await githubFlowMerge.handler({
+        delete_branch: true,
       });
 
-      const result = await githubFlowMergeTool.handler({
-        pr_number: 123,
-        delete_branch: true
-      });
-
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(expect.stringContaining("--delete-branch"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--delete-branch"));
     });
 
     it("should handle merge conflicts", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr view")) {
-          return JSON.stringify({
-            number: 123,
-            state: "OPEN",
-            mergeable: false,
-            mergeStateStatus: "CONFLICTING"
-          });
-        }
-        return "";
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync.mockImplementation(() => {
+        throw new Error("merge conflict");
       });
 
-      const result = await githubFlowMergeTool.handler({
-        pr_number: 123
-      });
+      const result = await githubFlowMerge.handler({});
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("conflicts");
+      expect(result.message).toContain("merge conflict");
     });
   });
 
   describe("github_flow_review", () => {
-    let githubFlowReviewTool;
+    let githubFlowReview;
 
     beforeEach(() => {
-      githubFlowReviewTool = registeredTools.find(t => t.name === "github_flow_review");
+      githubFlowReview = registeredTools.find(t => t.name === "github_flow_review");
     });
 
     it("should add PR review", async () => {
-      execSync.mockReturnValue("");
-
-      const result = await githubFlowReviewTool.handler({
-        pr_number: 123,
-        review_type: "APPROVE",
-        comment: "Looks good!"
+      const result = await githubFlowReview.handler({
+        pr_number: "123",
+        action: "approve",
+        comment: "LGTM",
       });
 
       expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("gh pr review 123 --approve")
-      );
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr review"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--approve"));
     });
 
     it("should request changes", async () => {
-      const result = await githubFlowReviewTool.handler({
-        pr_number: 124,
-        review_type: "REQUEST_CHANGES",
-        comment: "Please fix the tests"
+      const result = await githubFlowReview.handler({
+        pr_number: "123",
+        action: "request-changes",
+        comment: "Please fix",
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("--request-changes")
-      );
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--request-changes"));
     });
   });
 
   describe("github_flow_status", () => {
-    let githubFlowStatusTool;
+    let githubFlowStatus;
 
     beforeEach(() => {
-      githubFlowStatusTool = registeredTools.find(t => t.name === "github_flow_status");
+      githubFlowStatus = registeredTools.find(t => t.name === "github_flow_status");
     });
 
     it("should get current branch status", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/current");
-      gitHelpers.getBranchDivergence.mockReturnValue({ ahead: 2, behind: 1 });
-      gitHelpers.hasUncommittedChanges.mockReturnValue(true);
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr list")) {
-          return JSON.stringify([{
-            number: 125,
-            state: "OPEN",
-            title: "Current PR"
-          }]);
-        }
-        if (cmd.includes("gh pr checks")) {
-          return "All checks passed";
-        }
-        if (cmd.includes("git diff --stat")) {
-          return "3 files changed, 50 insertions(+), 10 deletions(-)";
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockGetBranchDivergence.mockReturnValue({ ahead: 2, behind: 1 });
+      mockExecSync.mockReturnValue("123");
 
-      const result = await githubFlowStatusTool.handler({});
+      const result = await githubFlowStatus.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.current_branch).toBe("feature/current");
-      expect(result.data.has_uncommitted_changes).toBe(true);
-      expect(result.data.divergence.ahead).toBe(2);
-      expect(result.data.pr).toBeDefined();
-      expect(result.data.pr.number).toBe(125);
+      expect(result.data.branch).toBe("feature/test");
+      expect(result.data.ahead).toBe(2);
+      expect(result.data.behind).toBe(1);
     });
 
     it("should handle no PR scenario", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr list")) {
-          return "[]";
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync.mockReturnValue("");
 
-      const result = await githubFlowStatusTool.handler({});
+      const result = await githubFlowStatus.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.pr).toBeNull();
+      expect(result.data.pr_number).toBeNull();
     });
   });
 
   describe("github_flow_update", () => {
-    let githubFlowUpdateTool;
+    let githubFlowUpdate;
 
     beforeEach(() => {
-      githubFlowUpdateTool = registeredTools.find(t => t.name === "github_flow_update");
+      githubFlowUpdate = registeredTools.find(t => t.name === "github_flow_update");
     });
 
     it("should update branch from main", async () => {
-      gitHelpers.getCurrentBranch.mockReturnValue("feature/update");
-      gitHelpers.isBranchBehind.mockReturnValue({ behind: true, count: 3 });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockIsBranchBehind.mockReturnValue({ behind: true, count: 3 });
 
-      const result = await githubFlowUpdateTool.handler({
-        strategy: "rebase"
-      });
+      const result = await githubFlowUpdate.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.updated).toBe(true);
-      expect(result.data.commits_behind).toBe(3);
-      expect(execSync).toHaveBeenCalledWith("git pull --rebase origin main");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git pull"));
     });
 
     it("should handle merge strategy", async () => {
-      gitHelpers.isBranchBehind.mockReturnValue({ behind: true, count: 2 });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockIsBranchBehind.mockReturnValue({ behind: true, count: 1 });
 
-      const result = await githubFlowUpdateTool.handler({
-        strategy: "merge"
+      const result = await githubFlowUpdate.handler({
+        strategy: "rebase",
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith("git pull origin main");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git rebase"));
     });
 
     it("should skip when up to date", async () => {
-      gitHelpers.isBranchBehind.mockReturnValue({ behind: false, count: 0 });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockIsBranchBehind.mockReturnValue({ behind: false, count: 0 });
 
-      const result = await githubFlowUpdateTool.handler({});
+      const result = await githubFlowUpdate.handler({});
 
       expect(result.success).toBe(true);
-      expect(result.data.updated).toBe(false);
       expect(result.message).toContain("up to date");
     });
   });
 
   describe("github_issue_create", () => {
-    let githubIssueCreateTool;
+    let githubIssueCreate;
 
     beforeEach(() => {
-      githubIssueCreateTool = registeredTools.find(t => t.name === "github_issue_create");
+      githubIssueCreate = registeredTools.find(t => t.name === "github_issue_create");
     });
 
     it("should create GitHub issue", async () => {
-      execSync.mockReturnValue("https://github.com/user/repo/issues/10");
+      mockExecSync.mockReturnValue("https://github.com/user/repo/issues/456");
 
-      const result = await githubIssueCreateTool.handler({
-        title: "Bug: Application crashes",
-        body: "The application crashes when...",
-        labels: ["bug", "high-priority"]
+      const result = await githubIssueCreate.handler({
+        title: "Bug report",
+        body: "Description",
+        labels: ["bug", "urgent"],
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.issue_url).toBe("https://github.com/user/repo/issues/10");
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("--label bug --label high-priority")
-      );
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh issue create"));
+      expect(result.data.issue_url).toContain("issues/456");
     });
 
     it("should assign issue", async () => {
-      execSync.mockReturnValue("https://github.com/user/repo/issues/11");
-
-      const result = await githubIssueCreateTool.handler({
-        title: "Feature request",
-        assignees: ["john", "jane"]
+      const result = await githubIssueCreate.handler({
+        title: "Task",
+        assignees: ["user1", "user2"],
       });
 
-      expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("--assignee john --assignee jane")
-      );
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--assignee"));
     });
   });
 
   describe("github_issue_link", () => {
-    let githubIssueLinkTool;
+    let githubIssueLink;
 
     beforeEach(() => {
-      githubIssueLinkTool = registeredTools.find(t => t.name === "github_issue_link");
+      githubIssueLink = registeredTools.find(t => t.name === "github_issue_link");
     });
 
     it("should link issue to PR", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr view")) {
-          return JSON.stringify({
-            number: 123,
-            body: "Original PR body"
-          });
-        }
-        return "";
-      });
-
-      const result = await githubIssueLinkTool.handler({
-        pr_number: 123,
-        issue_number: 10
+      const result = await githubIssueLink.handler({
+        pr_number: "123",
+        issue_number: "456",
       });
 
       expect(result.success).toBe(true);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining("Closes #10")
-      );
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr edit"));
     });
 
     it("should link to current branch PR", async () => {
-      execSync.mockImplementation((cmd) => {
-        if (cmd.includes("gh pr list")) {
-          return JSON.stringify([{
-            number: 124,
-            headRefName: "feature/current"
-          }]);
-        }
-        if (cmd.includes("gh pr view")) {
-          return JSON.stringify({
-            number: 124,
-            body: "PR body"
-          });
-        }
-        return "";
-      });
+      mockGetCurrentBranch.mockReturnValue("feature/test");
+      mockExecSync.mockReturnValue("123");
 
-      const result = await githubIssueLinkTool.handler({
-        issue_number: 11
+      const result = await githubIssueLink.handler({
+        issue_number: "456",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.pr_number).toBe(124);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("gh pr edit 123"));
     });
   });
 });

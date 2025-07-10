@@ -1,38 +1,47 @@
 import { jest } from "@jest/globals";
 
-// First set up all mocks before importing
-jest.mock("child_process");
-jest.mock("fs");
-jest.mock("../../../src/core/config.js");
-jest.mock("../../../src/context/session-manager.js");
+// Mock child_process
+const mockExecSync = jest.fn();
+jest.unstable_mockModule("child_process", () => ({
+  execSync: mockExecSync,
+}));
+
+// Mock fs
+const mockExistsSync = jest.fn();
+const mockReadFileSync = jest.fn();
+jest.unstable_mockModule("fs", () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
+  default: {
+    existsSync: mockExistsSync,
+    readFileSync: mockReadFileSync,
+  }
+}));
+
+// Mock config
+const mockGetConfig = jest.fn();
+jest.unstable_mockModule("../../../src/core/config.js", () => ({
+  getConfig: mockGetConfig,
+}));
+
+// Mock session manager - not used in automation.js
+// Removed unnecessary mock
+
+// Import after mocking
+const { registerAutomationTools } = await import("../../../src/tools/automation.js");
 
 describe("Simple Automation Tools Test", () => {
-  let execSync;
-  let registerAutomationTools;
   let tools = [];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
     tools = [];
     
-    // Set up mocks
-    const cp = await import("child_process");
-    execSync = cp.execSync;
-    execSync.mockReturnValue("");
-    
-    const fs = await import("fs");
-    fs.existsSync = jest.fn(() => true);
-    fs.readFileSync = jest.fn(() => JSON.stringify({ scripts: { test: "jest" } }));
-    
-    const config = await import("../../../src/core/config.js");
-    config.getConfig = jest.fn(() => ({ defaultToolOptions: {} }));
-    
-    const session = await import("../../../src/context/session-manager.js");
-    session.sessionManager = { updateGitContext: jest.fn() };
-    
-    // Now import the module
-    const automation = await import("../../../src/tools/automation.js");
-    registerAutomationTools = automation.registerAutomationTools;
+    // Set up default mocks
+    mockExecSync.mockReturnValue("");
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(JSON.stringify({ scripts: { test: "jest" } }));
+    mockGetConfig.mockReturnValue({ defaultToolOptions: {} });
     
     // Register tools
     registerAutomationTools({
@@ -45,7 +54,7 @@ describe("Simple Automation Tools Test", () => {
     expect(quickCommitTool).toBeDefined();
     
     // Mock git status - has changes
-    execSync.mockImplementation((cmd) => {
+    mockExecSync.mockImplementation((cmd) => {
       if (cmd.includes("git status")) return "Changes to be committed";
       if (cmd.includes("git diff")) return "file1.js\nfile2.js";
       return "";
@@ -56,7 +65,7 @@ describe("Simple Automation Tools Test", () => {
     });
     
     expect(result.success).toBe(true);
-    expect(execSync).toHaveBeenCalledWith(expect.stringContaining("git commit"));
+    expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit"));
   });
 
   it("should handle smart_commit tool", async () => {
@@ -64,7 +73,7 @@ describe("Simple Automation Tools Test", () => {
     expect(smartCommitTool).toBeDefined();
     
     // Mock git operations
-    execSync.mockImplementation((cmd) => {
+    mockExecSync.mockImplementation((cmd) => {
       if (cmd.includes("git status")) return "modified: src/index.js";
       if (cmd.includes("git diff")) return "+function newFeature()";
       return "";
@@ -80,11 +89,11 @@ describe("Simple Automation Tools Test", () => {
     const runTestsTool = tools.find(t => t.name === "run_tests");
     expect(runTestsTool).toBeDefined();
     
-    execSync.mockReturnValue("All tests passed");
+    mockExecSync.mockReturnValue("All tests passed");
     
     const result = await runTestsTool.handler({});
     
     expect(result.success).toBe(true);
-    expect(execSync).toHaveBeenCalledWith(expect.stringContaining("npm test"));
+    expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm test"));
   });
 });

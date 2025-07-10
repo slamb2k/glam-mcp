@@ -73,14 +73,51 @@
         "id": 2,
         "title": "Fix API Contract Mismatch Tests",
         "description": "Update tests with incorrect API expectations to align with the current implementation.",
-        "details": "For each test identified with API contract mismatches:\n1. Compare test expectations with actual API implementation\n2. Update test mocks and assertions to match current API contracts\n3. Document any API changes that weren't properly communicated\n\nFocus on high-impact areas first, particularly in core modules and frequently used tools.",
-        "testStrategy": "Run fixed tests to verify they pass. Create a regression test suite to ensure these tests remain aligned with API contracts in the future.",
-        "priority": "high",
+        "status": "pending",
         "dependencies": [
           1
         ],
-        "status": "pending",
-        "subtasks": []
+        "priority": "high",
+        "details": "For each test identified with API contract mismatches:\n1. Compare test expectations with actual API implementation\n2. Update test mocks and assertions to match current API contracts\n3. Document any API changes that weren't properly communicated\n\nFocus on high-impact areas first, particularly in core modules and frequently used tools.",
+        "testStrategy": "Run fixed tests to verify they pass. Create a regression test suite to ensure these tests remain aligned with API contracts in the future.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initial API contract mismatch fixes",
+            "description": "Fixed major API contract mismatch tests by updating mock implementations and test expectations.",
+            "status": "done",
+            "dependencies": [],
+            "details": "Reduced failing tests from 225 to 213. Major fixes included: enhanced-server.test.js, tool-registry-core.test.js, automation.test.js, github-flow.test.js, and others. Used ESM-compatible mocking pattern throughout.",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Fix remaining API contract mismatch tests",
+            "description": "Address the remaining 213 failing tests by updating test expectations to match current API implementation.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Continue using the ESM-compatible mocking pattern established in the initial fixes. Focus on remaining high-impact modules first.",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Document API changes",
+            "description": "Create documentation for API changes that weren't properly communicated to prevent future mismatches.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Compile a list of API changes discovered during test fixes and share with the development team.",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create regression test suite",
+            "description": "Develop a regression test suite to ensure tests remain aligned with API contracts.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Implement automated checks that can detect when API contracts change to prevent future test failures.",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 3,

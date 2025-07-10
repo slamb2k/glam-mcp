@@ -109,7 +109,7 @@ describe("Utilities Tools", () => {
     });
 
     it("should generate repository map", async () => {
-      fs.readdirSync.mockImplementation((dir) => {
+      mockReaddirSync.mockImplementation((dir) => {
         if (dir === ".") {
           return ["src", "tests", "README.md", ".git", "node_modules"];
         }
@@ -125,7 +125,7 @@ describe("Utilities Tools", () => {
         return [];
       });
       
-      fs.statSync.mockImplementation((path) => ({
+      mockStatSync.mockImplementation((path) => ({
         isDirectory: () => !path.includes(".")
       }));
 
@@ -143,7 +143,7 @@ describe("Utilities Tools", () => {
     });
 
     it("should respect max depth", async () => {
-      fs.readdirSync.mockImplementation((dir) => {
+      mockReaddirSync.mockImplementation((dir) => {
         if (dir === ".") return ["src"];
         if (dir === "src") return ["nested"];
         if (dir === "src/nested") return ["deep"];
@@ -151,7 +151,7 @@ describe("Utilities Tools", () => {
         return [];
       });
       
-      fs.statSync.mockImplementation((path) => ({
+      mockStatSync.mockImplementation((path) => ({
         isDirectory: () => !path.includes(".")
       }));
 
@@ -174,7 +174,7 @@ describe("Utilities Tools", () => {
     });
 
     it("should find TODO comments", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("grep") || cmd.includes("rg")) {
           return `src/index.js:10:// TODO: Implement feature
 src/utils.js:25:// TODO: Fix bug
@@ -198,7 +198,7 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should filter by type", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("FIXME")) {
           return "tests/test.js:5:// FIXME: Update test";
         }
@@ -223,8 +223,8 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should check npm dependencies", async () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify({
         dependencies: {
           "express": "^4.18.0",
           "lodash": "^4.17.21"
@@ -234,7 +234,7 @@ tests/test.js:5:// FIXME: Update test`;
         }
       }));
       
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("npm outdated")) {
           return JSON.stringify([
             {
@@ -272,14 +272,14 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should check for unused dependencies", async () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify({
         dependencies: {
           "unused-package": "^1.0.0"
         }
       }));
       
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("npx depcheck")) {
           return JSON.stringify({
             dependencies: ["unused-package"],
@@ -308,7 +308,7 @@ tests/test.js:5:// FIXME: Update test`;
 
     it("should create npm package structure", async () => {
       const writtenFiles = {};
-      fs.writeFileSync.mockImplementation((path, content) => {
+      mockWriteFileSync.mockImplementation((path, content) => {
         writtenFiles[path] = content;
       });
 
@@ -320,9 +320,9 @@ tests/test.js:5:// FIXME: Update test`;
       });
 
       expect(result.success).toBe(true);
-      expect(fs.mkdirSync).toHaveBeenCalledWith("my-package");
-      expect(fs.mkdirSync).toHaveBeenCalledWith("my-package/src");
-      expect(fs.mkdirSync).toHaveBeenCalledWith("my-package/tests");
+      expect(mockMkdirSync).toHaveBeenCalledWith("my-package");
+      expect(mockMkdirSync).toHaveBeenCalledWith("my-package/src");
+      expect(mockMkdirSync).toHaveBeenCalledWith("my-package/tests");
       
       expect(writtenFiles).toHaveProperty("my-package/package.json");
       const packageJson = JSON.parse(writtenFiles["my-package/package.json"]);
@@ -344,15 +344,15 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should run npm script", async () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify({
         scripts: {
           test: "jest",
           build: "webpack"
         }
       }));
       
-      execSync.mockReturnValue("Tests passed!");
+      mockExecSync.mockReturnValue("Tests passed!");
 
       const result = await runScriptTool.handler({
         script: "test"
@@ -361,12 +361,12 @@ tests/test.js:5:// FIXME: Update test`;
       expect(result.success).toBe(true);
       expect(result.data.script).toBe("test");
       expect(result.data.output).toBe("Tests passed!");
-      expect(execSync).toHaveBeenCalledWith("npm run test", expect.any(Object));
+      expect(mockExecSync).toHaveBeenCalledWith("npm run test", expect.any(Object));
     });
 
     it("should handle script not found", async () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify({
         scripts: {
           test: "jest"
         }
@@ -389,7 +389,7 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should find files by pattern", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("find")) {
           return `./src/index.js
 ./src/utils.js
@@ -408,7 +408,7 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should filter by modified time", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("-mtime")) {
           return "./src/recent.js";
         }
@@ -434,7 +434,7 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should count lines of code", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("cloc")) {
           return JSON.stringify({
             JavaScript: { nFiles: 10, blank: 100, comment: 50, code: 1000 },
@@ -466,11 +466,11 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should analyze webpack bundle", async () => {
-      fs.existsSync.mockImplementation((path) => {
+      mockExistsSync.mockImplementation((path) => {
         return path.includes("webpack.config.js") || path.includes("stats.json");
       });
       
-      fs.readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.includes("stats.json")) {
           return JSON.stringify({
             assets: [
@@ -505,7 +505,7 @@ tests/test.js:5:// FIXME: Update test`;
 
     it("should create CI workflow", async () => {
       let capturedContent = "";
-      fs.writeFileSync.mockImplementation((path, content) => {
+      mockWriteFileSync.mockImplementation((path, content) => {
         capturedContent = content;
       });
 
@@ -515,7 +515,7 @@ tests/test.js:5:// FIXME: Update test`;
       });
 
       expect(result.success).toBe(true);
-      expect(fs.mkdirSync).toHaveBeenCalledWith(".github/workflows", { recursive: true });
+      expect(mockMkdirSync).toHaveBeenCalledWith(".github/workflows", { recursive: true });
       expect(capturedContent).toContain("name: CI");
       expect(capturedContent).toContain("on:");
       expect(capturedContent).toContain("push:");
@@ -525,7 +525,7 @@ tests/test.js:5:// FIXME: Update test`;
 
     it("should create deploy workflow", async () => {
       let capturedContent = "";
-      fs.writeFileSync.mockImplementation((path, content) => {
+      mockWriteFileSync.mockImplementation((path, content) => {
         capturedContent = content;
       });
 
@@ -548,7 +548,7 @@ tests/test.js:5:// FIXME: Update test`;
     });
 
     it("should gather environment information", async () => {
-      execSync.mockImplementation((cmd) => {
+      mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("node --version")) return "v18.17.0";
         if (cmd.includes("npm --version")) return "9.6.7";
         if (cmd.includes("git --version")) return "git version 2.40.0";
@@ -566,6 +566,220 @@ tests/test.js:5:// FIXME: Update test`;
       expect(result.data.node_version).toBe("v18.17.0");
       expect(result.data.npm_version).toBe("9.6.7");
       expect(result.data.git_version).toContain("2.40.0");
+    });
+  });
+
+  describe("git_cleanup", () => {
+    let gitCleanupTool;
+
+    beforeEach(() => {
+      gitCleanupTool = registeredTools.find(t => t.name === "git_cleanup");
+    });
+
+    it("should clean up merged branches", async () => {
+      mockGetMergedBranches.mockReturnValue([
+        "feature/old-feature-1",
+        "feature/old-feature-2",
+        "bugfix/fixed-bug"
+      ]);
+
+      const result = await gitCleanupTool.handler({});
+
+      expect(result.success).toBe(true);
+      expect(result.data.branches_deleted).toHaveLength(3);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git branch -d"));
+    });
+
+    it("should handle dry run mode", async () => {
+      mockGetMergedBranches.mockReturnValue(["feature/test"]);
+
+      const result = await gitCleanupTool.handler({
+        dry_run: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).not.toHaveBeenCalledWith(expect.stringContaining("git branch -d"));
+      expect(result.data.would_delete).toContain("feature/test");
+    });
+  });
+
+  describe("git_history", () => {
+    let gitHistoryTool;
+
+    beforeEach(() => {
+      gitHistoryTool = registeredTools.find(t => t.name === "git_history");
+    });
+
+    it("should get commit history", async () => {
+      mockExecSync.mockReturnValue(
+        "abc123 - John Doe - Fix bug (2 hours ago)\n" +
+        "def456 - Jane Smith - Add feature (1 day ago)"
+      );
+
+      const result = await gitHistoryTool.handler({
+        limit: 2,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.commits).toHaveLength(2);
+      expect(result.data.commits[0]).toContain("Fix bug");
+    });
+
+    it("should filter by author", async () => {
+      const result = await gitHistoryTool.handler({
+        author: "john",
+      });
+
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--author=john"));
+    });
+  });
+
+  describe("git_stats", () => {
+    let gitStatsTool;
+
+    beforeEach(() => {
+      gitStatsTool = registeredTools.find(t => t.name === "git_stats");
+    });
+
+    it("should get repository statistics", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("git log --oneline")) return "commit1\ncommit2\ncommit3";
+        if (cmd.includes("git shortlog")) return "John Doe (10):\nJane Smith (5):";
+        if (cmd.includes("git ls-files")) return "file1\nfile2\nfile3\nfile4\nfile5";
+        return "";
+      });
+
+      const result = await gitStatsTool.handler({});
+
+      expect(result.success).toBe(true);
+      expect(result.data.total_commits).toBe(3);
+      expect(result.data.total_files).toBe(5);
+      expect(result.data.contributors).toBe(2);
+    });
+  });
+
+  describe("generate_docs", () => {
+    let generateDocsTool;
+
+    beforeEach(() => {
+      generateDocsTool = registeredTools.find(t => t.name === "generate_docs");
+    });
+
+    it("should generate documentation", async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(["component1.js", "component2.js", "README.md"]);
+      mockReadFileSync.mockImplementation((path) => {
+        if (path.includes("component1.js")) {
+          return "export function hello() { return 'world'; }";
+        }
+        return "";
+      });
+
+      const result = await generateDocsTool.handler({
+        path: "./src",
+        output: "./docs",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockReaddirSync).toHaveBeenCalled();
+      expect(result.data.files_processed).toBeGreaterThan(0);
+    });
+  });
+
+  describe("code_metrics", () => {
+    let codeMetricsTool;
+
+    beforeEach(() => {
+      codeMetricsTool = registeredTools.find(t => t.name === "code_metrics");
+    });
+
+    it("should calculate code metrics", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("find") && cmd.includes("-name")) {
+          return "./src/file1.js\n./src/file2.js\n./test/test.js";
+        }
+        if (cmd.includes("wc -l")) {
+          return "100 ./src/file1.js\n200 ./src/file2.js\n50 ./test/test.js\n350 total";
+        }
+        return "";
+      });
+
+      const result = await codeMetricsTool.handler({});
+
+      expect(result.success).toBe(true);
+      expect(result.data.total_lines).toBe(350);
+      expect(result.data.file_count).toBe(3);
+    });
+  });
+
+  describe("security_check", () => {
+    let securityCheckTool;
+
+    beforeEach(() => {
+      securityCheckTool = registeredTools.find(t => t.name === "security_check");
+    });
+
+    it("should run security checks", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("npm audit")) {
+          return JSON.stringify({
+            metadata: {
+              vulnerabilities: {
+                total: 2,
+                low: 1,
+                moderate: 1,
+                high: 0,
+                critical: 0
+              }
+            }
+          });
+        }
+        return "";
+      });
+
+      const result = await securityCheckTool.handler({});
+
+      expect(result.success).toBe(true);
+      expect(result.data.vulnerabilities.total).toBe(2);
+      expect(result.data.vulnerabilities.high).toBe(0);
+    });
+
+    it("should check for secrets", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("grep") && cmd.includes("api_key\\|secret\\|password")) {
+          return "";
+        }
+        return "{}";
+      });
+
+      const result = await securityCheckTool.handler({
+        check_secrets: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.secrets_found).toBe(false);
+    });
+  });
+
+  describe("optimize_imports", () => {
+    let optimizeImportsTool;
+
+    beforeEach(() => {
+      optimizeImportsTool = registeredTools.find(t => t.name === "optimize_imports");
+    });
+
+    it("should optimize imports", async () => {
+      mockReaddirSync.mockReturnValue(["index.js", "utils.js"]);
+      mockReadFileSync.mockReturnValue(
+        "import { a, b, c } from './module';\nimport * as utils from './utils';"
+      );
+
+      const result = await optimizeImportsTool.handler({
+        path: "./src",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.files_processed).toBeGreaterThan(0);
     });
   });
 });
