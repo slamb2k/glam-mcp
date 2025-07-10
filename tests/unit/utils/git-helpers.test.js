@@ -32,7 +32,7 @@ describe('Git Helpers', () => {
 
       const result = isGitRepository();
       expect(result).toBe(true);
-      expect(execSync).toHaveBeenCalledWith('git rev-parse --is-inside-work-tree', expect.any(Object));
+      expect(execSync).toHaveBeenCalledWith('git rev-parse --git-dir', { stdio: 'pipe' });
     });
 
     it('should return false when not in a git repository', () => {
