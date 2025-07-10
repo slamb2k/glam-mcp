@@ -327,7 +327,7 @@ export function safetyTools(gitClient) {
         required: ['operation']
       },
       handler: async (params) => {
-        const { operation, targetBranch, options = {} } = params;
+        const { operation, targetBranch } = params;
 
         try {
           const checks = [];
@@ -510,7 +510,7 @@ export function safetyTools(gitClient) {
         required: ['files']
       },
       handler: async (params) => {
-        const { files, operation } = params;
+        const { files } = params;
 
         try {
           const criticalPatterns = [

@@ -232,7 +232,7 @@ export class ToolDocumentationGenerator {
     }
     
     // Convert markdown to HTML (simplified)
-    let html = content
+    const html = content
       .replace(/^# (.+)$/gm, '<h1>$1</h1>')
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
@@ -294,7 +294,7 @@ export class ToolDocumentationGenerator {
     const toolsDir = path.join(outputPath, 'tools');
     await fs.promises.mkdir(toolsDir, { recursive: true });
     
-    for (const [name, tool] of this.registry.tools) {
+    for (const [name,] of this.registry.tools) {
       const content = format === 'html'
         ? this.generateHTMLDoc(name)
         : this.generateToolDoc(name);

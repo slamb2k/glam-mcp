@@ -3231,7 +3231,7 @@ async function analyzeCode({
       });
       
       let duplicateCount = 0;
-      lineMap.forEach((locations, line) => {
+      lineMap.forEach((locations, _line) => {
         if (locations.length > 1) {
           duplicateCount++;
           // Add to file issues

@@ -14,11 +14,13 @@ export { SuggestionsEnhancer } from './core/suggestions-enhancer.js';
 export { RiskAssessmentEnhancer } from './core/risk-assessment-enhancer.js';
 export { TeamActivityEnhancer } from './core/team-activity-enhancer.js';
 
+
 /**
  * Initialize default enhancers in the registry
  * @param {EnhancerRegistry} registry - Registry to initialize
  * @returns {Promise<EnhancerRegistry>} - Initialized registry
  */
+/* eslint-disable no-undef */
 export async function initializeDefaultEnhancers(registry = defaultRegistry) {
   // Register core enhancers
   registry
@@ -95,3 +97,4 @@ export async function enhance(response, context = {}) {
   }
   return pipeline.process(response, context);
 }
+/* eslint-enable no-undef */

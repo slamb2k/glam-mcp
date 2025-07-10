@@ -243,7 +243,7 @@ export class ToolDiscoveryService {
   /**
    * Get tool chain suggestions
    */
-  getToolChain(startTool, goal) {
+  getToolChain(startTool, _goal) {
     const start = this.registry.get(startTool);
     if (!start) return null;
     

@@ -142,7 +142,7 @@ export class ToolRegistry extends EventEmitter {
   search(criteria = {}) {
     const results = [];
     
-    for (const [name, tool] of this.tools) {
+    for (const [, tool] of this.tools) {
       let matches = true;
       
       // Category filter
@@ -347,7 +347,7 @@ export class ToolRegistry extends EventEmitter {
     };
     
     // Calculate detailed statistics
-    for (const [name, tool] of this.tools) {
+    for (const [, tool] of this.tools) {
       const category = tool.metadata.category;
       stats.toolsByCategory[category] = (stats.toolsByCategory[category] || 0) + 1;
       

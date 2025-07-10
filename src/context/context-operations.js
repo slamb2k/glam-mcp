@@ -3,7 +3,7 @@
  * Provides methods for updating, querying, and managing session context
  */
 
-import { ResponseFactory, RiskLevel } from '../core/enhanced-response.js';
+import { ResponseFactory } from '../core/enhanced-response.js';
 
 /**
  * Context update operations

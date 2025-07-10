@@ -8,7 +8,6 @@ import { program } from 'commander';
 import { configGenerator } from './config-generator.js';
 import './platforms/index.js'; // Register all platforms
 import fs from 'fs';
-import path from 'path';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);

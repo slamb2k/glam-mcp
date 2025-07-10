@@ -24,8 +24,6 @@ import { registerSafetyTools } from "../tools/safety.js";
 
 // Import tool registry
 import { toolRegistry, ToolCategories } from "../core/tool-registry.js";
-import { toolDiscovery } from "../services/tool-discovery.js";
-import { toolDocumentation } from "../services/tool-documentation.js";
 
 // Import session manager
 import { SessionManager } from "../core/session-manager.js";
