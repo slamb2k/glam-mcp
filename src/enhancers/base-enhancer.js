@@ -80,7 +80,7 @@ export class BaseEnhancer {
    * @param {Object} context - The context to validate
    * @returns {Response} - Validation result
    */
-  validate(response, context) {
+  validate(response, _context) {
     if (!response) {
       return ResponseFactory.error('Response is required');
     }
@@ -238,7 +238,7 @@ export class BaseEnhancer {
    * @returns {Promise<EnhancedResponse>} - The enhanced response
    * @protected
    */
-  async _doEnhance(response, context) {
+  async _doEnhance(_response, _context) {
     throw new Error(`${this.name} must implement _doEnhance method`);
   }
 

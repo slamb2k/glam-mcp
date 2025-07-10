@@ -8,10 +8,8 @@ import path from 'path';
 import { createSuccessResponse, createErrorResponse } from '../utils/responses.js';
 import { toolRegistry } from '../core/tool-registry.js';
 import { toolDocumentation } from '../services/tool-documentation.js';
-import { SessionManager } from '../context/session-manager.js';
 import { GitClient } from '../clients/git-client.js';
 
-const sessionManager = SessionManager.getInstance();
 const gitClient = new GitClient();
 
 /**
@@ -243,9 +241,7 @@ async function ${tool_name}(params) {
 async function updateDocsFromCode({
   source_path = './src',
   output_path = './docs/api',
-  extract_jsdoc = true,
-  generate_types = true,
-  update_readme = false
+  generate_types = true
 }) {
   try {
     await fs.promises.mkdir(output_path, { recursive: true });
@@ -660,7 +656,6 @@ console.log(result);\`;
  */
 async function checkDocsCoverage({
   docs_path = './docs',
-  source_path = './src/tools',
   min_coverage = 80
 }) {
   try {

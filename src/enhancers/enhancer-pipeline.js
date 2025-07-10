@@ -3,7 +3,6 @@
  * Manages the execution flow of multiple enhancers
  */
 
-import { ResponseFactory } from '../core/enhanced-response.js';
 import { BaseEnhancer } from './base-enhancer.js';
 
 /**

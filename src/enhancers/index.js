@@ -14,6 +14,13 @@ export { SuggestionsEnhancer } from './core/suggestions-enhancer.js';
 export { RiskAssessmentEnhancer } from './core/risk-assessment-enhancer.js';
 export { TeamActivityEnhancer } from './core/team-activity-enhancer.js';
 
+// Import for internal use
+import { defaultRegistry } from './enhancer-registry.js';
+import { MetadataEnhancer } from './core/metadata-enhancer.js';
+import { SuggestionsEnhancer } from './core/suggestions-enhancer.js';
+import { RiskAssessmentEnhancer } from './core/risk-assessment-enhancer.js';
+import { TeamActivityEnhancer } from './core/team-activity-enhancer.js';
+
 /**
  * Initialize default enhancers in the registry
  * @param {EnhancerRegistry} registry - Registry to initialize

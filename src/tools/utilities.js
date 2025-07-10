@@ -2041,7 +2041,6 @@ async function generateRepoMap({
  */
 async function searchTodos({
   patterns = ["TODO", "FIXME", "HACK", "XXX", "OPTIMIZE", "REFACTOR"],
-  include_context = true,
   group_by_type = true
 }) {
   if (!isGitRepository()) {
@@ -2154,8 +2153,7 @@ async function searchTodos({
  */
 async function checkDependencies({
   check_updates = true,
-  check_security = true,
-  check_unused = true
+  check_security = true
 }) {
   if (!fs.existsSync('package.json')) {
     return createErrorResponse("No package.json found");
