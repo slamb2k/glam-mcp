@@ -1715,13 +1715,13 @@
           27,
           36
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-06T12:21:12.492Z",
-      "updated": "2025-07-11T15:54:49.606Z",
+      "updated": "2025-07-11T15:57:54.961Z",
       "description": "Tasks for master context"
     }
   }
