@@ -1,0 +1,192 @@
+name: Coverage Trend
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  coverage-trend:
+    name: Track Coverage Trend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests with coverage
+      run: npm test -- --coverage --coverageReporters=json-summary
+      continue-on-error: true
+      env:
+        CI: true
+    
+    - name: Download previous coverage data
+      uses: actions/download-artifact@v4
+      with:
+        name: coverage-history
+        path: .coverage-history
+      continue-on-error: true
+    
+    - name: Update coverage history
+      run: |
+        mkdir -p .coverage-history
+        
+        # Get current date and commit info
+        DATE=$(date +%Y-%m-%d)
+        COMMIT=$(git rev-parse --short HEAD)
+        
+        # Read current coverage
+        if [ -f coverage/coverage-summary.json ]; then
+          COVERAGE=$(node -e "const c = require('./coverage/coverage-summary.json'); console.log(c.total.lines.pct)")
+        else
+          COVERAGE=0
+        fi
+        
+        # Append to history file
+        echo "$DATE,$COMMIT,$COVERAGE" >> .coverage-history/coverage-trend.csv
+        
+        # Keep only last 90 days
+        tail -n 90 .coverage-history/coverage-trend.csv > .coverage-history/coverage-trend.tmp
+        mv .coverage-history/coverage-trend.tmp .coverage-history/coverage-trend.csv
+        
+        # Generate trend chart using Node.js
+        cat > .coverage-history/generate-chart.js << 'EOF'
+        const fs = require('fs');
+        const data = fs.readFileSync('.coverage-history/coverage-trend.csv', 'utf8')
+          .trim()
+          .split('\n')
+          .map(line => {
+            const [date, commit, coverage] = line.split(',');
+            return { date, commit, coverage: parseFloat(coverage) };
+          });
+        
+        // Generate SVG chart
+        const width = 800;
+        const height = 400;
+        const padding = 50;
+        const chartWidth = width - 2 * padding;
+        const chartHeight = height - 2 * padding;
+        
+        const maxCoverage = Math.max(100, ...data.map(d => d.coverage));
+        const xScale = (i) => padding + (i / (data.length - 1)) * chartWidth;
+        const yScale = (coverage) => height - padding - (coverage / maxCoverage) * chartHeight;
+        
+        const pathData = data.map((d, i) => 
+          `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(d.coverage)}`
+        ).join(' ');
+        
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="${width}" height="${height}" fill="white"/>
+          <g stroke="#e0e0e0" stroke-width="1">
+            ${[0, 25, 50, 75, 100].map(y => 
+              `<line x1="${padding}" y1="${yScale(y)}" x2="${width - padding}" y2="${yScale(y)}"/>`
+            ).join('\n')}
+          </g>
+          <g fill="#666" font-size="12" text-anchor="end">
+            ${[0, 25, 50, 75, 100].map(y => 
+              `<text x="${padding - 5}" y="${yScale(y) + 4}">${y}%</text>`
+            ).join('\n')}
+          </g>
+          <path d="${pathData}" fill="none" stroke="#2196F3" stroke-width="2"/>
+          <g fill="#2196F3">
+            ${data.map((d, i) => 
+              `<circle cx="${xScale(i)}" cy="${yScale(d.coverage)}" r="3"/>`
+            ).join('\n')}
+          </g>
+          <text x="${width / 2}" y="30" text-anchor="middle" font-size="18" font-weight="bold">
+            Coverage Trend (Last ${data.length} Builds)
+          </text>
+          <text x="${width / 2}" y="${height - 10}" text-anchor="middle" font-size="14">
+            Current: ${data[data.length - 1]?.coverage.toFixed(1)}%
+          </text>
+        </svg>`;
+        
+        fs.writeFileSync('.coverage-history/coverage-trend.svg', svg);
+        console.log('Coverage trend chart generated');
+        EOF
+        
+        node .coverage-history/generate-chart.js
+    
+    - name: Upload coverage history
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-history
+        path: .coverage-history/
+        retention-days: 90
+    
+    - name: Update README with coverage badge
+      run: |
+        if [ -f coverage/coverage-summary.json ]; then
+          COVERAGE=$(node -e "const c = require('./coverage/coverage-summary.json'); console.log(c.total.lines.pct.toFixed(1))")
+          COLOR="red"
+          if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$COVERAGE >= 70" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+            COLOR="orange"
+          fi
+          
+          # Generate badge URL
+          BADGE_URL="https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}"
+          
+          # Update README if it exists
+          if [ -f README.md ] && ! grep -q "coverage-" README.md; then
+            sed -i '1s/^/![Coverage]('"$BADGE_URL"')\n\n/' README.md
+          fi
+        fi
+    
+    - name: Deploy coverage report to GitHub Pages
+      if: success()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./coverage
+        destination_dir: coverage
+        keep_files: true
+    
+    - name: Comment on latest commit
+      if: github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const total = coverage.total;
+          
+          const body = `## Coverage Report for ${context.sha.substring(0, 7)}
+          
+          | Metric | Coverage |
+          |--------|----------|
+          | Statements | ${total.statements.pct.toFixed(2)}% |
+          | Branches | ${total.branches.pct.toFixed(2)}% |
+          | Functions | ${total.functions.pct.toFixed(2)}% |
+          | Lines | ${total.lines.pct.toFixed(2)}% |
+          
+          [View Coverage Trend](https://github.com/${{ github.repository }}/actions/workflows/coverage-trend.yml)
+          [View Full Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/coverage/)`;
+          
+          await github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body
+          });
