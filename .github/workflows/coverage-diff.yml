@@ -1,0 +1,208 @@
+name: Coverage Diff
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  coverage-diff:
+    name: Coverage Difference Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests with coverage on PR branch
+      run: npm test -- --coverage --coverageReporters=json --coverageReporters=lcov
+      env:
+        CI: true
+    
+    - name: Copy PR coverage
+      run: |
+        mkdir -p coverage-pr
+        cp coverage/coverage-final.json coverage-pr/
+        cp coverage/lcov.info coverage-pr/
+    
+    - name: Checkout base branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+    
+    - name: Install dependencies for base
+      run: npm ci
+    
+    - name: Run tests with coverage on base branch
+      run: npm test -- --coverage --coverageReporters=json --coverageReporters=lcov
+      continue-on-error: true
+      env:
+        CI: true
+    
+    - name: Copy base coverage
+      run: |
+        mkdir -p coverage-base
+        cp coverage/coverage-final.json coverage-base/ || echo "{}" > coverage-base/coverage-final.json
+        cp coverage/lcov.info coverage-base/ || touch coverage-base/lcov.info
+    
+    - name: Generate coverage diff
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          // Read coverage data
+          let baseCoverage = {};
+          let prCoverage = {};
+          
+          try {
+            baseCoverage = JSON.parse(fs.readFileSync('coverage-base/coverage-final.json', 'utf8'));
+          } catch (e) {
+            console.log('No base coverage found, treating as new coverage');
+          }
+          
+          try {
+            prCoverage = JSON.parse(fs.readFileSync('coverage-pr/coverage-final.json', 'utf8'));
+          } catch (e) {
+            console.error('Failed to read PR coverage');
+            process.exit(1);
+          }
+          
+          // Calculate coverage for a file
+          const calculateCoverage = (file) => {
+            if (!file) return { statements: 0, branches: 0, functions: 0, lines: 0 };
+            
+            const s = file.s || {};
+            const b = file.b || {};
+            const f = file.f || {};
+            const lineMap = file.statementMap || {};
+            
+            const statements = Object.values(s);
+            const branches = Object.values(b).flat();
+            const functions = Object.values(f);
+            
+            const covered = {
+              statements: statements.filter(v => v > 0).length,
+              branches: branches.filter(v => v > 0).length,
+              functions: functions.filter(v => v > 0).length,
+              lines: Object.keys(lineMap).filter(k => s[k] > 0).length
+            };
+            
+            const total = {
+              statements: statements.length,
+              branches: branches.length,
+              functions: functions.length,
+              lines: Object.keys(lineMap).length
+            };
+            
+            return {
+              statements: total.statements ? (covered.statements / total.statements * 100) : 100,
+              branches: total.branches ? (covered.branches / total.branches * 100) : 100,
+              functions: total.functions ? (covered.functions / total.functions * 100) : 100,
+              lines: total.lines ? (covered.lines / total.lines * 100) : 100
+            };
+          };
+          
+          // Compare coverage
+          const changes = [];
+          const allFiles = new Set([...Object.keys(baseCoverage), ...Object.keys(prCoverage)]);
+          
+          for (const file of allFiles) {
+            const baseCov = calculateCoverage(baseCoverage[file]);
+            const prCov = calculateCoverage(prCoverage[file]);
+            
+            const diff = {
+              statements: prCov.statements - baseCov.statements,
+              branches: prCov.branches - baseCov.branches,
+              functions: prCov.functions - baseCov.functions,
+              lines: prCov.lines - baseCov.lines
+            };
+            
+            if (Math.abs(diff.statements) > 0.1 || Math.abs(diff.lines) > 0.1) {
+              changes.push({
+                file: file.replace(process.cwd() + '/', ''),
+                base: baseCov,
+                pr: prCov,
+                diff
+              });
+            }
+          }
+          
+          // Sort by largest decrease
+          changes.sort((a, b) => a.diff.lines - b.diff.lines);
+          
+          // Create comment
+          let body = `## Coverage Difference Report 📈\n\n`;
+          
+          if (changes.length === 0) {
+            body += '✅ No significant coverage changes detected.';
+          } else {
+            body += `### Files with Coverage Changes\n\n`;
+            body += `| File | Lines | Diff | Status |\n`;
+            body += `|------|-------|------|--------|\n`;
+            
+            for (const change of changes.slice(0, 20)) { // Show top 20
+              const emoji = change.diff.lines >= 0 ? '✅' : '⚠️';
+              const sign = change.diff.lines >= 0 ? '+' : '';
+              const linesPct = `${change.pr.lines.toFixed(1)}%`;
+              const diffPct = `${sign}${change.diff.lines.toFixed(1)}%`;
+              
+              body += `| ${change.file} | ${linesPct} | ${diffPct} | ${emoji} |\n`;
+            }
+            
+            if (changes.length > 20) {
+              body += `\n_...and ${changes.length - 20} more files_\n`;
+            }
+            
+            // Add summary
+            const decreased = changes.filter(c => c.diff.lines < -1).length;
+            const increased = changes.filter(c => c.diff.lines > 1).length;
+            
+            body += `\n### Summary\n`;
+            body += `- 📈 **Increased coverage**: ${increased} files\n`;
+            body += `- 📉 **Decreased coverage**: ${decreased} files\n`;
+            
+            if (decreased > 0) {
+              body += `\n⚠️ **Warning**: Coverage decreased in ${decreased} file(s). Please review.`;
+            }
+          }
+          
+          // Find and update or create comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && comment.body.includes('Coverage Difference Report')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }

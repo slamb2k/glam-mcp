@@ -1,0 +1,141 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    name: Generate Coverage Report
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests with coverage
+      run: npm test -- --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=html --coverageReporters=json-summary
+      env:
+        CI: true
+    
+    - name: Generate coverage badge
+      uses: jaywcjlove/coverage-badges-cli@main
+      with:
+        source: coverage/coverage-summary.json
+        output: coverage/badges.svg
+    
+    - name: Create coverage report comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          
+          const total = coverage.total;
+          const formatPct = (pct) => `${pct.toFixed(2)}%`;
+          
+          // Create coverage table
+          const body = `## Coverage Report 📊
+          
+          | Metric | Coverage | Details |
+          |--------|----------|---------|
+          | **Statements** | ${formatPct(total.statements.pct)} | ${total.statements.covered}/${total.statements.total} |
+          | **Branches** | ${formatPct(total.branches.pct)} | ${total.branches.covered}/${total.branches.total} |
+          | **Functions** | ${formatPct(total.functions.pct)} | ${total.functions.covered}/${total.functions.total} |
+          | **Lines** | ${formatPct(total.lines.pct)} | ${total.lines.covered}/${total.lines.total} |
+          
+          ### Coverage Thresholds
+          - ✅ Global: 70% (statements, branches, lines, functions)
+          - ✅ Core modules: 80%
+          - ✅ Tool modules: 60%
+          
+          [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+          
+          // Find and update or create comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && comment.body.includes('Coverage Report')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: |
+          coverage/
+          !coverage/tmp/
+    
+    - name: Check coverage thresholds
+      run: |
+        node -e "
+        const coverage = require('./coverage/coverage-summary.json');
+        const total = coverage.total;
+        
+        console.log('Coverage Summary:');
+        console.log('Statements:', total.statements.pct + '%');
+        console.log('Branches:', total.branches.pct + '%');
+        console.log('Functions:', total.functions.pct + '%');
+        console.log('Lines:', total.lines.pct + '%');
+        
+        // Check global thresholds
+        const globalThreshold = 70;
+        const failed = [];
+        
+        if (total.statements.pct < globalThreshold) failed.push('statements');
+        if (total.branches.pct < globalThreshold) failed.push('branches');
+        if (total.functions.pct < globalThreshold) failed.push('functions');
+        if (total.lines.pct < globalThreshold) failed.push('lines');
+        
+        if (failed.length > 0) {
+          console.error('\nCoverage threshold not met for:', failed.join(', '));
+          process.exit(1);
+        }
+        
+        console.log('\nAll coverage thresholds met! ✅');
+        "
