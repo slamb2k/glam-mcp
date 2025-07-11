@@ -387,4 +387,331 @@ describe("Automation Tools", () => {
       expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("--watch"));
     });
   });
+
+  describe("sync_branch", () => {
+    let syncBranch;
+
+    beforeEach(() => {
+      syncBranch = registeredTools.find(t => t.name === "sync_branch");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(syncBranch).toBeDefined();
+      expect(syncBranch.description).toContain("Sync branch");
+      expect(syncBranch.inputSchema.properties).toHaveProperty("branch");
+      expect(syncBranch.inputSchema.properties).toHaveProperty("strategy");
+    });
+
+    it("should sync with upstream branch", async () => {
+      const result = await syncBranch.handler({
+        branch: "upstream/main",
+        strategy: "merge"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git fetch"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git merge upstream/main"));
+    });
+
+    it("should use rebase strategy when specified", async () => {
+      const result = await syncBranch.handler({
+        branch: "origin/develop",
+        strategy: "rebase"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git rebase origin/develop"));
+    });
+  });
+
+  describe("squash_commits", () => {
+    let squashCommits;
+
+    beforeEach(() => {
+      squashCommits = registeredTools.find(t => t.name === "squash_commits");
+      // Mock git log to return commit count
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("git log --oneline")) {
+          return "commit1\ncommit2\ncommit3\ncommit4\ncommit5\ncommit6\ncommit7\ncommit8\ncommit9\ncommit10\n";
+        }
+        return "";
+      });
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(squashCommits).toBeDefined();
+      expect(squashCommits.description).toContain("Squash commits");
+      expect(squashCommits.inputSchema.properties).toHaveProperty("count");
+      expect(squashCommits.inputSchema.properties).toHaveProperty("message");
+    });
+
+    it("should squash specified number of commits", async () => {
+      const result = await squashCommits.handler({
+        count: 3,
+        message: "Squashed commits"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git reset --soft HEAD~3"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit -m \"Squashed commits\""));
+    });
+
+    it("should prevent squashing too many commits", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("git log --oneline")) {
+          return "commit1\ncommit2\ncommit3\ncommit4\ncommit5\n";
+        }
+        return "";
+      });
+
+      const result = await squashCommits.handler({
+        count: 10
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("only 5 commits");
+    });
+  });
+
+  describe("undo_commit", () => {
+    let undoCommit;
+
+    beforeEach(() => {
+      undoCommit = registeredTools.find(t => t.name === "undo_commit");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(undoCommit).toBeDefined();
+      expect(undoCommit.description).toContain("Undo");
+      expect(undoCommit.inputSchema.properties).toHaveProperty("mode");
+      expect(undoCommit.inputSchema.properties).toHaveProperty("count");
+    });
+
+    it("should undo last commit with soft reset", async () => {
+      const result = await undoCommit.handler({
+        mode: "soft"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git reset --soft HEAD~1"));
+    });
+
+    it("should undo multiple commits with hard reset", async () => {
+      const result = await undoCommit.handler({
+        mode: "hard",
+        count: 3
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git reset --hard HEAD~3"));
+    });
+  });
+
+  describe("batch_commit", () => {
+    let batchCommit;
+
+    beforeEach(() => {
+      batchCommit = registeredTools.find(t => t.name === "batch_commit");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(batchCommit).toBeDefined();
+      expect(batchCommit.description).toContain("Create multiple commits");
+      expect(batchCommit.inputSchema.properties).toHaveProperty("commits");
+    });
+
+    it("should create multiple commits from batch", async () => {
+      const commits = [
+        { files: ["file1.js"], message: "Add file1" },
+        { files: ["file2.js", "file3.js"], message: "Add file2 and file3" }
+      ];
+
+      const result = await batchCommit.handler({ commits });
+
+      expect(result.success).toBe(true);
+      expect(result.data.commits_created).toBe(2);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git add file1.js"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git commit -m \"Add file1\""));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git add file2.js file3.js"));
+    });
+
+    it("should validate commits array", async () => {
+      const result = await batchCommit.handler({ commits: [] });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("No commits provided");
+    });
+  });
+
+  describe("init_project", () => {
+    let initProject;
+
+    beforeEach(() => {
+      initProject = registeredTools.find(t => t.name === "init_project");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(initProject).toBeDefined();
+      expect(initProject.description).toContain("Initialize");
+      expect(initProject.inputSchema.properties).toHaveProperty("name");
+      expect(initProject.inputSchema.properties).toHaveProperty("type");
+    });
+
+    it("should initialize a new project", async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const result = await initProject.handler({
+        name: "my-new-project",
+        type: "node",
+        git: true
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("mkdir"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm init -y"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("git init"));
+    });
+
+    it("should handle existing directory", async () => {
+      mockExistsSync.mockReturnValue(true);
+
+      const result = await initProject.handler({
+        name: "existing-project"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("already exists");
+    });
+  });
+
+  describe("npm_publish", () => {
+    let npmPublish;
+
+    beforeEach(() => {
+      npmPublish = registeredTools.find(t => t.name === "npm_publish");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(npmPublish).toBeDefined();
+      expect(npmPublish.description).toContain("Publish");
+      expect(npmPublish.inputSchema.properties).toHaveProperty("version");
+      expect(npmPublish.inputSchema.properties).toHaveProperty("tag");
+    });
+
+    it("should publish npm package", async () => {
+      mockReadFileSync.mockReturnValue(JSON.stringify({ 
+        name: "my-package", 
+        version: "1.0.0" 
+      }));
+
+      const result = await npmPublish.handler({
+        version: "1.1.0"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm version 1.1.0"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm publish"));
+    });
+
+    it("should handle custom npm tag", async () => {
+      const result = await npmPublish.handler({
+        tag: "beta"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm publish --tag beta"));
+    });
+  });
+
+  describe("create_pr_workflow", () => {
+    let createPrWorkflow;
+
+    beforeEach(() => {
+      createPrWorkflow = registeredTools.find(t => t.name === "create_pr_workflow");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(createPrWorkflow).toBeDefined();
+      expect(createPrWorkflow.description).toContain("GitHub Actions workflow");
+      expect(createPrWorkflow.inputSchema.properties).toHaveProperty("name");
+      expect(createPrWorkflow.inputSchema.properties).toHaveProperty("node_version");
+    });
+
+    it("should create PR workflow file", async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const result = await createPrWorkflow.handler({
+        name: "CI",
+        node_version: "18"
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("mkdir -p .github/workflows"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("cat > .github/workflows/pr.yml"));
+    });
+  });
+
+  describe("create_release_workflow", () => {
+    let createReleaseWorkflow;
+
+    beforeEach(() => {
+      createReleaseWorkflow = registeredTools.find(t => t.name === "create_release_workflow");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(createReleaseWorkflow).toBeDefined();
+      expect(createReleaseWorkflow.description).toContain("release workflow");
+      expect(createReleaseWorkflow.inputSchema.properties).toHaveProperty("name");
+      expect(createReleaseWorkflow.inputSchema.properties).toHaveProperty("npm_publish");
+    });
+
+    it("should create release workflow file", async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const result = await createReleaseWorkflow.handler({
+        name: "Release",
+        npm_publish: true
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("cat > .github/workflows/release.yml"));
+    });
+  });
+
+  describe("analyze_code", () => {
+    let analyzeCode;
+
+    beforeEach(() => {
+      analyzeCode = registeredTools.find(t => t.name === "analyze_code");
+    });
+
+    it("should be registered with correct metadata", () => {
+      expect(analyzeCode).toBeDefined();
+      expect(analyzeCode.description).toContain("Analyze code");
+      expect(analyzeCode.inputSchema.properties).toHaveProperty("path");
+      expect(analyzeCode.inputSchema.properties).toHaveProperty("checks");
+    });
+
+    it("should run code analysis", async () => {
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("eslint")) {
+          return "No linting errors";
+        }
+        if (cmd.includes("npm audit")) {
+          return "0 vulnerabilities";
+        }
+        return "";
+      });
+
+      const result = await analyzeCode.handler({
+        checks: ["lint", "security"]
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.results).toHaveProperty("lint");
+      expect(result.data.results).toHaveProperty("security");
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("eslint"));
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("npm audit"));
+    });
+  });
 });
